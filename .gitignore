@@ -1,0 +1,6 @@
+/.venv
+/data
+/poetry.lock
+/poetry.toml
+/pyproject.toml
+/results_heavy
