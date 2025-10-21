@@ -1,6 +1,7 @@
 /.venv
 /data
 /results_heavy
+modules/__pycache__/config.cpython-311.pyc
 
 
 # Byte-compiled / optimized / DLL files

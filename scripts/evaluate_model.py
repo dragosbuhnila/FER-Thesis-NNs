@@ -1,10 +1,12 @@
 import os
 import sys
 import time
+import tensorflow as tf
 
 from modules.config import ACCURACY_RESULTS_PATH, ADELE_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, OCCLUDED_TEST_SET_H5_PATH, ALL_MODELS_PATHS
 from modules.data import generate_h5_from_images, load_data_generator
 from modules.model import load_model
+
 
 PATHS = {
     "ADELE": {
@@ -26,12 +28,27 @@ TEST_SET = "ADELE"  # Options: "ADELE", "OCCLUDED"
 # MODELS_NAMES = ["resnet_finetuning", "pattlite_finetuning", "vgg19_finetuning", "inceptionv3_finetuning", "convnext_finetuning", "efficientnet_finetuning"]
 MODELS_NAMES = ["efficientnet_finetuning"]
 
+REDIRECT_OUTPUT = False
 LOG_FILE = os.path.join(ACCURACY_RESULTS_PATH, f"{time.strftime('%Y%m%d-%H%M%S')}_accuracies_{TEST_SET.lower()}.log")
 # =========== END OF MACROS ===========
 
 
-sys.stdout = open(LOG_FILE, "w")
-sys.stderr = sys.stdout
+if REDIRECT_OUTPUT:
+    sys.stdout = open(LOG_FILE, "w")
+    sys.stderr = sys.stdout
+
+# Check if GPU is available
+physical_devices = tf.config.list_physical_devices('GPU')
+if physical_devices:
+    print(f"GPUs detected: {len(physical_devices)}")
+    for gpu in physical_devices:
+        print(f" - {gpu}")
+    # Set memory growth to avoid allocation issues
+    for gpu in physical_devices:
+        tf.config.experimental.set_memory_growth(gpu, True)
+else:
+    print("No GPU detected. The code will run on the CPU.")
+
 
 
 def evaluate_model(model, model_name, test_generator):
@@ -41,7 +58,6 @@ def evaluate_model(model, model_name, test_generator):
     # For other models. Probably: resnet, vgg, inception, convnext, pattlite, efficientnet
     test_loss, test_acc = model.evaluate(test_generator)
     return test_loss, test_acc
-
 
 if __name__ == "__main__":
     # 1) Load the test set
