@@ -15,10 +15,14 @@ EMOTIONS_PRED = {
 
 # 2) Paths
 DATASETS_PATH = os.path.join(BASE_DIR, "datasets")
-OCCLUDED_TEST_SET_H5_PATH = os.path.join(DATASETS_PATH, "occluded_test_set", "occluded_test_set.h5")
-OCCLUDED_TEST_SET_PATH = os.path.join(DATASETS_PATH, "occluded_test_set", "bosphorus_test_HQ")
-OCCLUDED_TEST_SET_RESIZED_PATH = os.path.join(DATASETS_PATH, "occluded_test_set", "output_images_testset_resized")
-ADELE_TEST_SET_H5_PATH = os.path.join(DATASETS_PATH, "adele_test_set", "adele_test_set.h5")
+
+OCCLUDED_TEST_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_test_set")
+OCCLUDED_TEST_SET_H5_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
+OCCLUDED_TEST_SET_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ")
+OCCLUDED_TEST_SET_RESIZED_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "output_images_testset_resized")
+
+ADELE_TEST_SET_BASE_PATH = os.path.join(DATASETS_PATH, "adele_test_set")
+ADELE_TEST_SET_H5_PATH = os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set.h5")
 
 
 # 3) Model paths
@@ -30,7 +34,7 @@ ALL_MODELS_PATHS = {
     "vgg19_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_VGG19_finetuning"),
     "inceptionv3_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_InceptionV3_finetuning"),
     "convnext_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ConvNeXt_finetuning"),
-    # "efficientnet_finetuning": os.path.join(FINETUNING_WEIGHTS_FOLDER, "pretrained_EfficientNetB1_finetuning"),
+    "efficientnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
 }
 
 
