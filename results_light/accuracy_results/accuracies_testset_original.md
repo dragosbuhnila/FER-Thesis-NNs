@@ -1,3 +1,7 @@
+<!-- ================================================== Main Results: ============================================= -->
+
+
+
 Final evaluation results on occluded test set:
 Model: resnet_finetuning - Test Loss: 0.1281, Test Accuracy: 0.7400
 Model: pattlite_finetuning - Test Loss: 0.1164, Test Accuracy: 0.7600
@@ -7,9 +11,15 @@ Model: convnext_finetuning - Test Loss: 0.1226, Test Accuracy: 0.7829
 
 
 
+<!-- ================================================== Note: ==================================================== -->
 
 
-<!-- ==================================================================================== -->
+
+I risultati combaciano con quelli della tesi.
+
+
+
+<!-- ======================================== Complete Console Output: =========================================== -->
 
 
 
@@ -159,3 +169,7 @@ Model: pattlite_finetuning - Test Loss: 0.1164, Test Accuracy: 0.7600
 Model: vgg19_finetuning - Test Loss: 0.1184, Test Accuracy: 0.7629
 Model: inceptionv3_finetuning - Test Loss: 0.1237, Test Accuracy: 0.7543
 Model: convnext_finetuning - Test Loss: 0.1226, Test Accuracy: 0.7829
+
+
+
+<!-- ============================================ END OF FILE =============================================== -->
