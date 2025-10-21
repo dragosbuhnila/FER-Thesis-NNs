@@ -1,6 +1,8 @@
 import os
+import sys
+import time
 
-from modules.config import ADELE_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, OCCLUDED_TEST_SET_H5_PATH, ALL_MODELS_PATHS
+from modules.config import ACCURACY_RESULTS_PATH, ADELE_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, OCCLUDED_TEST_SET_H5_PATH, ALL_MODELS_PATHS
 from modules.data import generate_h5_from_images, load_data_generator
 from modules.model import load_model
 
@@ -17,10 +19,19 @@ PATHS = {
     }
 }
 
+
 # ============== MACROS ===============
 MODEL_PATHS_SUBSET = ALL_MODELS_PATHS
 TEST_SET = "ADELE"  # Options: "ADELE", "OCCLUDED"
+# MODELS_NAMES = ["resnet_finetuning", "pattlite_finetuning", "vgg19_finetuning", "inceptionv3_finetuning", "convnext_finetuning", "efficientnet_finetuning"]
+MODELS_NAMES = ["efficientnet_finetuning"]
+
+LOG_FILE = os.path.join(ACCURACY_RESULTS_PATH, f"{time.strftime('%Y%m%d-%H%M%S')}_accuracies_{TEST_SET.lower()}.log")
 # =========== END OF MACROS ===========
+
+
+sys.stdout = open(LOG_FILE, "w")
+sys.stderr = sys.stdout
 
 
 def evaluate_model(model, model_name, test_generator):
@@ -40,11 +51,9 @@ if __name__ == "__main__":
     test_generator = load_data_generator(PATHS[TEST_SET]["test_set_h5"], 'test')
 
     # 2) Run the evaluations on the test set
-    # models_names = ["resnet_finetuning", "pattlite_finetuning", "vgg19_finetuning", "inceptionv3_finetuning", "convnext_finetuning", "efficientnet_finetuning"]
-    models_names = ["efficientnet_finetuning"]
-    models_results = {name: {"test_loss": None, "test_acc": None} for name in models_names}
+    models_results = {name: {"test_loss": None, "test_acc": None} for name in MODELS_NAMES}
 
-    for model_name in models_names:
+    for model_name in MODELS_NAMES:
         print("======================================")
         print(f"Evaluating model: {model_name}")
 
@@ -61,7 +70,7 @@ if __name__ == "__main__":
     print("======================================")
 
     # 3) Print the final results
-    print("Final evaluation results on occluded test set:")
+    print(f"\n\nFinal evaluation results on {TEST_SET.lower()} test set:")
     for model_name, results in models_results.items():
         print(f"Model: {model_name} - Test Loss: {results['test_loss']:.4f}, Test Accuracy: {results['test_acc']:.4f}")
     

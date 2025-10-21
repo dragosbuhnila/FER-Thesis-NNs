@@ -1,6 +1,6 @@
 # 1) Emotions
 import os
-BASE_DIR = os.path.join(".", "data")
+DATA_BASE_DIR = os.path.join(".", "data")
 
 EMOTIONS = ["ANGRY", "DISGUST", "FEAR", "HAPPY", "NEUTRAL", "SAD", "SURPRISE"]
 EMOTIONS_PRED = {
@@ -14,7 +14,9 @@ EMOTIONS_PRED = {
 }
 
 # 2) Paths
-DATASETS_PATH = os.path.join(BASE_DIR, "datasets")
+
+# 2a) Datasets paths
+DATASETS_PATH = os.path.join(DATA_BASE_DIR, "datasets")
 
 OCCLUDED_TEST_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_test_set")
 OCCLUDED_TEST_SET_H5_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
@@ -24,9 +26,14 @@ OCCLUDED_TEST_SET_RESIZED_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "outp
 ADELE_TEST_SET_BASE_PATH = os.path.join(DATASETS_PATH, "adele_test_set")
 ADELE_TEST_SET_H5_PATH = os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set.h5")
 
+# 2b) Results paths
+RESULTS_LIGHT_PATH = os.path.join(".", "results_light")
+RESULTS_HEAVY_PATH = os.path.join(".", "results_heavy")
+
+ACCURACY_RESULTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "accuracy_results")
 
 # 3) Model paths
-MODELS_PATH = os.path.join(BASE_DIR, "models")
+MODELS_PATH = os.path.join(DATA_BASE_DIR, "models")
 FINETUNING_MODELS_FOLDER = os.path.join(MODELS_PATH, "federica", "finetuning")
 ALL_MODELS_PATHS = {
     "resnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ResNet_finetuning"),
