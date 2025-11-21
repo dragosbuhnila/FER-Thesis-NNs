@@ -41,8 +41,7 @@ pwd
 # =====================================================================================
 
 
-python ./scripts/trying_things/test_datagenerator_with_occlusion_layer.py -o 1.0 -p true
-python ./scripts/trying_things/test_datagenerator_with_occlusion_layer.py -o 1.0 -p false
+python ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true
 
 
 # =====================================================================================
