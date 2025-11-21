@@ -8,7 +8,7 @@ import tensorflow as tf
 from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             ADELE_TEST_SET_H5_PATH, ADELE_TEST_SET_YAML_PATH, ADELE_TEST_SET_IMAGES_PATH, \
                             OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH 
-from modules.data import load_data_generator
+from modules.data import load_test_generator
 from modules.model import load_model
 from modules.eval import evaluate_model
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # # ACTUALLY, JUST GENERATE IT BEFORE RUNNING THIS, I DON'T WANT POSSIBLE BUGS FROM THIS
     # if not os.path.exists(PATHS[TEST_SET]["test_set_h5"]):
     #     generate_h5_from_images(PATHS[TEST_SET]["test_set"], PATHS[TEST_SET]["test_set_resized"], PATHS[TEST_SET]["test_set_h5"])
-    test_generator = load_data_generator(PATHS[TEST_SET]["test_set_h5"], 'test', 0.0, False)
+    test_generator = load_test_generator(PATHS[TEST_SET]["test_set_h5"], 'test', 0.0, False)
 
     print(f"Loaded {TEST_SET} test set with {len(test_generator.x_data)} samples.")
 

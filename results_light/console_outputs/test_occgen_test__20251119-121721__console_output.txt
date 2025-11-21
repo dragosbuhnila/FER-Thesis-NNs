@@ -1,0 +1,10 @@
+Testing data generator with occlusion_probability=1.0, parallelize_masking=True, masking_function=lines
+Generator initialized: test mode
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: [None*64]
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: [None*64]
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: [None*64]
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: [None*64]
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: [None*64]
+Batch X shape: (30, 128, 128, 3), Batch y shape: (30, 7), Batch paths: [None*30]
+Elapsed time for generator with occlusion: 41.811241 seconds
+Loaded a total of 0 images landmarks, saved 350 images landmarks.

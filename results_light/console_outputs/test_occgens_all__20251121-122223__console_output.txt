@@ -1,0 +1,132 @@
+Testing data generators with occlusion_probability=1.0, parallelize_masking=True, masking_function=lines, use_label_smoothing=True
+Epoch ended. Shuffling data.
+Generator initialized: train mode
+Epoch ended. Shuffling data.
+Generator initialized: valid mode
+Generator initialized: test mode
+Testing generator: train
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+An error occurred while processing generator train, printing info so far:
+Loaded a total of 1074 images landmarks, saved 311 images landmarks.
+Traceback (most recent call last):
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\scripts\trying_things\test_occgens_all.py", line 79, in <module>
+    for batch in generator:
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 166, in __next__
+    batch = self.__getitem__(self.index)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 223, in __getitem__
+    augmented_batch_x = self.occlusion_layer(augmented_batch_x, np.argmax(batch_y, axis=1), batch_x_hashes, training=(self.data_inf != 'test'))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dragos\.conda\envs\fer-thesis\Lib\site-packages\keras\src\utils\traceback_utils.py", line 70, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 118, in call
+    return tf.cond(
+           ^^^^^^^^
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 104, in occlude
+    landmarks_all_batch = np.delete(landmarks_all_batch, i, axis=0)            
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dragos\.conda\envs\fer-thesis\Lib\site-packages\numpy\lib\function_base.py", line 5245, in delete
+    arr = asarray(arr)
+          ^^^^^^^^^^^^
+ValueError: Exception encountered when calling layer 'random_occlusion' (type RandomOcclusion).
+
+setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (63,) + inhomogeneous part.
+
+Call arguments received by layer 'random_occlusion' (type RandomOcclusion):
+  • images=tf.Tensor(shape=(63, 128, 128, 3), dtype=uint8)
+  • labels=array([6, 3, 6, 4, 4, 2, 5, 4, 5, 0, 5, 5, 3, 3, 2, 4, 1, 3, 2, 0, 3, 0,
+       3, 3, 0, 2, 1, 6, 0, 0, 6, 2, 6, 1, 4, 1, 2, 5, 4, 2, 5, 5, 1, 1,
+       0, 3, 0, 0, 1, 3, 1, 6, 5, 2, 4, 4, 6, 4, 6, 2, 6, 1, 5],
+      dtype=int64)
+  • image_hashes=array(['856d950c44ef499db2cc303393248dd7',
+       '625e17ca3aba7a414f83f4efcc888c00',
+       '46b584cad2bddb26ebf5394b3361db8f',
+       '599f2d3cd7e4a9942bf7e75c3a8fe853',
+       '5ecfb9f74056ef158d22277be5b0b095',
+       'e0b3a97d46e2f3c0acfec19d5ec3adb7',
+       '9feb0a03e3718d268a1352e85fa8a9eb',
+       '61be9c45ce1c81d6f679969b982ea483',
+       '94c95827591da2e44ad66ab33994e3ac',
+       'd508d987ffbf6f1576a634b70ebd87c1',
+       '4929b24bd90032adc85a0df5d0b84294',
+       'b2354a630f4dad0695263de7245ac4fc',
+       '6145cb5e6ebdb8ce7324fb4a00910a82',
+       '2d0f0868adb6940f34dc46fd7b001a78',
+       'b198c87028857ac6c8757d47f1da906d',
+       '3857a8803bc57cd87cf080949605fa02',
+       '3ba826b7b53847b964a97a2c414dc054',
+       '69ba77ca517f5e299497bcdc11a79224',
+       '1aa6213813297ec96669356bb4a52fcd',
+       'ed81128fe3ac697555b3d82ad3f55902',
+       'b4a9ef5c24c89c3637b7e28898515e3c',
+       'e75373b9295fecaeccbd3334af1ac2ac',
+       'd8974d60ea37164a41075f4a8c010a78',
+       'e711fa1ea1e1f41c9fc6f1e2a0b06aa9',
+       '09c9a94a1fb125a4b0ba47b30f9a9d61',
+       '6308dd9a0303cd960054a9623de28756',
+       '32879d46c4b8327a669baead13681010',
+       'c1cfa513d5b44981295bbfd4d88b0dc5',
+       '03c5fc107677dd1dd21139a19cdb930d',
+       '5cd20685933f8205cf9a6eff044bd72c',
+       '19aeb1c51d8366e34ac6b48a0c443b6a',
+       '9841388059c87db1832182cb3a318caf',
+       'ef3090a67fe8be9170445612cfac73cc',
+       '67fcf2e908398d537e0ca2bd9732fa8f',
+       '2b11345234db2d0d46cfb82e7aeca75b',
+       '85e48c6bfd23eb34e006fc48a1d47681',
+       '69b5204eddacded4a4c64d4c523ace08',
+       '419a2a39a3bb6b51f2030fb4a9074e21',
+       '3d2072a07d9db355c20dc54eafb0b685',
+       '937729d8d4cb8daae96256e9bdf04caa',
+       '8e684ca163d66894cf9dd4c1368a2c8f',
+       '504ffe98dc67e171f647d6ae6cd533fd',
+       '8cdc09e582bb2f3891a383cc2c11253c',
+       'e14bfc0dd0a9785c42a8fb38f8dcc037',
+       '0ec6faeb8183ca25737b1b89dbb68983',
+       '744ab8e9ad1bef3ff3c035a5782d91c4',
+       'e09c6ddcdc6aad8e5637e83a4efc5719',
+       'fb00a452ea27e96ce6e02adc5099a67e',
+       '1455507137428b523eb53486cc43e4fe',
+       '0578e310f1da3c84cda5730bf22fe8f3',
+       'c74b24880ddf9cb6ce568458c4dd06b3',
+       'fda7bf1b8a3006aea494cbf84cfdfa4d',
+       'd67455f16324d0bddfb81eb3105a6b7e',
+       '7ce6e4bfd63802f56fe67473d4ca963a',
+       '9158d11c04045d5b86eaceb4395663b6',
+       '70af107e68f5ae6f0cf3b015e4a86054',
+       'f28895c329b5ab5ee7f842dbd41676ba',
+       'b5f461d3b20df8bb4a460bf325a95ed5',
+       '6b3e14e0646a97eb1ff84f66f4896d96',
+       'e28d6948e9fac5fe560619054c07b6b5',
+       'c195cce69cc8157ba5d603467a5e2ba6',
+       '4d46aa4fc3b5e4f64a7b9c917d38e934',
+       'cef49b01114555e5a5dec11e1978d544'], dtype='<U32')
+  • training=True
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\scripts\trying_things\test_occgens_all.py", line 99, in <module>
+    if len(GLOBALS["UNLANDMARKABLE_IMAGES_LIST"] > 0):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '>' not supported between instances of 'list' and 'int'

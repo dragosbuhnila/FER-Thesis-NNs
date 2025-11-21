@@ -1,4 +1,3 @@
-import hashlib
 import os
 import numpy as np
 from PIL import Image
@@ -12,6 +11,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from modules.config import EMOTIONS
 from modules.landmark_utils import detect_facial_landmarks__batch, get_landmark_coordinate_sets_by_emotion__batch
 from modules.mask import apply_mask_to__batch
+from modules.misc import hash_image
 
 
 
@@ -72,26 +72,54 @@ def generate_h5_from_images(test_set_path, resized_path, h5_path):
             raise ValueError(f"Expected 350 paths, but found {len(paths_loaded)}.")
 
 class RandomOcclusion(keras.layers.Layer):
-    def __init__(self, occlusion_probability, parallelize_masking, **kwargs):
+    def __init__(self, occlusion_probability, parallelize_masking, masking_function, **kwargs):
         super().__init__(**kwargs)
         self.occlusion_probability = occlusion_probability
         self.parallelize_masking = parallelize_masking
+        self.masking_function = masking_function
 
-    def call(self, images, labels, image_hashes, training=None):
+    def call(self, images, labels, image_landmarks, training=None):
+        # TODO: check if this really is needed
         if training is None:
             training = keras.backend.learning_phase()
 
         def occlude():
             # images is a tf.Tensor:
-            #   > my functions work with numpy arrays, so convert
+            #   > my functions work with numpy arrays, so convert, until you modify the functions to be tensorable or idk (see if you can use mediapipe on batches of data)
             numpy_images = images.numpy()
-            landmarks_all = detect_facial_landmarks__batch(numpy_images, image_hashes)
-            emotions = [EMOTIONS[label] for label in labels]
-            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(landmarks_all, emotions)
-            occluded = apply_mask_to__batch(numpy_images, list_of_landmark_sets, self.parallelize_masking)
 
-            # Convert back to tf.Tensor
-            return tf.convert_to_tensor(occluded)
+            # If no landmarks are detected, then occlusion isn't possible for the approach we're currently using (i.e. masking based on AU landmarks),
+            #   so leave the unprocessable image out and reinsert it with no occlusion
+            error_indices = []
+            for i, landmarks_all in enumerate(image_landmarks):
+                if len(landmarks_all) == 0:
+                    error_indices.append(i)
+
+            unoccludable_images = dict()
+            error_indices.sort(reverse=True)
+            for i in error_indices:
+                # Save the image without occlusion and remove it from the batch
+                unoccludable_images[i] = numpy_images[i]
+                landmarks_all_batch = np.delete(landmarks_all_batch, i, axis=0)            
+            
+            # Continue the occlusion process for valid images
+            emotions = [EMOTIONS[label] for label in labels]
+            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(landmarks_all_batch, emotions, self.parallelize_masking)
+            occluded = apply_mask_to__batch(numpy_images, list_of_landmark_sets, self.parallelize_masking, self.masking_function)
+
+            # Reinsert unoccludable images without occlusion
+            for i, img in unoccludable_images.items():
+                occluded = np.insert(occluded, i, img, axis=0)
+
+            # If I implemented the pipeline correctly, when cache miss doesn't happen this is already a tensor, else it's a list
+            # But since the augmentation pipeline is not GPU compatible RN, I convert to numpy before passing to augmentation
+            if tf.is_tensor(occluded):
+                return occluded.numpy()
+            elif isinstance(occluded, list):
+                occluded = np.array(occluded)
+                return occluded
+            else:
+                raise TypeError("Occluded images must be either a tf.Tensor or a list, there must have been an issue.")
 
         return tf.cond(
             tf.less(tf.random.uniform([]), self.occlusion_probability),
@@ -100,41 +128,44 @@ class RandomOcclusion(keras.layers.Layer):
         )
 
 class CustomBalancedDataGenerator(Sequence):
-    def __init__(self, x_data, y_data, x_hashes, batch_size, occlusion_probability, parallelize_masking, augmentations=None, data_inf=None, label_smoothing=0.1,paths_data=None, **kwargs):
+    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, parallelize_masking, masking_function, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, **kwargs):
         super().__init__(**kwargs)
+        if data_inf not in ['train', 'valid', 'test']:
+            raise ValueError(f"data_inf must be 'train', 'valid', or 'test', but is '{data_inf}'")
+
         self.x_data = x_data
         self.y_data = y_data
         self.x_hashes = x_hashes
-        self.batch_size = batch_size
-        self.data_inf = data_inf
-        self.label_smoothing = label_smoothing
-        self.indices = np.arange(len(x_data))
+        self.x_landmarks = x_landmarks
         self.paths_data = paths_data
-        self.occlusion_probability = occlusion_probability
-        self.parallelize_masking = parallelize_masking
+        self.indices = np.arange(len(x_data))
+        
+        self.data_inf = data_inf
+        self.batch_size = batch_size
+        self.label_smoothing = label_smoothing
+        self.occlusion_layer = RandomOcclusion(occlusion_probability, parallelize_masking, masking_function)
 
-
-        # Se siamo in 'train' o 'valid', impostiamo le augmentation e il bilanciamento
         if data_inf in ['train', 'valid']:
             #print(y_data)
+            # 1) Augment
             self.augmentations = ImageDataGenerator(**augmentations)
+
+            # 2) Class balancing
             self.classes = np.unique(np.argmax(y_data, axis=1))  # Ricaviamo le classi dai dati one-hot encoded
             self.class_indices = {cls: np.where(np.argmax(y_data, axis=1) == cls)[0] for cls in self.classes}
             self.num_classes = len(self.classes)
             self.samples_per_class = max(1, self.batch_size // self.num_classes)
-
-            # Coda ciclica per le classi minoritarie
-            self.class_pointers = {cls: 0 for cls in self.classes}
-
-        # Se siamo in 'test', usiamo solo rescale e nessuna augmentation o bilanciamento
+            self.class_pointers = {cls: 0 for cls in self.classes} # Coda ciclica per le classi minoritarie
         elif data_inf == 'test':
             self.augmentations = ImageDataGenerator(**(augmentations or {}))
+        
         self.index = 0
-        self.on_epoch_end()
+        self.on_epoch_end() # Shuffles data by shuffling indices (only in train/valid)
         print(f"Generator initialized: {data_inf} mode")
 
     def __len__(self):
         return int(np.ceil(len(self.x_data) / self.batch_size))
+    
     def __next__(self):
         # Il comportamento dell'iteratore
         if self.index >= len(self):
@@ -147,25 +178,21 @@ class CustomBalancedDataGenerator(Sequence):
         # Rende l'oggetto un iteratore
         self.index = 0
         return self
+    
     def __getitem__(self, index):
         if self.data_inf == 'test':
             # Per il test set, usiamo semplicemente gli indici
             start_idx = index * self.batch_size
             end_idx = min((index + 1) * self.batch_size, len(self.x_data))
+
             batch_x = self.x_data[start_idx:end_idx]
             batch_y = self.y_data[start_idx:end_idx]
             batch_x_hashes = self.x_hashes[start_idx:end_idx]
-            batch_x = np.array(batch_x)
-            batch_y = np.array(batch_y)
-            batch_x_hashes = np.array(batch_x_hashes)
-            # Se hai i path
-            if self.paths_data is not None:
-                batch_paths = self.paths_data[start_idx:end_idx]
-            else:
-                batch_paths = None
-        else:
+            batch_x_landmarks = self.x_landmarks[start_idx:end_idx]
+            batch_paths = self.paths_data[start_idx:end_idx] if self.paths_data is not None else [None]*len(batch_x)
+        elif self.data_inf in ['train', 'valid']:
             # Per train/valid, selezioniamo batch bilanciati
-            batch_x, batch_y, batch_paths, batch_x_hashes = [], [], [], []
+            batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths = [], [], [], [], []
             for cls in self.classes:
                 cls_indices = self.class_indices[cls]
                 cls_pointer = self.class_pointers[cls]
@@ -175,7 +202,8 @@ class CustomBalancedDataGenerator(Sequence):
                 batch_x.extend(self.x_data[selected_indices])
                 batch_y.extend(self.y_data[selected_indices])
                 batch_x_hashes.extend(self.x_hashes[selected_indices])
-                batch_paths.extend(self.paths_data[selected_indices] if self.paths_data is not None else [None]*len(selected_indices))
+                batch_x_landmarks.extend(self.x_landmarks[selected_indices])
+                batch_paths.extend(self.paths_data[selected_indices]) if self.paths_data is not None else batch_paths.extend([None]*len(selected_indices))
 
                 # Aggiorna il puntatore per la classe
                 self.class_pointers[cls] += len(selected_indices)
@@ -189,26 +217,22 @@ class CustomBalancedDataGenerator(Sequence):
             batch_x = np.array(batch_x)
             batch_y = np.array(batch_y)
             batch_x_hashes = np.array(batch_x_hashes)
+            batch_x_landmarks = np.array(batch_x_landmarks)
             batch_paths = np.array(batch_paths)
 
-            batch_x, batch_y, batch_x_hashes, batch_paths = shuffle(batch_x, batch_y, batch_x_hashes, batch_paths)
+            batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths = shuffle(batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths)
 
             # Applica il label smoothing
             if self.label_smoothing > 0:
                 batch_y = self.apply_label_smoothing(batch_y)
 
-        occlusion_layer = RandomOcclusion(self.occlusion_probability, self.parallelize_masking)
-
         # Applica il rescale o le trasformazioni per augmentation
+        batch_x = self.occlusion_layer(batch_x, np.argmax(batch_y, axis=1), batch_x_landmarks, training=(self.data_inf != 'test'))
         augmented_batch_x = np.zeros_like(batch_x)
         for i in range(len(batch_x)):
             augmented_batch_x[i] = self.augmentations.random_transform(batch_x[i])
 
-        # TODO check if training=xxx works as intended
-        augmented_batch_x = occlusion_layer(augmented_batch_x, np.argmax(batch_y, axis=1), batch_x_hashes, training=(self.data_inf != 'test'))
-
         return augmented_batch_x, batch_y, batch_paths, batch_x_hashes
-
 
     def on_epoch_end(self):
         if self.data_inf != 'test':
@@ -229,44 +253,186 @@ class CustomBalancedDataGenerator(Sequence):
             return smoothed_labels
         else:
             return labels
-        
-def load_data_generator(path, title, occlusion_probability, parallelize_masking):
-    def load_data_and_labels(file_path, info):
-        class_names = None
-        with h5py.File(file_path, 'r') as f:
-            if info == 'train':
-                raise NotImplementedError("Training data loading not implemented.")
-            elif info == 'test':
-                x = np.array(f['X_test'])
-                y = np.array(f['y_test'])
-                # Leggiamo anche i path se esistono
-                if 'paths' in f:
-                    # Se 'paths' è un dataset di stringhe a lunghezza variabile
-                    # con h5py.string_dtype, possiamo leggerlo direttamente:
-                    paths_data = f['paths'][...]  # np array di stringhe
-                else:
-                    paths_data = None
-                return x, y, class_names, paths_data
-            else:
-                raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
 
-    NUM_CLASSES = len(EMOTIONS)
-    X_test, y_test, class_names, test_paths = load_data_and_labels(path, title)
+def load_data_and_labels(file_path, info):
+    class_names = None
+    with h5py.File(file_path, 'r') as f:
+        if info == 'train':
+            X_train = np.array(f['X_train'])
+            y_train = np.array(f['y_train'])
+            X_val = np.array(f['X_val'])
+            y_val = np.array(f['y_val'])
+            class_names = [name.decode('utf-8') for name in f['class_names']]
+
+            if 'paths' in f:
+                # Se 'paths' è un dataset di stringhe a lunghezza variabile
+                # con h5py.string_dtype, possiamo leggerlo direttamente:
+                train_paths_data = f['train_paths'][...]  # np array di stringhe
+                val_paths_data = f['val_paths'][...]  # np array di stringhe
+            else:
+                train_paths_data = None
+                val_paths_data = None
+            return X_train, y_train, X_val, y_val, class_names, train_paths_data, val_paths_data
+        elif info == 'test':
+            X_test = np.array(f['X_test'])
+            y_test = np.array(f['y_test'])
+            class_names = [name.decode('utf-8') for name in f['class_names']]
+            
+            if 'paths' in f:
+                # Se 'paths' è un dataset di stringhe a lunghezza variabile
+                # con h5py.string_dtype, possiamo leggerlo direttamente:
+                paths_data = f['paths'][...]  # np array di stringhe
+            else:
+                paths_data = None
+            return X_test, y_test, class_names, paths_data
+        else:
+            raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
+
+def load_test_generator(path, occlusion_probability, parallelize_masking, masking_function):
+    X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test')
+
+    for emotion in EMOTIONS:
+        if emotion not in class_names:
+            raise ValueError(f"Class '{emotion}' not found in class names from H5 file.")
+    NUM_CLASSES = len(class_names)
+
     y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
-    X_test_hashes = np.array([hashlib.md5(img.tobytes()).hexdigest() for img in X_test])
-    test_augmentations = {}
+    X_test_hashes = np.array([hash_image(img) for img in X_test])
 
     data_generator = CustomBalancedDataGenerator(
         x_data=X_test,
         y_data=y_test_one_hot,
         x_hashes=X_test_hashes,
-        batch_size=64,
+        paths_data=test_paths,
+
+        data_inf='test',
+        batch_size=64,        
+        augmentations={},
+        label_smoothing=0,
+
+        masking_function=masking_function,
         occlusion_probability=occlusion_probability,
         parallelize_masking=parallelize_masking,
-        augmentations=test_augmentations,
-        data_inf='test',
-        label_smoothing=0,
-        paths_data=test_paths 
     )
 
     return data_generator
+
+def load_data_generators(train_path, test_path, occlusion_probability, parallelize_masking, masking_function, use_label_smoothing):
+    # 1) Load training and validation data
+    # ____________________________________
+    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
+    X_test, y_test, test_class_names, test_paths_data = load_data_and_labels(test_path, 'test')
+    
+    # 1.b) Hashing
+    # ____________________________________
+    X_train_hashes = np.array([hash_image(img) for img in X_train])
+    X_val_hashes = np.array([hash_image(img) for img in X_val])
+    X_test_hashes = np.array([hash_image(img) for img in X_test])
+    
+    # 1.c) Classes validations
+    # ____________________________________
+    for emotion in EMOTIONS:
+        if emotion not in trainval_class_names:
+            raise ValueError(f"Class '{emotion}' not found in training/validation class names from H5 file.")
+        if emotion not in test_class_names:
+            raise ValueError(f"Class '{emotion}' not found in test class names from H5 file.")
+    class_names = test_class_names
+
+    # 1.d) Paths validations
+    # ____________________________________
+    if train_paths_data is not None and val_paths_data is None:
+        raise ValueError(f"Training paths are provided but validation paths are missing, which is weird, so check the dataset at {train_path}.")
+    if train_paths_data is None and val_paths_data is not None:
+        raise ValueError(f"Validation paths are provided but training paths are missing, which is weird, so check the dataset at {train_path}.")
+    
+    # 2) Landmarking
+    # ____________________________________
+    X_train_landmarks = detect_facial_landmarks__batch(X_train, X_train_hashes, parallelize=True)
+    X_val_landmarks = detect_facial_landmarks__batch(X_val, X_val_hashes, parallelize=True)
+    X_test_landmarks = detect_facial_landmarks__batch(X_test, X_test_hashes, parallelize=True)
+
+    # 3) Compute initial bias
+    # ____________________________________
+    class_counts = np.bincount(y_train)
+    total_samples = len(y_train)
+    class_probabilities = class_counts / total_samples
+    initial_bias = np.log(class_probabilities / (1 - class_probabilities))
+    # print("Bias iniziale per ciascuna classe:", initial_bias)
+
+    # 3) Shuffle training and validation data
+    # ____________________________________
+    if train_paths_data is not None:
+        X_train, y_train, X_train_hashes, train_paths_data = shuffle(X_train, y_train, X_train_hashes, train_paths_data)
+        X_val, y_val, X_val_hashes, val_paths_data = shuffle(X_val, y_val, X_val_hashes, val_paths_data)
+    else:
+        X_train, y_train, X_train_hashes = shuffle(X_train, y_train, X_train_hashes)
+        X_val, y_val, X_val_hashes = shuffle(X_val, y_val, X_val_hashes)
+    
+    # 4) One-hot encoding, augmentations, generators
+    # ____________________________________
+    NUM_CLASSES = len(class_names)
+    y_train_one_hot = to_categorical(y_train, num_classes=NUM_CLASSES)
+    y_val_one_hot = to_categorical(y_val, num_classes=NUM_CLASSES)
+    y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
+
+    # 5)  Augmentations
+    # ____________________________________
+    # TODO: make them GPUable as right now they can only run on CPU so I have to convert them to numpy arrays
+    train_augmentations = {
+        'rotation_range': 10,
+        'width_shift_range': 0.2,
+        'shear_range': 0.3,
+        'horizontal_flip': True,
+        'fill_mode': 'wrap',
+    }
+
+    # 6) Label smoothing
+    # ____________________________________
+    if use_label_smoothing:
+        label_smoothing_value = 0.05
+    else:
+        label_smoothing_value = 0.0
+
+    # 7) Create generators
+    # ____________________________________
+    train_generator = CustomBalancedDataGenerator(
+        x_data=X_train, 
+        y_data=y_train_one_hot,
+        x_hashes=X_train_hashes,
+        x_landmarks=X_train_landmarks,
+        paths_data=train_paths_data,
+        data_inf='train',
+        batch_size=64,
+        augmentations=train_augmentations,
+        label_smoothing=label_smoothing_value,
+        masking_function=masking_function,
+        occlusion_probability=occlusion_probability,
+        parallelize_masking=parallelize_masking)
+    val_generator = CustomBalancedDataGenerator(
+        x_data=X_val,
+        y_data=y_val_one_hot,
+        x_hashes=X_val_hashes,
+        x_landmarks=X_val_landmarks,
+        paths_data=val_paths_data,
+        data_inf='valid',
+        batch_size=64,
+        augmentations=train_augmentations,
+        label_smoothing=0,
+        masking_function=masking_function,
+        occlusion_probability=1.0,
+        parallelize_masking=parallelize_masking)
+    test_generator = CustomBalancedDataGenerator(
+        x_data=X_test,
+        y_data=y_test_one_hot,
+        x_hashes=X_test_hashes,
+        x_landmarks=X_test_landmarks,
+        paths_data=test_paths_data,
+        data_inf='test',
+        batch_size=64,
+        augmentations={},
+        label_smoothing=0,
+        masking_function=masking_function,
+        occlusion_probability=1.0,
+        parallelize_masking=parallelize_masking)
+    
+    return train_generator, val_generator, test_generator, initial_bias

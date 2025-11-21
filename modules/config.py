@@ -1,12 +1,18 @@
 import os
 
 # 0) Debug Options
-DEBUG_MASKING = False                                                # If True, will plot images during masking for debugging
-DEBUG_MASKING_TIER2 = False if DEBUG_MASKING == False else True     # If True, will plot more images during masking for debugging
+DEBUG_MASKING = False                                                   # If True, will plot images during masking for debugging
+DEBUG_MASKING_TIER2 = False if DEBUG_MASKING == False else True         # If True, will plot more images during masking for debugging
 
-FORCE_RECALCULATE_LANDMARKS = False                                  # If True, will recalculate and overwrite existing landmark coordinates even if they exist
+FORCE_RECALCULATE_LANDMARKS = False                                     # If True, will recalculate and overwrite existing landmark coordinates even if they exist
 
-# 1) Globals
+GLOBALS = {
+    "TOTAL_IMAGES_LANDMARKS_SAVED": 0,                      # Counter for total images saved during masking
+    "TOTAL_IMAGES_LANDMARKS_LOADED": 0,                     # Counter for total images loaded during masking
+    "UNLANDMARKABLE_IMAGES_LIST": [],
+}
+
+# 1) Core Configurations
 # ______________________________________________________________________
 DATA_BASE_DIR = os.path.join(".", "data")
 AUXILIARY_DATA_DIR = os.path.join(DATA_BASE_DIR, "auxiliary")
@@ -66,6 +72,7 @@ RESULTS_LIGHT_PATH = os.path.join(".", "results_light")
 RESULTS_HEAVY_PATH = os.path.join(".", "results_heavy")
 # ______________________________________________________________________
 ACCURACY_RESULTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "accuracy_results")
+CONSOLE_OUTPUTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "console_outputs")
 
 # 3) Model paths
 # ______________________________________________________________________
@@ -83,13 +90,13 @@ ALL_MODELS_PATHS = {
     "efficientnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
     "yolo_last": os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
 }
+
+
+# 4) Landmarks
 # ______________________________________________________________________
 # > MEDIAPIPE
 MEDIAPIPE_PATH = os.path.join(MODELS_PATH, "mediapipe")
 LANDMARKER_MODEL_PATH = os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
-
-# 4) Landmarks
-# ______________________________________________________________________
 LANDMARK_COORDINATES_FOLDER = os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
 
 

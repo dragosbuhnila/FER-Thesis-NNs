@@ -5,14 +5,15 @@
 
 from concurrent.futures import ThreadPoolExecutor
 import os
-import cv2
 import numpy as np
 import mediapipe as mp
 from mediapipe.tasks.python.vision import FaceLandmarker, FaceLandmarkerOptions
 from mediapipe.tasks.python import BaseOptions
+from PIL import Image
 
 
-from modules.config import FORCE_RECALCULATE_LANDMARKS, LANDMARK_COORDINATES_FOLDER, LANDMARKER_MODEL_PATH
+from modules.config import FORCE_RECALCULATE_LANDMARKS, LANDMARK_COORDINATES_FOLDER, LANDMARKER_MODEL_PATH, GLOBALS
+from modules.misc import hash_image
 
 EMOTION_AUS = {
     "ANGRY":    ["AU4", "AU23", "AU24"],
@@ -301,18 +302,20 @@ def detect_facial_landmarks_frompath(image_path):
     # TODO: check if coordinates aren't already cached to save time (so you also need to add a feature to clear the cache in case you change something in the related MACROS)
 
     # Load the image
-    image = mp.Image.create_from_file(image_path)
+    image = Image.open(image_path)
+    image_hash = hash_image(image)
 
-    detect_facial_landmarks(image)
+    detect_facial_landmarks(np.asarray(image, dtype=np.uint8), image_hash)
         
-def detect_facial_landmarks(numpy_image, image_hash, force_recalculate=FORCE_RECALCULATE_LANDMARKS):
-    # check if image is numpy
-    if not isinstance(numpy_image, np.ndarray):
-        raise TypeError("Input image must be a numpy array.")
-
+def detect_facial_landmarks(numpy_image, image_hash, ignore_error, force_recalculate=FORCE_RECALCULATE_LANDMARKS):
     desired_landmarks = load_landmark_coordinates(image_hash)
     if desired_landmarks is not None and not force_recalculate:
-        return desired_landmarks
+        GLOBALS["TOTAL_IMAGES_LANDMARKS_LOADED"] += 1
+        return np.array(desired_landmarks)
+
+    # check if image is numpy
+    if not isinstance(numpy_image, np.ndarray):
+        raise TypeError("Input image must be a numpy array, or alternatively, a tf.Tensor which will be converted promptly.")
 
     # Convert a NumPy array or other image format to mediapipe.Image
     image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
@@ -350,20 +353,25 @@ def detect_facial_landmarks(numpy_image, image_hash, force_recalculate=FORCE_REC
             ok = save_landmark_coordinates(image_hash, desired_landmarks, force_recalculate)
             if ok == False:
                 raise ValueError(f"Could not save landmark coordinates for image hash {image_hash}.")
+            else: 
+                GLOBALS["TOTAL_IMAGES_LANDMARKS_SAVED"] += 1
 
-            return desired_landmarks
+            return np.array(desired_landmarks)
         else:
-            raise ValueError(f"No face detected in image.")
+            GLOBALS["UNLANDMARKABLE_IMAGES_LIST"].append(image_hash)
+            if ignore_error:
+                return np.array([])
+            raise ValueError(f"No face detected in image with hash {image_hash}.")
 
-def detect_facial_landmarks__batch(numpy_images, image_hashes):
-    if not isinstance(numpy_images, (np.ndarray)):
-        raise TypeError("Input must be a numpy array.")
-
-    if len(numpy_images) != len(image_hashes):
+def detect_facial_landmarks__batch(images, image_hashes, parallelize):
+    if len(images) != len(image_hashes):
         raise ValueError("Mismatched lengths between images and image hashes.")
 
-    with ThreadPoolExecutor() as executor:
-        results = list(executor.map(detect_facial_landmarks, numpy_images, image_hashes))
+    if parallelize:
+        with ThreadPoolExecutor() as executor:
+            results = list(executor.map(detect_facial_landmarks, images, image_hashes, [True]*len(images)))
+    else:
+        results = [res for res in map(detect_facial_landmarks, images, image_hashes, [True]*len(images))]
     return results
 
 def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
@@ -380,13 +388,16 @@ def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
     then get_landmark_coordinate_sets_by_au(landmark_coordinates, "AU1") will return:
     [ [(x66, y66), (x107, y107)], [(x336, y336), (x296, y296)] ]
     """
+    if len(landmark_coordinates) == 0:
+        raise ValueError("landmark_coordinates is an empty list")
     if emotion == "NEUTRAL":
-        return []  # No AUs for neutral expression
-
+        # No AUs for neutral expression
+        return []
     if emotion not in EMOTION_AUS:
+        # Don't move this above if emotion == "NEUTRAL", bc there's no "NEUTRAL" in EMOTION_AUS, so it would error
         raise ValueError(f"Emotion {emotion} not found in EMOTION_AUS dictionary.")
+    
     AUs = EMOTION_AUS[emotion]
-
     for au in AUs:
         if au not in AU_LANDMARKS:
             raise ValueError(f"AU {au} not found in AU_LANDMARKS dictionary.")
@@ -405,7 +416,7 @@ def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
 
     return au_landmark_coords_sets
 
-def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, emotions_batch):
+def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, emotions_batch, parallelize):
     if not isinstance(landmark_coordinates_batch, (list, tuple, np.ndarray)):
         raise TypeError("Input must be a list or tuple or np.ndarray of numpy arrays.")
     if not isinstance(emotions_batch, (list, tuple)):
@@ -414,8 +425,11 @@ def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, e
     if len(landmark_coordinates_batch) != len(emotions_batch):
         raise ValueError("Mismatched lengths between landmark coordinates and emotions.")
 
-    with ThreadPoolExecutor() as executor:
-        results = list(executor.map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch))
+    if parallelize:
+        with ThreadPoolExecutor() as executor:
+            results = list(executor.map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch))
+    else:
+        results = [res for res in map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch)]
     return results
 
 def save_landmark_coordinates(image_hash, landmark_coordinates, force_recalculate, coords_folder=LANDMARK_COORDINATES_FOLDER):

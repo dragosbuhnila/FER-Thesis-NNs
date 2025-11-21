@@ -30,7 +30,7 @@ DISPLAY_OPTIONS = {
     "AU27":     {"radius": 270.0, "axis_ratio": 0.8 , "gradient_exp": 3.0},
 }
 
-def mask_face_dots(img, landmark_coords, radius=5, color=(0, 255, 0)):
+def mask_face_dots(img, landmark_coords, radius=5, color=MASK_COLOR):
     """
     Masks the face with simple dots at the landmark coordinates.
     """
@@ -38,14 +38,14 @@ def mask_face_dots(img, landmark_coords, radius=5, color=(0, 255, 0)):
         cv2.circle(img, (x, y), radius, color, -1)  # Fill the circle
     return img
 
-def mask_face_circles(img, landmark_coords, AU="default"):
+def mask_face_circles(img, landmark_coords, mask_color=MASK_COLOR, AU="default"):
     radius = DISPLAY_OPTIONS[AU]["radius"] if AU in DISPLAY_OPTIONS else DISPLAY_OPTIONS["default"]["radius"]
     axis_ratio = DISPLAY_OPTIONS[AU]["axis_ratio"] if AU in DISPLAY_OPTIONS else DISPLAY_OPTIONS["default"]["axis_ratio"]
     angle_deg = 0.0
     wobble_amp = 0.0
     gradient_exp = DISPLAY_OPTIONS[AU]["gradient_exp"] if AU in DISPLAY_OPTIONS else DISPLAY_OPTIONS["default"]["gradient_exp"]
     ungrad_slice = 0.15
-    color = (0,0,0)
+    color = mask_color
     close_size = 20   
 
     img = img.astype(np.float32) / 255.0
@@ -93,7 +93,6 @@ def mask_face_circles(img, landmark_coords, AU="default"):
 def mask_face_lines(image, landmark_coordinates,
               expansion=37,
               blur_radius=None,
-              fill=False,
               fade_start=None,
               fade_end=None,
               mask_color=MASK_COLOR,
@@ -125,6 +124,16 @@ def mask_face_lines(image, landmark_coordinates,
     out : np.ndarray
         Copy of `image` with the mask region painted black, fading to transparent.
     """
+    # fill parameter
+    if isinstance(landmark_coordinates[0], np.ndarray):
+        are_equal = np.array_equal(landmark_coordinates[0], landmark_coordinates[-1])
+    else:
+        are_equal = landmark_coordinates[0] == landmark_coordinates[-1]
+    if are_equal:
+        fill = True
+    else:
+        fill = False
+
     # Prepare single-channel mask
     h, w = image.shape[:2]
     mask = np.zeros((h, w), dtype=np.uint8)
@@ -236,6 +245,16 @@ def mask_face_lines(image, landmark_coordinates,
 
     return out.astype(np.uint8)
 
+
+
+MASKING_FUNCTIONS = {
+    "circles": mask_face_circles,
+    "lines": mask_face_lines,
+    # "random_rectangles": mask_random_rectangles, # TODO: implement this function
+}
+
+
+
 def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_MASKING):
     """
     Apply facial landmark masks to all sets of landmarks for a batch of images.
@@ -245,17 +264,7 @@ def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_M
     """
     i = 0
     for landmark_set in landmark_sets:
-        if isinstance(landmark_set[0], np.ndarray):
-            are_equal = np.array_equal(landmark_set[0], landmark_set[-1])
-        else:
-            are_equal = landmark_set[0] == landmark_set[-1]
-
-        if are_equal:
-            closed_curve = True
-        else:
-            closed_curve = False
-
-        image = masking_function(image, landmark_set, fill=closed_curve)
+        image = masking_function(image, landmark_set)
         i += 1
 
     if debug:
@@ -263,15 +272,15 @@ def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_M
 
     return image
 
-def apply_mask_to__batch(images, list_of_landmark_sets, parallelize, masking_function=mask_face_lines):
+def apply_mask_to__batch(images, list_of_landmark_sets, parallelize, masking_function):
     """
     Apply facial landmark masks to a batch of images using ThreadPoolExecutor for parallel processing..
     images : list of np.ndarray
     list_of_landmark_sets : list of list of (x, y)
     masking_function : function to apply the mask
     """
-    if masking_function.__name__ != "mask_face_lines":
-        raise ValueError("masking_function must be mask_face_lines for the time being, as I have not tested yet the loopability (on landmark sets) of the other ones")
+    # if masking_function.__name__ != "mask_face_lines":
+    #     raise ValueError("masking_function must be mask_face_lines for the time being, as I have not tested yet the loopability (on landmark sets) of the other ones")
 
     if len(images) != len(list_of_landmark_sets):
         raise ValueError(f"Number of images must match number of landmark sets. Got {len(images)} images and {len(list_of_landmark_sets)} lists of landmark sets.")

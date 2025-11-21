@@ -2,7 +2,7 @@ import os; import sys;
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from modules.config import ADELE_TEST_SET_H5_PATH
-from modules.data import load_data_generator
+from modules.data import load_test_generator
 from modules.landmark_utils import detect_facial_landmarks
 import matplotlib.pyplot as plt
 
@@ -16,7 +16,7 @@ def plot_image_with_landmarks(image, landmarks):
 
 if __name__ == "__main__":
     # Before knowing what type of image ill have to see if it works, I need to implement the pipeline even if i dont have the occlusion part yet
-    test_generator = load_data_generator(ADELE_TEST_SET_H5_PATH, 'test')
+    test_generator = load_test_generator(ADELE_TEST_SET_H5_PATH, 'test')
 
     for batch in test_generator:
         if isinstance(batch, (list, tuple)) and len(batch) >= 2:

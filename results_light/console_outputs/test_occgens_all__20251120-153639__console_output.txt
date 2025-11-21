@@ -1,0 +1,208 @@
+Testing data generators with occlusion_probability=1.0, parallelize_masking=True, masking_function=lines, use_label_smoothing=True
+Epoch ended. Shuffling data.
+Generator initialized: train mode
+Epoch ended. Shuffling data.
+Generator initialized: valid mode
+Generator initialized: test mode
+Testing generator: train
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (56, 128, 128, 3), Batch y shape: (56, 7), Batch paths: [None*56]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (59, 128, 128, 3), Batch y shape: (59, 7), Batch paths: [None*59]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Batch X shape: (63, 128, 128, 3), Batch y shape: (63, 7), Batch paths: [None*63]
+Traceback (most recent call last):
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\scripts\trying_things\test_occgens_all.py", line 78, in <module>
+    for batch in generator:
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 166, in __next__
+    batch = self.__getitem__(self.index)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 223, in __getitem__
+    augmented_batch_x = self.occlusion_layer(augmented_batch_x, np.argmax(batch_y, axis=1), batch_x_hashes, training=(self.data_inf != 'test'))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dragos\.conda\envs\fer-thesis\Lib\site-packages\keras\src\utils\traceback_utils.py", line 70, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 118, in call
+    return tf.cond(
+           ^^^^^^^^
+  File "c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\modules\data.py", line 104, in occlude
+    landmarks_all_batch = np.delete(landmarks_all_batch, i, axis=0)            
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dragos\.conda\envs\fer-thesis\Lib\site-packages\numpy\lib\function_base.py", line 5245, in delete
+    arr = asarray(arr)
+          ^^^^^^^^^^^^
+ValueError: Exception encountered when calling layer 'random_occlusion' (type RandomOcclusion).
+
+setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (63,) + inhomogeneous part.
+
+Call arguments received by layer 'random_occlusion' (type RandomOcclusion):
+  � images=tf.Tensor(shape=(63, 128, 128, 3), dtype=uint8)
+  � labels=array([0, 2, 1, 2, 5, 3, 0, 2, 6, 4, 0, 3, 3, 4, 6, 4, 0, 3, 6, 1, 1, 2,
+       5, 4, 2, 6, 6, 6, 6, 1, 5, 0, 3, 5, 5, 3, 0, 2, 3, 4, 4, 3, 1, 5,
+       3, 1, 1, 2, 6, 6, 4, 5, 5, 2, 0, 4, 0, 0, 1, 1, 2, 5, 4],
+      dtype=int64)
+  � image_hashes=array(['a7370d962940237a908371f62ccb663d',
+       'a5ed96130aa8a07cf6030ace44da59ab',
+       'e0709f88f491ad049421e9728d820485',
+       'dfa1cf9f9392587e1744c572b05b8dd5',
+       '91f27efb18eab5a59d18b46f0776ac31',
+       '09c505d06e4a37a865fd9ddbf282ff02',
+       '99c3a2c89ae1653b0a7f5aed8e81c4a0',
+       'b8b97816b93f73fe47961cbc50d698de',
+       '4cdc95d126f3ef8c24922e9b02c07982',
+       '5fe39cf8f7f762c89dd9c0b7d5b6312c',
+       '883417f013d218d598a6fadcf0442238',
+       '93dcab055d364c4c9f9f0b45baf55cfa',
+       '9e5f3b9c01d3aef149cdc042724a7e2c',
+       'cdedc7aac366e7c731136f9f5f6e18f0',
+       'b6169aa5661011c7c451da6ee39cd249',
+       'e39df7bb146a40103138e116e83b5e8a',
+       'c1e5a70e9f55f304d527af14f4fa679a',
+       'd8973d7d371ef2194235bd2c9991fb59',
+       '5cb323b9b18fe41c594619a9464cfb6c',
+       'a8d336a54fe7df8e9849ced2269653a6',
+       '189caa9b0161bbc3e799274ac1f4811c',
+       'eaf5f627571888f689871948884abc0e',
+       '1d8d2aebef1774ca134b93bf32b41442',
+       '9e1611ab38e9744cf6ee9119e230230b',
+       'fa657b4b0e50e5f45afb8ca713b67aaf',
+       '770b00d398ed69a2fd561333e54884c6',
+       'e9a9e2436820a79265ccb48dc2e74857',
+       '8bd87ed9e48b988c86b0ef9c9fc2b376',
+       '4a033370397e592611a6084cd2505a65',
+       '2d2c8f8a4dcd78f3dad03ba3d983210b',
+       '074a32a082915c5502862aa730927a76',
+       'ce54e60d66a7b27722de4b357dfdd5d3',
+       'a06a512bd2337e7b9e253e222c57c83d',
+       '9d4276de361ec8f3eac04d6dba01bded',
+       'fd1fb2498292bb2c4ce189e55d12f6bc',
+       '1e7e5ea0694c2040d2037c2bff9d8f5c',
+       '39cac3c0a7023a19a7bda5898fa1f0ea',
+       '69c97f3f03392654a28ab7fcd5fe3571',
+       'e70152c44b344959cf0a6f8e30323211',
+       '1d01efb268edbb2ff549a19f0675dee0',
+       'ffa84ff158ee97c085c84b34ffb29f04',
+       '289fe931c00cd8759dd6534e625d20d8',
+       '13cbba885cb10d7e4a52bc56cfc9c0e9',
+       '60b0f80999c3e67c330470a034cbe2df',
+       'f82967c1fb8b700e63a2f79e8f155052',
+       'fea03f111f2d2cb878df211dde65add5',
+       'd27a65893aa070806378790690bb578a',
+       '767b408c1910eedb21176571bf5625f7',
+       '037f99ca2adbb1c84d8478bfe2a027a0',
+       'cf1c6c0a8f97075bb54acf18d4fe3a75',
+       '70a687ec9ba89c7b45678ef9d3b3a7ea',
+       '369b3154fcfef089f8098dd41d721b14',
+       '704f28e1a792cb1897ef468834c47af7',
+       '28b7b2fa128833f7cfd724ef2f69e7bf',
+       '25850cc19ef5072cb8d017a7e4d3142b',
+       'bea045a105b95f77dff865dbf4207422',
+       '8f81af0ba26365e61ba27943ea0be63e',
+       '4b018ae546abed7f95a4ef89c57156c9',
+       'fc0096868a0902af80cac4828bc1b89e',
+       '2fe2cbf54d38809dbdc9eac521e1aa6d',
+       '451a2a95ae14347bddc4ec5fa56f777b',
+       '47dd228efc683f953eae503de8d1b751',
+       '9d613e709d50f6f9ee4ca3917824a328'], dtype='<U32')
+  � training=True

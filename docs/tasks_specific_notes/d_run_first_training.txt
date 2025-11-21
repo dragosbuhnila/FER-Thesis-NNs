@@ -1,0 +1,4 @@
+1) Run with and without focal smooth to see differences
+2) Run using mask-type lines and mask-type random_rectangles to see differences
+3) Run using different learning rates as specified in file c of task_specific_notes
+4) Run with and without initial bias

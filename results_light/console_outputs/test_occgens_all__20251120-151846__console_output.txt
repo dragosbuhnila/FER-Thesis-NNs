@@ -1,0 +1,9 @@
+Testing data generators with occlusion_probability=1.0, parallelize_masking=True, masking_function=lines, use_label_smoothing=True
+Epoch ended. Shuffling data.
+Generator initialized: train mode
+Epoch ended. Shuffling data.
+Generator initialized: valid mode
+Generator initialized: test mode
+Testing generator: train
+49.09s - thread._ident is None in _get_related_thread!
+0.18s - thread._ident is None in _get_related_thread!
