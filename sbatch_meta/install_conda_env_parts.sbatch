@@ -24,19 +24,9 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install tensorflow-io-gcs-filesystem==0.31.0
+python -m pip install mediapipe
 echo "=========================================================================="
-echo "Installed tf io-gs-fs!"
-echo "=========================================================================="
-
-python -m pip install tensorflow==2.15.0
-echo "=========================================================================="
-echo "Installed tf!"
-echo "=========================================================================="
-
-python -m pip install h5py "numpy>=1.23.5,<2.0.0" Pillow scikit-learn ultralytics gdown
-echo "=========================================================================="
-echo "Installed other dependencies! (h5, np, PIL, skl, ultralytics)"
+echo "Installed other dependencies! (mediapipe)"
 echo "=========================================================================="
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
