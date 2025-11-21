@@ -371,8 +371,10 @@ def detect_facial_landmarks__batch(images, image_hashes, parallelize):
         with ThreadPoolExecutor() as executor:
             results = list(executor.map(detect_facial_landmarks, images, image_hashes, [True]*len(images)))
     else:
+        # I don't need this to be tensorable anymore as I don't use it online anymore.
+        # I just run it as overhead when generating the three data generators
         results = [res for res in map(detect_facial_landmarks, images, image_hashes, [True]*len(images))]
-    return results
+    return np.array(results)
 
 def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
     """
@@ -429,6 +431,7 @@ def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, e
         with ThreadPoolExecutor() as executor:
             results = list(executor.map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch))
     else:
+        # TODO: ensure it's tensorable
         results = [res for res in map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch)]
     return results
 

@@ -35,15 +35,13 @@
 
 TODO:
     - OK <= first of all confirm what the models architecture is although I'm not sure it's completely necessary
-    - randomize the occlusion in terms of:
+    - TODO <= randomize the occlusion in terms of:
         - non matching emotions
         - negative emotions
         - (i.e. in the same way you did in occlude.py in the other repo)
+    - TODO <= Check difference in size between extracted images and h5 files
 
 
-
-# LANDMARKS
-when not loading them, they appear as a batch (usually 64) where each element is a list of tuples (of xy coordinates)
 
 > ERROR: sometimes it raises the error ValueError(f"No face detected in image."), probably bc the training augmentations make the image too weird
     - SOLUTION: just run the occclusion BEFORE the augmentations

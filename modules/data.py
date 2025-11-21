@@ -197,13 +197,42 @@ class CustomBalancedDataGenerator(Sequence):
                 cls_indices = self.class_indices[cls]
                 cls_pointer = self.class_pointers[cls]
 
-                # Seleziona i dati dalla coda ciclica
+                # Select indices from the class circular queue
                 selected_indices = cls_indices[cls_pointer:cls_pointer + self.samples_per_class]
-                batch_x.extend(self.x_data[selected_indices])
-                batch_y.extend(self.y_data[selected_indices])
-                batch_x_hashes.extend(self.x_hashes[selected_indices])
-                batch_x_landmarks.extend(self.x_landmarks[selected_indices])
-                batch_paths.extend(self.paths_data[selected_indices]) if self.paths_data is not None else batch_paths.extend([None]*len(selected_indices))
+                selected_indices = np.asarray(selected_indices, dtype=int)
+
+                # Debug info (only prints if unusual types are present or sel is empty)
+                if selected_indices.size == 0:
+                    # nothing to take for this class this round
+                    # keep class pointer unchanged (pointer update below uses len(sel) so safe)
+                    continue
+
+                # Helper to index arrays or lists safely
+                def safe_index(container, indices):
+                    if isinstance(container, np.ndarray):
+                        return container[indices]
+                    else:
+                        # container is likely a list: convert indices to Python ints and use list comprehension
+                        return [container[int(i)] for i in indices]
+
+                try:
+                    batch_x.extend(safe_index(self.x_data, selected_indices))
+                    batch_y.extend(safe_index(self.y_data, selected_indices))
+                    batch_x_hashes.extend(safe_index(self.x_hashes, selected_indices))
+                    batch_x_landmarks.extend(safe_index(self.x_landmarks, selected_indices))
+                    if self.paths_data is not None:
+                        batch_paths.extend(safe_index(self.paths_data, selected_indices))
+                    else:
+                        batch_paths.extend([None] * len(selected_indices))
+                except Exception as exc:
+                    # Print full diagnostics to help debug the specific failing case
+                    print("DEBUG: failure indexing during batch construction")
+                    print(f"  cls={cls!r}, cls_pointer={cls_pointer}, samples_per_class={self.samples_per_class}")
+                    print(f"  cls_indices type={type(cls_indices)}, len={len(cls_indices)}")
+                    print(f"  sel (np.asarray) dtype={selected_indices.dtype}, shape={selected_indices.shape}, values={selected_indices.tolist()[:20]}")
+                    print(f"  x_data type={type(self.x_data)}, len={len(self.x_data) if hasattr(self.x_data,'__len__') else 'n/a'}")
+                    print(f"  x_landmarks type={type(self.x_landmarks)}, len={len(self.x_landmarks) if hasattr(self.x_landmarks,'__len__') else 'n/a'}")
+                    raise
 
                 # Aggiorna il puntatore per la classe
                 self.class_pointers[cls] += len(selected_indices)
