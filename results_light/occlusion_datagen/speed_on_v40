@@ -1,0 +1,75 @@
+The order of scripts ran is:
+
+# this one does parallelization using ThreadPool executor
+python ./scripts/trying_things/test_datagenerator_with_occlusion_layer.py -o 1.0 -p true
+# this one doesn't
+python ./scripts/trying_things/test_datagenerator_with_occlusion_layer.py -o 1.0 -p false
+
+==========================================================================
+Activated venv!
+Python executable: /home/dbuhnila/.conda/envs/fer-thesis/bin/python
+Environment: /home/dbuhnila/.conda/envs/fer-thesis
+2025-11-14 15:49:57.029503: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-11-14 15:49:57.357680: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2025-11-14 15:49:57.357787: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2025-11-14 15:49:57.403073: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-11-14 15:49:57.557871: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-14 15:50:00.226616: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+tf 2.15.0
+OrderedDict([('cpu_compiler', '/usr/lib/llvm-17/bin/clang'), ('cuda_compute_capabilities', ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'compute_80']), ('cuda_version', '12.2'), ('cudnn_version', '8'), ('is_cuda_build', True), ('is_rocm_build', False), ('is_tensorrt_build', True)])
+gpus: [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+==========================================================================
+/home/dbuhnila/models/FER-Thesis-NNs
+2025-11-14 15:50:07.667485: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-11-14 15:50:07.699878: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2025-11-14 15:50:07.699900: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2025-11-14 15:50:07.700952: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-11-14 15:50:07.705920: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-14 15:50:08.805007: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+2025-11-14 15:50:12.459699: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1929] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 43694 MB memory:  -> device: 0, name: NVIDIA A40, pci bus id: 0000:b1:00.0, compute capability: 8.6
+Testing data generator with occlusion_probability=1.0, parallelize_masking=True
+Generator initialized: test mode
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (30, 128, 128, 3), Batch y shape: (30, 7), Batch paths: None
+Elapsed time for generator with occlusion: 7.211831 seconds
+Generator initialized: test mode
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (30, 128, 128, 3), Batch y shape: (30, 7), Batch paths: None, Batch hashes: (30,)
+Elapsed time for generator without occlusion: 0.234598 seconds
+2025-11-14 15:50:25.588572: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-11-14 15:50:25.839962: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2025-11-14 15:50:25.840032: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2025-11-14 15:50:25.892553: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-11-14 15:50:26.006355: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX_VNNI AMX_TILE AMX_INT8 AMX_BF16 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-14 15:50:27.761261: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+2025-11-14 15:50:32.273219: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1929] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 43694 MB memory:  -> device: 0, name: NVIDIA A40, pci bus id: 0000:b1:00.0, compute capability: 8.6
+Testing data generator with occlusion_probability=1.0, parallelize_masking=True
+Generator initialized: test mode
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None
+Batch X shape: (30, 128, 128, 3), Batch y shape: (30, 7), Batch paths: None
+Elapsed time for generator with occlusion: 7.639522 seconds
+Generator initialized: test mode
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (64, 128, 128, 3), Batch y shape: (64, 7), Batch paths: None, Batch hashes: (64,)
+Batch X shape: (30, 128, 128, 3), Batch y shape: (30, 7), Batch paths: None, Batch hashes: (30,)
+Elapsed time for generator without occlusion: 0.282376 seconds
+Creating ZIP archive /home/dbuhnila/fer-thesis-logs-to-push/job_952186_20251114-155043/code_20251114-155043.zip (scripts/ + modules/)
+Saved logs and snapshot to /home/dbuhnila/fer-thesis-logs-to-push/job_952186_20251114-155043
