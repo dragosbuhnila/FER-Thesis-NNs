@@ -14,7 +14,9 @@ GLOBALS = {
 
 # 1) Core Configurations
 # ______________________________________________________________________
-DATA_BASE_DIR = os.path.join(".", "data")
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+# ______________________________________________________________________
+DATA_BASE_DIR = os.path.join(PROJECT_ROOT, "data")
 AUXILIARY_DATA_DIR = os.path.join(DATA_BASE_DIR, "auxiliary")
 
 # 1a) Emotions
@@ -68,8 +70,8 @@ BOSPHORUS_TEST_HQ_H5_PATH = os.path.join(BOSPHORUS_TEST_HQ_BASE_PATH, "bosphorus
 
 # 2b) Results paths
 # ______________________________________________________________________
-RESULTS_LIGHT_PATH = os.path.join(".", "results_light")
-RESULTS_HEAVY_PATH = os.path.join(".", "results_heavy")
+RESULTS_LIGHT_PATH = os.path.join(PROJECT_ROOT, "results_light")
+RESULTS_HEAVY_PATH = os.path.join(PROJECT_ROOT, "results_heavy")
 # ______________________________________________________________________
 ACCURACY_RESULTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "accuracy_results")
 CONSOLE_OUTPUTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "console_outputs")

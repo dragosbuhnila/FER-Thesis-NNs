@@ -11,7 +11,7 @@ parser.add_argument("-o", "--occlusion_probability", type=float, required=True, 
 parser.add_argument("-p", "--parallelize_masking", type=bool, required=True, help="Whether to parallelize masking (boolean).")
 parser.add_argument("-m", "--masking_function", type=str, required=True, choices=MASKING_FUNCTIONS.keys(), help=f"Masking function to use ({', '.join(MASKING_FUNCTIONS.keys())}).")
 parser.add_argument("-l", "--label_smoothing", type=bool, default=False, help="Whether to use label smoothing in training (boolean).")
-parser.add_argument("-r", "--redirect_output", type=bool, default=False, help="Whether to redirect console output to a log file (boolean).")
+parser.add_argument("-r", "--redirect_output", type=bool, default=False, help="Whether to redirect output to a log file (boolean).")
 args = parser.parse_args()
 
 from modules.config import ADELE_TEST_SET_H5_PATH, BOSPHORUS_TEST_HQ_H5_PATH, CONSOLE_OUTPUTS_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, GLOBALS
@@ -29,14 +29,16 @@ TRAINVAL_SET_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH
 
 USE_PROFILER = False
 STOP_AFTER_IMAGES = 0
+REDIRECT_OUTPUT = args.redirect_output
 
-LOG_FILE = os.path.join(CONSOLE_OUTPUTS_PATH, f"test_occgens_all__{time.strftime('%Y%m%d-%H%M%S')}__console_output.txt")
+LOG_FILE = os.path.join(CONSOLE_OUTPUTS_PATH, f"{time.strftime('%Y%m%d-%H%M%S')}__test_occgens_all__console_output.txt")
 
 print("SETTINGS selected:")
 print(f"  TEST_SET_PATH = {TEST_SET_PATH}")
 print(f"  TRAINVAL_SET_PATH = {TRAINVAL_SET_PATH}")
 print(f"  USE_PROFILER = {USE_PROFILER}")
 print(f"  STOP_AFTER_IMAGES = {STOP_AFTER_IMAGES}")
+print(f"  REDIRECT_OUTPUT = {REDIRECT_OUTPUT}")
 print(f"  LOG_FILE = {LOG_FILE}")
 
 # ========================== END OF MACROS ========================
@@ -46,8 +48,7 @@ print(f"  LOG_FILE = {LOG_FILE}")
 if USE_PROFILER:
     import cProfile
 
-redirect_output = args.redirect_output
-if redirect_output:
+if REDIRECT_OUTPUT:
     log_dir = os.path.dirname(LOG_FILE)
     if log_dir and not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -93,6 +94,7 @@ if __name__ == "__main__":
                         i += 1
                         if i >= STOP_AFTER_IMAGES:
                             break
+                break  # Just test one batch for timing purposes  
         except Exception as e:
             print(f"An error occurred while processing generator {name}, printing info so far:")
             print(f"Loaded a total of {GLOBALS['TOTAL_IMAGES_LANDMARKS_LOADED']} images landmarks, saved {GLOBALS['TOTAL_IMAGES_LANDMARKS_SAVED']} images landmarks.")
