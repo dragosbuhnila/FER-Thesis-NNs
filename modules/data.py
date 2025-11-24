@@ -376,9 +376,10 @@ def load_data_generators(train_path, test_path, occlusion_probability, paralleli
     
     # 2) Landmarking
     # ____________________________________
-    X_train_landmarks = detect_facial_landmarks__batch(X_train, X_train_hashes, parallelize=True)
-    X_val_landmarks = detect_facial_landmarks__batch(X_val, X_val_hashes, parallelize=True)
-    X_test_landmarks = detect_facial_landmarks__batch(X_test, X_test_hashes, parallelize=True)
+    X_train_landmarks = detect_facial_landmarks__batch(X_train, X_train_hashes, parallelize=parallelize_masking)
+    X_val_landmarks = detect_facial_landmarks__batch(X_val, X_val_hashes, parallelize=parallelize_masking)
+    X_test_landmarks = detect_facial_landmarks__batch(X_test, X_test_hashes, parallelize=parallelize_masking)
+    print(f"Landmarks detected for training, validation, and test sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}, X_test_landmarks length: {len(X_test_landmarks)}")
 
     # 3) Compute initial bias
     # ____________________________________

@@ -2,7 +2,7 @@
 #SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_v100
+#SBATCH --partition=gpu_a40
 #SBATCH --time=00:05:00
 #SBATCH --nodes=1
 #SBATCH --mem=1G

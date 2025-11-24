@@ -3,9 +3,9 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
-#SBATCH --time=00:30:00
+#SBATCH --time=01:15:00
 #SBATCH --nodes=1
-#SBATCH --mem=1G
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
@@ -41,7 +41,8 @@ pwd
 # =====================================================================================
 
 
-python ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true
+echo "Now running ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true -r false"
+python ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true -r false
 
 
 # =====================================================================================
