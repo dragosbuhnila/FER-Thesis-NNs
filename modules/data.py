@@ -72,10 +72,9 @@ def generate_h5_from_images(test_set_path, resized_path, h5_path):
             raise ValueError(f"Expected 350 paths, but found {len(paths_loaded)}.")
 
 class RandomOcclusion(keras.layers.Layer):
-    def __init__(self, occlusion_probability, parallelize_masking, masking_function, **kwargs):
+    def __init__(self, occlusion_probability, masking_function, **kwargs):
         super().__init__(**kwargs)
         self.occlusion_probability = occlusion_probability
-        self.parallelize_masking = parallelize_masking
         self.masking_function = masking_function
 
     def call(self, images, labels, image_landmarks, training=None):
@@ -104,8 +103,8 @@ class RandomOcclusion(keras.layers.Layer):
             
             # Continue the occlusion process for valid images
             emotions = [EMOTIONS[label] for label in labels]
-            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(landmarks_all_batch, emotions, self.parallelize_masking)
-            occluded = apply_mask_to__batch(numpy_images, list_of_landmark_sets, self.parallelize_masking, self.masking_function)
+            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(landmarks_all_batch, emotions)
+            occluded = apply_mask_to__batch(numpy_images, list_of_landmark_sets, self.masking_function)
 
             # Reinsert unoccludable images without occlusion
             for i, img in unoccludable_images.items():
@@ -128,7 +127,7 @@ class RandomOcclusion(keras.layers.Layer):
         )
 
 class CustomBalancedDataGenerator(Sequence):
-    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, parallelize_masking, masking_function, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, **kwargs):
+    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, **kwargs):
         super().__init__(**kwargs)
         if data_inf not in ['train', 'valid', 'test']:
             raise ValueError(f"data_inf must be 'train', 'valid', or 'test', but is '{data_inf}'")
@@ -143,7 +142,7 @@ class CustomBalancedDataGenerator(Sequence):
         self.data_inf = data_inf
         self.batch_size = batch_size
         self.label_smoothing = label_smoothing
-        self.occlusion_layer = RandomOcclusion(occlusion_probability, parallelize_masking, masking_function)
+        self.occlusion_layer = RandomOcclusion(occlusion_probability, masking_function)
 
         if data_inf in ['train', 'valid']:
             #print(y_data)
@@ -317,7 +316,7 @@ def load_data_and_labels(file_path, info):
         else:
             raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
 
-def load_test_generator(path, occlusion_probability, parallelize_masking, masking_function):
+def load_test_generator(path, occlusion_probability, masking_function):
     X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test')
 
     for emotion in EMOTIONS:
@@ -341,12 +340,11 @@ def load_test_generator(path, occlusion_probability, parallelize_masking, maskin
 
         masking_function=masking_function,
         occlusion_probability=occlusion_probability,
-        parallelize_masking=parallelize_masking,
     )
 
     return data_generator
 
-def load_data_generators(train_path, test_path, occlusion_probability, parallelize_masking, masking_function, use_label_smoothing):
+def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
@@ -376,9 +374,9 @@ def load_data_generators(train_path, test_path, occlusion_probability, paralleli
     
     # 2) Landmarking
     # ____________________________________
-    X_train_landmarks = detect_facial_landmarks__batch(X_train, X_train_hashes, parallelize=parallelize_masking)
-    X_val_landmarks = detect_facial_landmarks__batch(X_val, X_val_hashes, parallelize=parallelize_masking)
-    X_test_landmarks = detect_facial_landmarks__batch(X_test, X_test_hashes, parallelize=parallelize_masking)
+    X_train_landmarks = detect_facial_landmarks__batch(X_train, X_train_hashes)
+    X_val_landmarks = detect_facial_landmarks__batch(X_val, X_val_hashes)
+    X_test_landmarks = detect_facial_landmarks__batch(X_test, X_test_hashes)
     print(f"Landmarks detected for training, validation, and test sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}, X_test_landmarks length: {len(X_test_landmarks)}")
 
     # 3) Compute initial bias
@@ -437,7 +435,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, paralleli
         label_smoothing=label_smoothing_value,
         masking_function=masking_function,
         occlusion_probability=occlusion_probability,
-        parallelize_masking=parallelize_masking)
+        )
     val_generator = CustomBalancedDataGenerator(
         x_data=X_val,
         y_data=y_val_one_hot,
@@ -450,7 +448,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, paralleli
         label_smoothing=0,
         masking_function=masking_function,
         occlusion_probability=1.0,
-        parallelize_masking=parallelize_masking)
+        )
     test_generator = CustomBalancedDataGenerator(
         x_data=X_test,
         y_data=y_test_one_hot,
@@ -463,6 +461,6 @@ def load_data_generators(train_path, test_path, occlusion_probability, paralleli
         label_smoothing=0,
         masking_function=masking_function,
         occlusion_probability=1.0,
-        parallelize_masking=parallelize_masking)
+        )
     
     return train_generator, val_generator, test_generator, initial_bias

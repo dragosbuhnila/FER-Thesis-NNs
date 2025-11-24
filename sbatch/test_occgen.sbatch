@@ -42,7 +42,7 @@ pwd
 
 
 echo "Now running ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true -r false"
-python ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true -r false
+python ./scripts/trying_things/test_occgens_all.py -o 1.0 -m lines -l true -r false
 
 
 # =====================================================================================

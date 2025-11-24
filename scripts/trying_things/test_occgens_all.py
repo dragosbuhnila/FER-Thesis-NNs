@@ -8,7 +8,6 @@ from modules.mask import MASKING_FUNCTIONS
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Test data generator with occlusion layer.")
 parser.add_argument("-o", "--occlusion_probability", type=float, required=True, help="Probability of occlusion (float).")
-parser.add_argument("-p", "--parallelize_masking", type=bool, required=True, help="Whether to parallelize masking (boolean).")
 parser.add_argument("-m", "--masking_function", type=str, required=True, choices=MASKING_FUNCTIONS.keys(), help=f"Masking function to use ({', '.join(MASKING_FUNCTIONS.keys())}).")
 parser.add_argument("-l", "--label_smoothing", type=bool, default=False, help="Whether to use label smoothing in training (boolean).")
 parser.add_argument("-r", "--redirect_output", type=bool, default=False, help="Whether to redirect output to a log file (boolean).")
@@ -57,17 +56,16 @@ if REDIRECT_OUTPUT:
 
 
 
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_occgens_all.py" -o 1.0 -p false -m lines -l true -r true
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_occgens_all.py" -o 1.0  -m lines -l true -r true
 if __name__ == "__main__":
     # 0) Access arguments
     occlusion_probability = args.occlusion_probability
-    parallelize_masking = args.parallelize_masking
     masking_function = MASKING_FUNCTIONS[args.masking_function]
     use_label_smoothing = args.label_smoothing
-    print(f"Testing data generators with occlusion_probability={occlusion_probability}, parallelize_masking={parallelize_masking}, masking_function={args.masking_function}, use_label_smoothing={use_label_smoothing}")
+    print(f"Testing data generators with occlusion_probability={occlusion_probability}, masking_function={args.masking_function}, use_label_smoothing={use_label_smoothing}")
 
     # 1) First time run with occlusions      
-    train_generator, val_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, occlusion_probability, parallelize_masking, masking_function, use_label_smoothing)
+    train_generator, val_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, occlusion_probability, masking_function, use_label_smoothing)
 
     for generator, name in [(train_generator, "train"), (val_generator, "validation"), (test_generator, "test")]:
         start_time = time.time() 

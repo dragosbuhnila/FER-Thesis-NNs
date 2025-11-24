@@ -6,7 +6,6 @@
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor
 from math import ceil
 
 from modules.visualize import plot_image
@@ -272,9 +271,8 @@ def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_M
 
     return image
 
-def apply_mask_to__batch(images, list_of_landmark_sets, parallelize, masking_function):
+def apply_mask_to__batch(images, list_of_landmark_sets, masking_function):
     """
-    Apply facial landmark masks to a batch of images using ThreadPoolExecutor for parallel processing..
     images : list of np.ndarray
     list_of_landmark_sets : list of list of (x, y)
     masking_function : function to apply the mask
@@ -285,11 +283,7 @@ def apply_mask_to__batch(images, list_of_landmark_sets, parallelize, masking_fun
     if len(images) != len(list_of_landmark_sets):
         raise ValueError(f"Number of images must match number of landmark sets. Got {len(images)} images and {len(list_of_landmark_sets)} lists of landmark sets.")
 
-    if parallelize:
-        with ThreadPoolExecutor() as executor:
-            results = list(executor.map(apply_mask_to_all_sets, images, list_of_landmark_sets, [masking_function]*len(images)))
-    else:
-        results = [apply_mask_to_all_sets(image, landmark_set, masking_function) for image, landmark_set in zip(images, list_of_landmark_sets)]
+    results = [apply_mask_to_all_sets(image, landmark_set, masking_function) for image, landmark_set in zip(images, list_of_landmark_sets)]
     return results
 
 def apply_inverse_masks(image, list_of_au_configs, mask_color=(0, 0, 0)):

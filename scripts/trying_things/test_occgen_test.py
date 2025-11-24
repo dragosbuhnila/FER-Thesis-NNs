@@ -10,7 +10,6 @@ from modules.mask import MASKING_FUNCTIONS
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Test data generator with occlusion layer.")
 parser.add_argument("-o", "--occlusion_probability", type=float, required=True, help="Probability of occlusion (float).")
-parser.add_argument("-p", "--parallelize_masking", type=bool, required=True, help="Whether to parallelize masking (boolean).")
 parser.add_argument("-m", "--masking_function", type=str, required=True, choices=MASKING_FUNCTIONS.keys(), help=f"Masking function to use ({', '.join(MASKING_FUNCTIONS.keys())}).")
 args = parser.parse_args()
 
@@ -45,20 +44,19 @@ if REDIRECT_OUTPUT:
 
 
 
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_occgen_test.py" -o 1.0 -p false -m lines
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_occgen_test.py" -o 1.0 -m lines
 if __name__ == "__main__":
     # 0) Access arguments
     occlusion_probability = args.occlusion_probability
-    parallelize_masking = args.parallelize_masking
     masking_function = MASKING_FUNCTIONS[args.masking_function]
-    print(f"Testing data generator with occlusion_probability={occlusion_probability}, parallelize_masking={parallelize_masking}, masking_function={args.masking_function}")
+    print(f"Testing data generator with occlusion_probability={occlusion_probability}, masking_function={args.masking_function}")
 
     # 1) First time run with occlusions
     start_time = time.time() 
     if USE_PROFILER:
         profiler = cProfile.Profile()
         profiler.enable()
-    test_generator = load_test_generator(DATASET, occlusion_probability, parallelize_masking, masking_function)
+    test_generator = load_test_generator(DATASET, occlusion_probability, masking_function)
 
     for batch in test_generator:
         if isinstance(batch, (list, tuple)) and len(batch) >= 2:

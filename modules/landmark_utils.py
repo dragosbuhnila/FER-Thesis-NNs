@@ -3,7 +3,6 @@
 # This right file may be updated if needed, so don't necessarily treat it as the same as the original one.
 # Dragos.
 
-from concurrent.futures import ThreadPoolExecutor
 import os
 import numpy as np
 import mediapipe as mp
@@ -363,17 +362,13 @@ def detect_facial_landmarks(numpy_image, image_hash, ignore_error, force_recalcu
                 return np.array([])
             raise ValueError(f"No face detected in image with hash {image_hash}.")
 
-def detect_facial_landmarks__batch(images, image_hashes, parallelize):
+def detect_facial_landmarks__batch(images, image_hashes):
     if len(images) != len(image_hashes):
         raise ValueError("Mismatched lengths between images and image hashes.")
 
-    if parallelize:
-        with ThreadPoolExecutor() as executor:
-            results = list(executor.map(detect_facial_landmarks, images, image_hashes, [True]*len(images)))
-    else:
-        # I don't need this to be tensorable anymore as I don't use it online anymore.
-        # I just run it as overhead when generating the three data generators
-        results = [res for res in map(detect_facial_landmarks, images, image_hashes, [True]*len(images))]
+    # I don't need this to be tensorable anymore as I don't use it online anymore.
+    # I just run it as overhead when generating the three data generators
+    results = [res for res in map(detect_facial_landmarks, images, image_hashes, [True]*len(images))]
     return np.array(results)
 
 def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
@@ -418,7 +413,7 @@ def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
 
     return au_landmark_coords_sets
 
-def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, emotions_batch, parallelize):
+def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, emotions_batch):
     if not isinstance(landmark_coordinates_batch, (list, tuple, np.ndarray)):
         raise TypeError("Input must be a list or tuple or np.ndarray of numpy arrays.")
     if not isinstance(emotions_batch, (list, tuple)):
@@ -427,12 +422,8 @@ def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, e
     if len(landmark_coordinates_batch) != len(emotions_batch):
         raise ValueError("Mismatched lengths between landmark coordinates and emotions.")
 
-    if parallelize:
-        with ThreadPoolExecutor() as executor:
-            results = list(executor.map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch))
-    else:
-        # TODO: ensure it's tensorable
-        results = [res for res in map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch)]
+    # TODO: ensure it's tensorable
+    results = [res for res in map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch)]
     return results
 
 def save_landmark_coordinates(image_hash, landmark_coordinates, force_recalculate, coords_folder=LANDMARK_COORDINATES_FOLDER):
