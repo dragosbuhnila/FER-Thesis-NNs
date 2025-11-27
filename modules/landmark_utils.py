@@ -11,7 +11,7 @@ from mediapipe.tasks.python import BaseOptions
 from PIL import Image
 
 
-from modules.config import FORCE_RECALCULATE_LANDMARKS, LANDMARK_COORDINATES_FOLDER, LANDMARKER_MODEL_PATH, GLOBALS
+from modules.config import FORCE_RECALCULATE_LANDMARKS, LANDMARK_COORDINATES_FOLDER_PATH, LANDMARKER_MODEL_PATH, GLOBALS
 from modules.misc import hash_image
 
 EMOTION_AUS = {
@@ -294,6 +294,23 @@ FACE_PARTS_LANDMARKS_LRMERGED = LandmarkDict({
     "Corrugator":   [FACE_PARTS_LANDMARKS["Corrugator"][0]],
 })
 
+_landmarker_instance = None
+
+def get_landmarker():
+    global _landmarker_instance
+    if _landmarker_instance is None:
+        base_options = BaseOptions(model_asset_path=LANDMARKER_MODEL_PATH)
+        options = FaceLandmarkerOptions(
+            base_options=base_options,
+            output_face_blendshapes=False,
+            output_facial_transformation_matrixes=False,
+            num_faces=1
+        )
+        _landmarker_instance = FaceLandmarker.create_from_options(options)
+    return _landmarker_instance
+
+
+
 def detect_facial_landmarks_frompath(image_path):
     """
     Returns the coordinates for landmarks on an image.
@@ -306,7 +323,7 @@ def detect_facial_landmarks_frompath(image_path):
 
     detect_facial_landmarks(np.asarray(image, dtype=np.uint8), image_hash)
         
-def detect_facial_landmarks(numpy_image, image_hash, ignore_error, force_recalculate=FORCE_RECALCULATE_LANDMARKS):
+def detect_facial_landmarks(numpy_image, image_hash, ignore_error, force_recalculate=FORCE_RECALCULATE_LANDMARKS, dont_save=False):
     desired_landmarks = load_landmark_coordinates(image_hash)
     if desired_landmarks is not None and not force_recalculate:
         GLOBALS["TOTAL_IMAGES_LANDMARKS_LOADED"] += 1
@@ -329,47 +346,41 @@ def detect_facial_landmarks(numpy_image, image_hash, ignore_error, force_recalcu
         num_faces=1
     )
 
-    with FaceLandmarker.create_from_options(options) as landmarker:
-        result = landmarker.detect(image)
+    landmarker = get_landmarker()
+    result = landmarker.detect(image)
 
-        if result.face_landmarks:
-            if len(result.face_landmarks) > 1:
-                raise ValueError(f"Multiple faces detected. Only one face is expected.")
-            face_landmarks = result.face_landmarks[0]
-            if len(face_landmarks) < 4:
-                raise ValueError(f"Insufficient landmarks detected, detected {len(face_landmarks)}.")
-            
-            desired_landmarks = []
+    if result.face_landmarks:
+        if len(result.face_landmarks) > 1:
+            raise ValueError(f"Multiple faces detected. Only one face is expected.")
+        face_landmarks = result.face_landmarks[0]
+        if len(face_landmarks) < 4:
+            raise ValueError(f"Insufficient landmarks detected, detected {len(face_landmarks)}.")
+        
+        desired_landmarks = []
 
-            h, w, _ = numpy_image.shape
-            for face_landmarks in result.face_landmarks:
-                for idx in range(len(face_landmarks)):
-                    landmark = face_landmarks[idx]
-                    x = int(landmark.x * w)
-                    y = int(landmark.y * h)
-                    desired_landmarks.append((x, y))
-            
-            ok = save_landmark_coordinates(image_hash, desired_landmarks, force_recalculate)
-            if ok == False:
-                raise ValueError(f"Could not save landmark coordinates for image hash {image_hash}.")
-            else: 
-                GLOBALS["TOTAL_IMAGES_LANDMARKS_SAVED"] += 1
-
+        h, w, _ = numpy_image.shape
+        for face_landmarks in result.face_landmarks:
+            for idx in range(len(face_landmarks)):
+                landmark = face_landmarks[idx]
+                x = int(landmark.x * w)
+                y = int(landmark.y * h)
+                desired_landmarks.append((x, y))
+        
+        if dont_save:
             return np.array(desired_landmarks)
-        else:
-            GLOBALS["UNLANDMARKABLE_IMAGES_LIST"].append(image_hash)
-            if ignore_error:
-                return np.array([])
-            raise ValueError(f"No face detected in image with hash {image_hash}.")
+        
+        ok = save_landmark_coordinates(image_hash, desired_landmarks, force_recalculate)
+        if ok == False:
+            raise ValueError(f"Could not save landmark coordinates for image hash {image_hash}.")
+        else: 
+            GLOBALS["TOTAL_IMAGES_LANDMARKS_SAVED"] += 1
 
-def detect_facial_landmarks__batch(images, image_hashes):
-    if len(images) != len(image_hashes):
-        raise ValueError("Mismatched lengths between images and image hashes.")
-
-    # I don't need this to be tensorable anymore as I don't use it online anymore.
-    # I just run it as overhead when generating the three data generators
-    results = [res for res in map(detect_facial_landmarks, images, image_hashes, [True]*len(images))]
-    return np.array(results)
+        return np.array(desired_landmarks)
+    else:
+        GLOBALS["UNLANDMARKABLE_IMAGES_LIST"].append(image_hash)
+        if ignore_error:
+            return np.array([])
+        raise ValueError(f"No face detected in image with hash {image_hash}.")
 
 def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
     """
@@ -426,7 +437,7 @@ def get_landmark_coordinate_sets_by_emotion__batch(landmark_coordinates_batch, e
     results = [res for res in map(get_landmark_coordinate_sets_by_emotion, landmark_coordinates_batch, emotions_batch)]
     return results
 
-def save_landmark_coordinates(image_hash, landmark_coordinates, force_recalculate, coords_folder=LANDMARK_COORDINATES_FOLDER):
+def save_landmark_coordinates(image_hash, landmark_coordinates, force_recalculate, coords_folder=LANDMARK_COORDINATES_FOLDER_PATH):
     """
         Saves the landmark coordinates to a .npy file in the LANDMARK_COORDINATES_FOLDER.
         The path/filename includes emotion as folder and same name as the image
@@ -441,7 +452,7 @@ def save_landmark_coordinates(image_hash, landmark_coordinates, force_recalculat
     np.save(filepath, np.array(landmark_coordinates, dtype=np.int32))
 
 
-def load_landmark_coordinates(image_hash, coords_folder=LANDMARK_COORDINATES_FOLDER):
+def load_landmark_coordinates(image_hash, coords_folder=LANDMARK_COORDINATES_FOLDER_PATH):
     """
         The path/filename includes emotion as folder and same name as the image
     """

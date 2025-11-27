@@ -9,7 +9,7 @@ from tensorflow.keras.utils import to_categorical, Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from modules.config import EMOTIONS
-from modules.landmark_utils import detect_facial_landmarks__batch, get_landmark_coordinate_sets_by_emotion__batch
+from modules.landmark_utils import detect_facial_landmarks, get_landmark_coordinate_sets_by_emotion__batch, load_landmark_coordinates
 from modules.mask import apply_mask_to__batch
 from modules.misc import hash_image
 
@@ -84,9 +84,12 @@ class RandomOcclusion(keras.layers.Layer):
 
         def occlude():
             # images is a tf.Tensor:
-            #   > my functions work with numpy arrays, so convert, until you modify the functions to be tensorable or idk (see if you can use mediapipe on batches of data)
+            # TODO make work as is instead of converting to numpy
             numpy_images = images.numpy()
 
+            # a) Get all the landmarks, in the form of coordinates, for each image
+            #       i.e. for each image every single face point, even unnecessary ones, will be there (they should be cached already)
+            # ____________________________________________________________________________________________
             # If no landmarks are detected, then occlusion isn't possible for the approach we're currently using (i.e. masking based on AU landmarks),
             #   so leave the unprocessable image out and reinsert it with no occlusion
             error_indices = []
@@ -95,19 +98,28 @@ class RandomOcclusion(keras.layers.Layer):
                     error_indices.append(i)
 
             unoccludable_images = dict()
+            # sort error indices in reverse order so that the insertion has correct indices (deleting from the end first)
             error_indices.sort(reverse=True)
             for i in error_indices:
                 # Save the image without occlusion and remove it from the batch
                 unoccludable_images[i] = numpy_images[i]
-                landmarks_all_batch = np.delete(landmarks_all_batch, i, axis=0)            
+                image_landmarks = np.delete(image_landmarks, i, axis=0) 
+            # ____________________________________________________________________________________________           
             
-            # Continue the occlusion process for valid images
+            # b) Get the coordinates relating to just the specific emotion needed, for each image
+            # ____________________________________________________________________________________________
             emotions = [EMOTIONS[label] for label in labels]
-            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(landmarks_all_batch, emotions)
-            occluded = apply_mask_to__batch(numpy_images, list_of_landmark_sets, self.masking_function)
+            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(image_landmarks, emotions)
+            # ____________________________________________________________________________________________
 
-            # Reinsert unoccludable images without occlusion
-            for i, img in unoccludable_images.items():
+            # c) Apply occlusion based on the landmarks
+            # ____________________________________________________________________________________________
+            occluded = apply_mask_to__batch(numpy_images, list_of_landmark_sets, self.masking_function)
+            # ____________________________________________________________________________________________
+
+            # a2) Reinsert unoccludable images without occlusion
+            # sort unoccludable images by key in reverse order (so double reverse means original order) so that the insertion has correct indices (inserting from the start again)
+            for i, img in sorted(unoccludable_images.items()):
                 occluded = np.insert(occluded, i, img, axis=0)
 
             # If I implemented the pipeline correctly, when cache miss doesn't happen this is already a tensor, else it's a list
@@ -300,6 +312,7 @@ def load_data_and_labels(file_path, info):
             else:
                 train_paths_data = None
                 val_paths_data = None
+            
             return X_train, y_train, X_val, y_val, class_names, train_paths_data, val_paths_data
         elif info == 'test':
             X_test = np.array(f['X_test'])
@@ -344,11 +357,23 @@ def load_test_generator(path, occlusion_probability, masking_function):
 
     return data_generator
 
-def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing):
+def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, debug=False):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
     X_test, y_test, test_class_names, test_paths_data = load_data_and_labels(test_path, 'test')
+
+    if debug:
+        debug_limit = 100
+        X_train = X_train[:debug_limit]
+        y_train = y_train[:debug_limit]
+        X_val = X_val[:debug_limit]
+        y_val = y_val[:debug_limit]
+        train_paths_data = train_paths_data[:debug_limit] if train_paths_data is not None else None
+        val_paths_data = val_paths_data[:debug_limit] if val_paths_data is not None else None
+        X_test = X_test[:debug_limit]
+        y_test = y_test[:debug_limit]
+        test_paths_data = test_paths_data[:debug_limit] if test_paths_data is not None else None
     
     # 1.b) Hashing
     # ____________________________________
@@ -374,10 +399,44 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
     
     # 2) Landmarking
     # ____________________________________
-    X_train_landmarks = detect_facial_landmarks__batch(X_train, X_train_hashes)
-    X_val_landmarks = detect_facial_landmarks__batch(X_val, X_val_hashes)
-    X_test_landmarks = detect_facial_landmarks__batch(X_test, X_test_hashes)
+    if debug:
+        X_train_landmarks = np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_train, X_train_hashes)])
+        X_val_landmarks =   np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_val, X_val_hashes)])
+        X_test_landmarks =  np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_test, X_test_hashes)])
+    else:
+        X_train_landmarks = np.array([load_landmark_coordinates(X_train_hash) for X_train_hash in X_train_hashes])
+        X_val_landmarks =   np.array([load_landmark_coordinates(X_val_hash) for X_val_hash in X_val_hashes])
+        X_test_landmarks =  np.array([load_landmark_coordinates(X_test_hash) for X_test_hash in X_test_hashes])
     print(f"Landmarks detected for training, validation, and test sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}, X_test_landmarks length: {len(X_test_landmarks)}")
+
+    # 2b) Remove 0-length landmark entries (i.e. images where no landmarks were detected)
+    #           I filter them here already so that I don't have to handle it at runtime
+    # ____________________________________
+    def filter_zero_length_landmarks(X_data, y_data, X_hashes, X_landmarks, paths_data=None, name="no_name"):
+        # valid_indices = [i for i, landmarks in enumerate(X_landmarks) if len(landmarks) > 0]
+        valid_indices = []
+        for i, landmarks in enumerate(X_landmarks):
+            if len(landmarks) > 0:
+                valid_indices.append(i)
+
+        print(f"Found a total of {len(X_landmarks) - len(valid_indices)} invalid indices with zero-length landmarks in the {name} set.")
+
+        X_data_filtered = X_data[valid_indices]
+        y_data_filtered = y_data[valid_indices]
+        X_hashes_filtered = X_hashes[valid_indices]
+        X_landmarks_filtered = X_landmarks[valid_indices]
+        if paths_data is not None:
+            paths_data_filtered = paths_data[valid_indices]
+        
+        if paths_data is not None:
+            return X_data_filtered, y_data_filtered, X_hashes_filtered, X_landmarks_filtered, paths_data_filtered
+        else:
+            return X_data_filtered, y_data_filtered, X_hashes_filtered, X_landmarks_filtered, paths_data
+
+    X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data = filter_zero_length_landmarks(X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data, name="train")
+    X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data, name="val")
+    X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data, name="test")
+    print(f"After filtering zero-length landmarks: X_train length: {len(X_train)}, X_val length: {len(X_val)}, X_test length: {len(X_test)}")
 
     # 3) Compute initial bias
     # ____________________________________

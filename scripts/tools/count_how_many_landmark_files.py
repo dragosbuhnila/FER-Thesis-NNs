@@ -2,11 +2,11 @@ import os; import sys;
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import h5py
 
-from modules.config import LANDMARK_COORDINATES_FOLDER, \
+from modules.config import LANDMARK_COORDINATES_FOLDER_PATH, \
                         ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, \
                         ADELE_TEST_SET_IMAGES_PATH, ORIGINAL_TRAIN_SET_IMAGES_PATH, ORIGINAL_VAL_SET_IMAGES_PATH
 
-LANDMARKS_PATH = LANDMARK_COORDINATES_FOLDER
+LANDMARKS_PATH = LANDMARK_COORDINATES_FOLDER_PATH
 
 IMAGES_FOLDERS = [
     ORIGINAL_TRAIN_SET_IMAGES_PATH, 

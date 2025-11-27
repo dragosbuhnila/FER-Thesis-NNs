@@ -18,6 +18,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__fi
 # ______________________________________________________________________
 DATA_BASE_DIR = os.path.join(PROJECT_ROOT, "data")
 AUXILIARY_DATA_DIR = os.path.join(DATA_BASE_DIR, "auxiliary")
+MODULES_DIR = os.path.join(PROJECT_ROOT, "modules")
 
 # 1a) Emotions
 # ______________________________________________________________________
@@ -99,7 +100,7 @@ ALL_MODELS_PATHS = {
 # > MEDIAPIPE
 MEDIAPIPE_PATH = os.path.join(MODELS_PATH, "mediapipe")
 LANDMARKER_MODEL_PATH = os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
-LANDMARK_COORDINATES_FOLDER = os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
+LANDMARK_COORDINATES_FOLDER_PATH = os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
 
 
 if __name__ == "__main__":

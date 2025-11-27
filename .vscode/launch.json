@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+    
         
 
         {
@@ -36,11 +37,11 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                    // -o 1.0 -p false -m lines -l true
+                    // -o 1.0  -m lines -l true -r true
                     "-o", "1.0",
-                    "-p", "false",
                     "-m", "lines",
-                    "-l", "true"
+                    "-l", "true",
+                    "-r", "true",
                 ]
         }
     ]

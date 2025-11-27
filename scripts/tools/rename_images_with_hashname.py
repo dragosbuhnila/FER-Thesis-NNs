@@ -3,7 +3,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from modules.misc import hash_image
-from modules.config import LANDMARK_COORDINATES_FOLDER, ORIGINAL_TRAIN_SET_IMAGES_PATH, ORIGINAL_VAL_SET_IMAGES_PATH, ADELE_TEST_SET_IMAGES_PATH
+from modules.config import LANDMARK_COORDINATES_FOLDER_PATH, ORIGINAL_TRAIN_SET_IMAGES_PATH, ORIGINAL_VAL_SET_IMAGES_PATH, ADELE_TEST_SET_IMAGES_PATH
 
 
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         # 1) Create dictionary mapping image paths to their hash names
         mapping = {}
         all_hash_names = set()
-        hashes_in_landmark_coords_folder = {filename.split('.')[0] for filename in os.listdir(LANDMARK_COORDINATES_FOLDER) if filename.endswith('.npy')}
+        hashes_in_landmark_coords_folder = {filename.split('.')[0] for filename in os.listdir(LANDMARK_COORDINATES_FOLDER_PATH) if filename.endswith('.npy')}
 
         # 2) Save hash names to the mapping
         any_non_converted_entry_found = False
