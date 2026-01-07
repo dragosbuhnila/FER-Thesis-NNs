@@ -1,3 +1,16 @@
+PRIMARY
+1) Only matching and positive occlusions
+    - Not having negative is more similar to how humans learning
+2) Allow mismatching but still no negative
+    - I guess this is even more similar to real life, since it doesn't really make much sense to always have the exact occlusions of a specific emotion irl
+3) Allow negative occlusions too
+    - This will probably yield better results since it's more similar to the target domain, although I think it's further from our goal
+4) Try training with both:
+    > batches full of just matching or just of non matching or even just of positive or only negative unmatching
+    > batches with distributed amounts of all types (matching, unmatching positive and negative)
+
+
+SECONDARY
 1) Run with and without focal smooth to see differences
 2) Run using mask-type lines and mask-type random_rectangles to see differences
 3) Run using different learning rates as specified in file c of task_specific_notes

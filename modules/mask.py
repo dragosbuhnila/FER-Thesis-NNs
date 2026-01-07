@@ -248,13 +248,13 @@ def mask_face_lines(image, landmark_coordinates,
 
 MASKING_FUNCTIONS = {
     "circles": mask_face_circles,
-    "lines": mask_face_lines,
+    "lines": mask_face_lines, # standard
     # "random_rectangles": mask_random_rectangles, # TODO: implement this function
 }
 
 
 
-def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_MASKING):
+def apply_mask_to_all_sets(image, landmark_sets, masking_function_name, debug=DEBUG_MASKING):
     """
     Apply facial landmark masks to all sets of landmarks for a batch of images.
     images : list of np.ndarray
@@ -263,7 +263,7 @@ def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_M
     """
     i = 0
     for landmark_set in landmark_sets:
-        image = masking_function(image, landmark_set)
+        image = MASKING_FUNCTIONS[masking_function_name](image, landmark_set)
         i += 1
 
     if debug:
@@ -271,7 +271,7 @@ def apply_mask_to_all_sets(image, landmark_sets, masking_function, debug=DEBUG_M
 
     return image
 
-def apply_mask_to__batch(images, list_of_landmark_sets, masking_function):
+def apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name):
     """
     images : list of np.ndarray
     list_of_landmark_sets : list of list of (x, y)
@@ -283,7 +283,7 @@ def apply_mask_to__batch(images, list_of_landmark_sets, masking_function):
     if len(images) != len(list_of_landmark_sets):
         raise ValueError(f"Number of images must match number of landmark sets. Got {len(images)} images and {len(list_of_landmark_sets)} lists of landmark sets.")
 
-    results = [apply_mask_to_all_sets(image, landmark_set, masking_function) for image, landmark_set in zip(images, list_of_landmark_sets)]
+    results = [apply_mask_to_all_sets(image, landmark_set, masking_function_name) for image, landmark_set in zip(images, list_of_landmark_sets)]
     return results
 
 def apply_inverse_masks(image, list_of_au_configs, mask_color=(0, 0, 0)):

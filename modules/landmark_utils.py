@@ -9,6 +9,7 @@ import mediapipe as mp
 from mediapipe.tasks.python.vision import FaceLandmarker, FaceLandmarkerOptions
 from mediapipe.tasks.python import BaseOptions
 from PIL import Image
+import tensorflow as tf
 
 
 from modules.config import FORCE_RECALCULATE_LANDMARKS, LANDMARK_COORDINATES_FOLDER_PATH, LANDMARKER_MODEL_PATH, GLOBALS
@@ -421,6 +422,44 @@ def get_landmark_coordinate_sets_by_emotion(landmark_coordinates, emotion):
     for indices_set in au_landmarks_indices_sets:
         coords = [landmark_coordinates[idx] for idx in indices_set] # list of coordinates
         au_landmark_coords_sets.append(coords) # put this list of coordinates in a list, so that au_landmark_coords_sets becomes a list of lists of coordinates
+
+    return au_landmark_coords_sets
+
+def get_landmark_coordinate_sets_by_emotion_tf(landmark_coordinates, emotion):
+    """
+    Given the full set of landmark coordinates and an emotion, returns the coordinates relevant to that emotion, as a tf.Tensor of coordinates.
+
+    :param landmark_coordinates: tf.Tensor of shape (N, 2) for all landmarks.
+    :param emotion: The emotion string.
+    :return: tf.RaggedTensor of shape (num_AUs, num_landmarks_per_AU, 2) corresponding to the landmarks for the specified AU.
+    """
+    if tf.size(landmark_coordinates) == 0:
+        raise ValueError("landmark_coordinates is an empty tensor")
+    # TODO make this tensorable by making it an integer (you'll also need to get rid of the dicts and shit)
+    if emotion == "NEUTRAL":
+        # No AUs for neutral expression
+        return tf.ragged.constant([])
+    if emotion not in EMOTION_AUS:
+        raise ValueError(f"Emotion {emotion} not found in EMOTION_AUS dictionary.")
+    
+    AUs = EMOTION_AUS[emotion]
+    for au in AUs:
+        if au not in AU_LANDMARKS:
+            raise ValueError(f"AU {au} not found in AU_LANDMARKS dictionary.")
+    
+    # Gather all indices for the emotion's AUs
+    au_landmarks_indices_sets = []
+    for au in AUs:
+        au_landmarks_indices_sets.extend(AU_LANDMARKS[au])  # Flatten the list of lists of indices
+
+    # Convert indices to a Tensor
+    au_landmarks_indices_sets = tf.ragged.constant(au_landmarks_indices_sets)
+
+    # Gather coordinates using TensorFlow operations
+    au_landmark_coords_sets = tf.ragged.map_flat_values(
+        lambda indices: tf.gather(landmark_coordinates, indices),
+        au_landmarks_indices_sets
+    )
 
     return au_landmark_coords_sets
 

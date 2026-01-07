@@ -41,8 +41,8 @@ pwd
 # =====================================================================================
 
 
-echo "Now running ./scripts/trying_things/test_occgens_all.py -o 1.0 -p false -m lines -l true -r false"
-python ./scripts/trying_things/test_occgens_all.py -o 1.0 -m lines -l true -r false
+echo "Now running ./scripts/trying_things/test_occgens_all.py -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false"
+python ./scripts/trying_things/test_occgens_all.py -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false
 
 
 # =====================================================================================

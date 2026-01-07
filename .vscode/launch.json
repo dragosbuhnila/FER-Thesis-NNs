@@ -3,9 +3,12 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [
+    "configurations": [ 
+
+
+
     
-        
+
 
         {
             "name": "Python: Current File",
@@ -37,11 +40,14 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                    // -o 1.0  -m lines -l true -r true
-                    "-o", "1.0",
-                    "-m", "lines",
-                    "-l", "true",
-                    "-r", "true",
+                    // -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false
+                    "-o", "1.0",    // occlusion ratio
+                    "-f", "lines",  // masking function
+                    "-l", "True",   // use label smoothing
+                    "-r", "False",  // redirect output
+                    "-m", "True",  // do mismatch on emotion-landmarks
+                    "-a", "0.2",    // matching_amount = 20% (i.e. out of 50 images 10 will be matching, the rest will be of some mismatch type (every 4))
+                    "-s", "False",  // use small subset (only 100 images per set)
                 ]
         }
     ]
