@@ -101,6 +101,7 @@ ALL_MODELS_PATHS = {
 MEDIAPIPE_PATH = os.path.join(MODELS_PATH, "mediapipe")
 LANDMARKER_MODEL_PATH = os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
 LANDMARK_COORDINATES_FOLDER_PATH = os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
+LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE = 26951 # expected number of landmark coordinate files. If the size of the db changes this should change accordingly
 
 
 # 5) Datasets

@@ -1,3 +1,4 @@
+import os
 from joblib import Parallel, delayed
 import numpy as np
 import h5py
@@ -5,7 +6,7 @@ from sklearn.utils import shuffle
 from tensorflow.keras.utils import to_categorical
 from tqdm import tqdm
 
-from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS
+from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
 from modules.data import CustomBalancedDataGenerator
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
 from modules.misc import hash_image
@@ -178,6 +179,13 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         raise ValueError(f"Validation paths are provided but training paths are missing, which is weird, so check the dataset at {train_path}.")
     
     # 2) Landmarking
+    # ____________________________________
+    if not run_detection:
+        size_of_cached_landmarks = len(os.listdir(LANDMARK_COORDINATES_FOLDER_PATH))
+        if size_of_cached_landmarks != LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE:
+            raise ValueError(f"The size of the landmark coordinates cache ({size_of_cached_landmarks}) does not match the expected size ({LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE}).\n\
+                             This may also mean that the db size has changed.\n\
+                             Anyway, you may want to try running ./scripts/tools/find_unlandmarkable.py or download the cache again.")
     # ____________________________________
     if run_detection:
         if parallelize:

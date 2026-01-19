@@ -10,8 +10,10 @@ PRIMARY
     > batches with distributed amounts of all types (matching, unmatching positive and negative)
 
 
-SECONDARY
+SECONDARY (not in a specific order probably)
 1) Run with and without focal smooth to see differences
 2) Run using mask-type lines and mask-type random_rectangles to see differences
 3) Run using different learning rates as specified in file c of task_specific_notes
 4) Run with and without initial bias
+5) Finetune the whole architecture instead of just final layers
+
