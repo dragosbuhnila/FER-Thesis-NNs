@@ -248,11 +248,12 @@ class CustomBalancedDataGenerator(Sequence):
 
         # Applica il rescale o le trasformazioni per augmentation
         batch_x = self.occlusion_layer(batch_x, np.argmax(batch_y, axis=1), batch_x_landmarks, batch_x_hashes, training=(self.data_inf != 'test'))
+        batch_x = np.array(batch_x)
         augmented_batch_x = np.zeros_like(batch_x)
         for i in range(len(batch_x)):
             augmented_batch_x[i] = self.augmentations.random_transform(batch_x[i])
 
-        return augmented_batch_x, batch_y, batch_paths, batch_x_hashes
+        return augmented_batch_x, batch_y
 
     def on_epoch_end(self):
         if self.data_inf != 'test':

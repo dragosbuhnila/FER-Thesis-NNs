@@ -93,6 +93,9 @@ ALL_MODELS_PATHS = {
     "efficientnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
     "yolo_last": os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
 }
+# ______________________________________________________________________
+# > MY MODELS (occft -- i.e. occlusion finetuning)
+OCCFT_MODELS_FOLDER = os.path.join(MODELS_PATH, "occft")
 
 
 # 4) Landmarks

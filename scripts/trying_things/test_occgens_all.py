@@ -111,11 +111,11 @@ if __name__ == "__main__":
             first_batch = True
             for batch in tqdm(generator, desc=f"Going through data generator {name}"):
                 if isinstance(batch, (list, tuple)) and len(batch) >= 2:
-                    X_batch, y_batch, batch_paths = batch[0], batch[1], batch[2]
+                    X_batch, y_batch = batch[0], batch[1]
                 else:
                     raise ValueError("test_generator must yield (X_batch, y_batch) tuples")
                 if first_batch:
-                    print(f"First: Batch X shape: {X_batch.shape}, Batch y shape: {y_batch.shape}, Batch paths: {batch_paths if batch_paths[0] is not None else f'[None*{len(batch_paths)}]'}")
+                    print(f"First: Batch X shape: {X_batch.shape}, Batch y shape: {y_batch.shape}")
                     first_batch = False
 
                 i = 0
@@ -129,7 +129,7 @@ if __name__ == "__main__":
                         if i >= STOP_AFTER_IMAGES:
                             break
                 # break  # Just test one batch for timing purposes  
-            print(f"Last: Batch X shape: {X_batch.shape}, Batch y shape: {y_batch.shape}, Batch paths: {batch_paths if batch_paths[0] is not None else f'[None*{len(batch_paths)}]'}")
+            print(f"Last: Batch X shape: {X_batch.shape}, Batch y shape: {y_batch.shape}")
         except Exception as e:
             print(f"An error occurred while processing generator {name}, printing info so far:")
             print(f"Loaded a total of {GLOBALS['TOTAL_IMAGES_LANDMARKS_LOADED']} images landmarks, saved {GLOBALS['TOTAL_IMAGES_LANDMARKS_SAVED']} images landmarks.")

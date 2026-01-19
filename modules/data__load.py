@@ -92,7 +92,7 @@ def load_data_and_labels(file_path, info):
         else:
             raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
 
-def load_test_generator(path, occlusion_probability, masking_function, mismatch):
+def load_test_generator(path, occlusion_probability, masking_function, mismatch, batch_size=64):
     X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test')
 
     for emotion in EMOTIONS:
@@ -110,7 +110,7 @@ def load_test_generator(path, occlusion_probability, masking_function, mismatch)
         paths_data=test_paths,
 
         data_inf='test',
-        batch_size=64,        
+        batch_size=batch_size,        
         augmentations={},
         label_smoothing=0,
 
@@ -129,7 +129,7 @@ def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove):
     paths_data = np.delete(paths_data, indices_to_remove, axis=0) if paths_data is not None else None
     return X_data, y_data, paths_data
 
-def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2):
+def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
@@ -234,7 +234,9 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
     X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data = filter_zero_length_landmarks(X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data, name="train")
     X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data, name="val")
     X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data, name="test")
-    print(f"After filtering zero-length landmarks: X_train length: {len(X_train)}, X_val length: {len(X_val)}, X_test length: {len(X_test)}")
+    
+    train_length = len(X_train); val_length = len(X_val); test_length = len(X_test)
+    print(f"After filtering zero-length landmarks: X_train length: {train_length}, X_val length: {val_length}, X_test length: {test_length}. Cumulated length: {train_length + val_length + test_length}")
 
     # for images, labels, image_landmarks, image_hashes in zip(X_train, y_train, X_train_landmarks, X_train_hashes):
     #     occlude_debug(images, np.argmax(labels, axis=1), image_landmarks, image_hashes, training=True)
@@ -292,7 +294,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         x_landmarks=X_train_landmarks,
         paths_data=train_paths_data,
         data_inf='train',
-        batch_size=64,
+        batch_size=batch_size,
         augmentations=train_augmentations,
         label_smoothing=label_smoothing_value,
         masking_function=masking_function,
@@ -307,7 +309,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         x_landmarks=X_val_landmarks,
         paths_data=val_paths_data,
         data_inf='valid',
-        batch_size=64,
+        batch_size=batch_size,
         augmentations=train_augmentations,
         label_smoothing=0,
         masking_function=masking_function,
@@ -322,7 +324,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         x_landmarks=X_test_landmarks,
         paths_data=test_paths_data,
         data_inf='test',
-        batch_size=64,
+        batch_size=batch_size,
         augmentations={},
         label_smoothing=0,
         masking_function=masking_function,

@@ -1,16 +1,14 @@
-import os; import sys;
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
+import os; import sys; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import tensorflow as tf
 import argparse
 import os
 
 from modules.data__load import load_data_generators
-from modules.misc import init_neptune
 from modules.model import build_model_occfinetuning
-from scripts.trying_things.test_occgens_all import TEST_SET_PATH, TRAINVAL_SET_PATH
+from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, OCCFT_MODELS_FOLDER
 
-# Funzione per addestrare il modello
+
+
 def addestra_modello(model, train_generator, valid_generator, test_generator, TRAIN_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name):
     early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='val_categorical_accuracy', patience=TRAIN_ES_PATIENCE, min_delta=ES_LR_MIN_DELTA, restore_best_weights=True, mode = 'max')
     learning_rate_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_categorical_accuracy', patience=TRAIN_LR_PATIENCE, verbose=0, min_delta=ES_LR_MIN_DELTA, min_lr=TRAIN_MIN_LR)
@@ -18,40 +16,28 @@ def addestra_modello(model, train_generator, valid_generator, test_generator, TR
     history = model.fit(train_generator, epochs=TRAIN_EPOCH, validation_data=valid_generator, verbose=1,
                         callbacks=[early_stopping_callback, learning_rate_callback])
     
-     # Loggare l'accuratezza del training e della validazione su Neptune
-    for epoch in range(len(history.history['categorical_accuracy'])):
-        run[f"{model_name}/finetuning/training/accuracy"].log(history.history['categorical_accuracy'][epoch])
-        run[f"{model_name}/finetuning/validation/accuracy"].log(history.history['val_categorical_accuracy'][epoch])
-        run[f"{model_name}/finetuning/training/loss"].log(history.history['loss'][epoch])
-        run[f"{model_name}/finetuning/validation/loss"].log(history.history['val_loss'][epoch])
-        
-
+    #  # Loggare l'accuratezza del training e della validazione su Neptune
+    # for epoch in range(len(history.history['categorical_accuracy'])):
+    #     run[f"{model_name}/finetuning/training/accuracy"].log(history.history['categorical_accuracy'][epoch])
+    #     run[f"{model_name}/finetuning/validation/accuracy"].log(history.history['val_categorical_accuracy'][epoch])
+    #     run[f"{model_name}/finetuning/training/loss"].log(history.history['loss'][epoch])
+    #     run[f"{model_name}/finetuning/validation/loss"].log(history.history['val_loss'][epoch])
     
     return history
 
-# Funzione per valutare il modello
 def valuta_modello(model, test_generator, run, model_name):
     test_loss, test_acc = model.evaluate(test_generator)
-    run[f"{model_name}/finetuning/test/loss"].log(test_loss)
-    run[f"{model_name}/finetuning/test/accuracy"].log(test_acc)
+    # run[f"{model_name}/finetuning/test/loss"].log(test_loss)
+    # run[f"{model_name}/finetuning/test/accuracy"].log(test_acc)
     return test_loss, test_acc
 
-# Funzione per ottenere un nome di file unico
-def get_unique_filename(base_path, base_name, extension):
-    counter = 1
-    file_path = f"{base_path}/{base_name}"
-    while os.path.exists(file_path):
-        file_path = f"{base_path}/{base_name}_{counter}"
-        counter += 1
-    return file_path
-
-# Funzione per salvare il modello e la storia dell'addestramento
 def salva_modello(model, run, model_name):
-    base_path = 'model/finetuning'
+    base_path = OCCFT_MODELS_FOLDER
+    base_name = f'{model_name}_occfinetuning'
     
     try:
         # Salva il modello in formato TensorFlow
-        tf_model_path = os.path.join(base_path,f'pretrained_{model_name}_finetuning')
+        tf_model_path = os.path.join(base_path, base_name)
         model.save(tf_model_path, save_format='tf')
         print(f"Model saved as {tf_model_path}")
     except Exception as e:
@@ -59,7 +45,7 @@ def salva_modello(model, run, model_name):
 
     try:
         # Salva il modello in formato HDF5
-        h5_model_path = os.path.join(base_path,f'pretrained_{model_name}_finetuning')
+        h5_model_path = os.path.join(base_path, f'{base_name}')
         model.save(h5_model_path, save_format='h5')
         print(f"Model saved as {h5_model_path}")
     except Exception as e:
@@ -67,33 +53,43 @@ def salva_modello(model, run, model_name):
 
     try:
         # Salva i pesi del modello
-        weights_path = os.path.join(base_path,f'pretrained_{model_name}_finetuning_weights.h5')
+        weights_path = os.path.join(base_path, f'pretrained_{base_name}_weights.h5')
         model.save_weights(weights_path)
-        weights_path = os.path.join(base_path,f'pretrained_{model_name}_finetuning.weights.h5')
+        weights_path = os.path.join(base_path,f'pretrained_{base_name}.weights.h5')
         model.save_weights(weights_path)
         print(f"Model weights saved as {weights_path}")
     except Exception as e:
         print(f"An error occurred while saving the model weights: {e}")
 
     try:
-        keras_model_path = os.path.join(base_path,f'pretrained_{model_name}_finetuning')
+        keras_model_path = os.path.join(base_path, f'pretrained_{base_name}')
         # Salva il modello in formato Keras
         model.save(keras_model_path, save_format='keras')
-        print(f"Model saved as pretrained_{model_name}_finetuning.keras")
+        print(f"Model saved as pretrained_{base_name}.keras")
     except Exception as e:
         print(f"An error occurred while saving the model in Keras format: {e}")
 
-    try:
-        # Carica i file su Neptune
-        run[f"{model_name}/saved_model"].upload(tf_model_path)
-        run[f"{model_name}/saved_weights"].upload(weights_path)
-    except Exception as e:
-        print(f"An error occurred while uploading the model to Neptune: {e}")
+    # try:
+    #     # Carica i file su Neptune
+    #     run[f"{model_name}/saved_model"].upload(tf_model_path)
+    #     run[f"{model_name}/saved_weights"].upload(weights_path)
+    # except Exception as e:
+    #     print(f"An error occurred while uploading the model to Neptune: {e}")
 
-# Funzione principale
+
+
+# __________________-DATASETS-_________________
+#        1161 x 1161               128 x 128                   128 x 128
+# BOSPHORUS_TEST_HQ_H5_PATH, ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
+TEST_SET_PATH = ADELE_TEST_SET_H5_PATH  
+TRAINVAL_SET_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH
+
+
+
+# example usage: 
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 64 --occ-prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
 def main():
-    # Inizializza Neptune
-    run = init_neptune()
+    # *init Neptune or alternative*
 
     # Definisci gli argomenti della linea di comando
     parser = argparse.ArgumentParser(description='Training parameters for occlusion finetuning')
@@ -103,6 +99,7 @@ def main():
     parser.add_argument('--FT_EPOCH', type=int, required=True, help='Training epochs')
     parser.add_argument('--model_name', type=str, required=True, help='Model name. Default is PattLite', default='PattLite')
     parser.add_argument('--occ-prob', type=float, required=True, help='Occlusion probability')
+    parser.add_argument('--batch_size', type=int, required=False, help='Batch size', default=64)
     args = parser.parse_args()
 
     # Recupera i parametri dalla linea di comando
@@ -120,18 +117,21 @@ def main():
                                                                                           use_label_smoothing=True, 
                                                                                           mismatch=True,
                                                                                           small_subset=False, 
-                                                                                          matching_amount=0.2) # same matching amount as the test set, where only one in 5 images is matching positive
+                                                                                          matching_amount=0.2, # same matching amount as the test set, where only one in 5 images is matching positive
+                                                                                          batch_size=8
+                                                                                          ) 
 
     model = build_model_occfinetuning(FT_LR, FT_DROPOUT, l2_reg, initial_bias, model_name)
 
-    # Logga i parametri di addestramento su Neptune
-    run[f"{model_name}finetuning/parameters"] = {
-        "learning_rate": FT_LR,
-        "dropout_rate": FT_DROPOUT,
-        "l2_reg": l2_reg,
-        "epochs": FT_EPOCH,
-        "batch_size": 64
-    }
+    # # Logga i parametri di addestramento su Neptune
+    # run[f"{model_name}finetuning/parameters"] = {
+    #     "learning_rate": FT_LR,
+    #     "dropout_rate": FT_DROPOUT,
+    #     "l2_reg": l2_reg,
+    #     "epochs": FT_EPOCH,
+    #     "batch_size": 64
+    # }
+    run = None
 
     # Addestra il modello
     history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, 50, 15, 0.003, 1e-6, run, model_name)
@@ -142,8 +142,8 @@ def main():
     # Salva il modello e la storia dell'addestramento
     salva_modello(model, run, model_name)
 
-    # Termina la sessione di Neptune
-    run.stop()
+
+    ## *** termina Neptune run o alternativa ***
 
 if __name__ == "__main__":
     main()
