@@ -129,7 +129,7 @@ def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove):
     paths_data = np.delete(paths_data, indices_to_remove, axis=0) if paths_data is not None else None
     return X_data, y_data, paths_data
 
-def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64):
+def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
@@ -313,7 +313,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         augmentations=train_augmentations,
         label_smoothing=0,
         masking_function=masking_function,
-        occlusion_probability=1.0,
+        occlusion_probability=validation_occlusion_probability,
         mismatch=mismatch,
         matching_amount=matching_amount,
         )

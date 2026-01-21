@@ -7,6 +7,7 @@ import cv2
 from matplotlib import pyplot as plt
 import numpy as np
 from math import ceil
+import warnings
 
 from modules.visualize import plot_image
 from modules.config import DEBUG_MASKING, DEBUG_MASKING_TIER2, MASK_COLOR
@@ -250,28 +251,36 @@ MASKING_FUNCTIONS = {
     "circles": mask_face_circles,
     "lines": mask_face_lines, # standard
     # "random_rectangles": mask_random_rectangles, # TODO: implement this function
+
 }
 
 
 
-def apply_mask_to_all_sets(image, landmark_sets, masking_function_name, debug=DEBUG_MASKING):
+def apply_mask_to_all_sets(image, landmark_sets, masking_function_name, positive_or_negative, debug=DEBUG_MASKING):
     """
     Apply facial landmark masks to all sets of landmarks for a batch of images.
     images : list of np.ndarray
     landmark_sets : list of list of (x, y)
     masking_function : function to apply the mask
     """
-    i = 0
-    for landmark_set in landmark_sets:
-        image = MASKING_FUNCTIONS[masking_function_name](image, landmark_set)
-        i += 1
+    if positive_or_negative not in [0, 1]:
+        warnings.warn(f"positive_or_negative must be either 1 (positive) or 0 (negative). Got '{positive_or_negative}'. Defaulting to 1 (positive).")
+        positive_or_negative = 1
+
+    if positive_or_negative == 1:
+        i = 0
+        for landmark_set in landmark_sets:
+            image = MASKING_FUNCTIONS[masking_function_name](image, landmark_set)
+            i += 1
+    else:
+        image = apply_inverse_masks(image, landmark_sets, mask_color=MASK_COLOR)
 
     if debug:
         plot_image(image, title=f"Mask with {i} landmark sets")
 
     return image
 
-def apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name):
+def apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name, positive_or_negative_batch):
     """
     images : list of np.ndarray
     list_of_landmark_sets : list of list of (x, y)
@@ -283,10 +292,10 @@ def apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name):
     if len(images) != len(list_of_landmark_sets):
         raise ValueError(f"Number of images must match number of landmark sets. Got {len(images)} images and {len(list_of_landmark_sets)} lists of landmark sets.")
 
-    results = [apply_mask_to_all_sets(image, landmark_set, masking_function_name) for image, landmark_set in zip(images, list_of_landmark_sets)]
+    results = [apply_mask_to_all_sets(image, landmark_sets, masking_function_name, positive_or_negative) for image, landmark_sets, positive_or_negative in zip(images, list_of_landmark_sets, positive_or_negative_batch)]
     return results
 
-def apply_inverse_masks(image, list_of_au_configs, mask_color=(0, 0, 0)):
+def apply_inverse_masks(image, landmark_sets, mask_color=(0, 0, 0)):
     """
     image : np.ndarray, original BGR image
     list_of_au_configs : list of dict, each with keys
@@ -308,6 +317,19 @@ def apply_inverse_masks(image, list_of_au_configs, mask_color=(0, 0, 0)):
             Per-pixel opacity of the mask (1=fully keep; 0=fully black).
         """
         h, w = image_shape[:2]
+
+        # Scale parameters based on image size
+        ref_size = 1161  
+        scale = h / ref_size
+
+        expansion = max(1, ceil(expansion * scale))
+        if blur_radius is not None:
+            blur_radius = max(1, ceil(blur_radius * scale))
+        if fade_start is not None:
+            fade_start = ceil(fade_start * scale)
+        if fade_end is not None:
+            fade_end = ceil(fade_end * scale)
+
         # -- 1) build binary dilated mask exactly like before
         mask = np.zeros((h, w), dtype=np.uint8)
         pts = np.array(landmark_coordinates, dtype=np.int32).reshape(-1,1,2)
@@ -347,16 +369,16 @@ def apply_inverse_masks(image, list_of_au_configs, mask_color=(0, 0, 0)):
     alpha_total = np.zeros((h, w), dtype=np.float32)
 
     # accumulate each mask's alpha
-    for cfg in list_of_au_configs:
-        alpha = compute_mask_alpha(
-            cfg['landmark_coordinates'],
-            image.shape,
-            expansion=cfg.get('expansion', 37),
-            blur_radius=cfg.get('blur_radius'),
-            fill=cfg.get('fill'),
-            fade_start=cfg.get('fade_start'),
-            fade_end=cfg.get('fade_end'),
-        )
+    for landmark_set in landmark_sets:
+        if isinstance(landmark_set, np.ndarray):
+            two_results = np.array_equal(landmark_set[0], landmark_set[-1])
+            closed_curve = two_results[0] and two_results[1]
+        elif isinstance(landmark_set, list):
+            closed_curve = (landmark_set[0][0] == landmark_set[-1][0]) and (landmark_set[0][1] == landmark_set[-1][1])
+        else:
+            closed_curve = True  # default
+            warnings.warn("landmark_set must be either a list or a numpy array")
+        alpha = compute_mask_alpha(landmark_set, image.shape, fill=closed_curve)
         alpha_total = np.maximum(alpha_total, alpha)
 
     # composite once

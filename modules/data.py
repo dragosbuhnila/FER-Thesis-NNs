@@ -31,11 +31,11 @@ class RandomOcclusion(keras.layers.Layer):
         # TODO: check if this really is needed AND if training not being a tf.Tensor slows things down
         if training is None:
             training = keras.backend.learning_phase()
+        
+        images = images.numpy()
 
-        def occlude(images, labels, image_landmarks, image_hashes, debug=DEBUG_OCCLUSION):
-            # images is a tf.Tensor
-            # For now convert it to numpy for easier processing
-            images = images.numpy()
+        def occlude(images, labels, image_landmarks, image_hashes, positive_or_negative_batch):
+            # images is a np array
 
             # a) Get all the landmarks, in the form of coordinates, for each image
             #       i.e. for each image every single face point, even unnecessary ones, will be there (they should be cached already)
@@ -65,16 +65,16 @@ class RandomOcclusion(keras.layers.Layer):
 
             # c) Apply occlusion based on the landmarks
             # ____________________________________________________________________________________________
-            occluded = apply_mask_to__batch(images, list_of_landmark_sets, self.masking_function)
+            occluded = apply_mask_to__batch(images, list_of_landmark_sets, self.masking_function, positive_or_negative_batch)
             # ___________________________________________________________________________________________   
 
-            if debug: # Visualize occluded images
-                nop_variable = 0
-                for image, landmarks_emotion, landmarks_emotions_index, hash in zip(occluded, emotions, labels, image_hashes):
-                    print(f"Hash for the current image: {hash}")
-                    landmarks_that_should_be = load_landmark_coordinates(hash)
-                    plot_image(image, title=f"landmarks for emotion {landmarks_emotion} (index {landmarks_emotions_index})\nHash: {hash}")
-                    nop_variable += 1
+            # if DEBUG_OCCLUSION: # Visualize occluded images
+            #     nop_variable = 0
+            #     for image, landmarks_emotion, landmarks_emotions_index, hash in zip(occluded, emotions, labels, image_hashes):
+            #         print(f"Hash for the current image: {hash}")
+            #         landmarks_that_should_be = load_landmark_coordinates(hash)
+            #         plot_image(image, title=f"landmarks for emotion {landmarks_emotion} (index {landmarks_emotions_index})\nHash: {hash}")
+            #         nop_variable += 1
 
             # # a2) Reinsert unoccludable images without occlusion (won't do it in this version as I am already removing the problem images)
             # # sort unoccludable images by key in reverse order (so double reverse means original order) so that the insertion has correct indices (inserting from the start again)
@@ -98,24 +98,65 @@ class RandomOcclusion(keras.layers.Layer):
             if num_emotions != 7:
                 raise ValueError(f"Expected 7 emotions, but got {num_emotions}. Check EMOTIONS mapping.")
 
-            non_neutral_emotions = [i for i in range(num_emotions) if i != 4]  # Exclude NEUTRAL (4)
+            # 1) Exclude NEUTRAL (4) from pool
+            non_neutral_emotions = [i for i in range(num_emotions) if i != 4] 
 
-            # keep matching_amount of labels the same, change the rest
+            # Here there's the choice of keeping always ratios that mirror the test sets (i.e. always having a 20% of the masked images being matched and so on) or allow for the 
+            #   non occluded images to substitute any of these, meaning that the ratio may fluctuate inside of the single batch, but should stay kind of consisten throughout the epochs instead.
+            # I'll keep this choice of picking the occlusions first (mirroring ratio) and then selecting which images will be occluded or not, since it's the easier approach, 
+            #   and should also grant variety to the descent towards optimality.
+            # The same philosophy applies to the choice of positive/negative. The distribution within a single batch of every of the 10 kinds of occlusion (nof_occlusion_types = 5 * 2  # 5 occlusion types (each unmatched emotion), each with +/- occlusion)
+            #   won't be exaclty uniform since negative/positive isn't really chained to the choice of the mismatching emotion in the following code, but again, 
+            #   it should uniform itself throughout the epochs, plus add variability between batches.
+
+            # keep **matching_amount** of labels the same, change the rest
             labels = labels.astype(int)
             num_to_match = int(len(labels) * self.matching_amount)
             indices = np.arange(len(labels))
             np.random.shuffle(indices)
             indices_to_change = indices[num_to_match:]
-            indices_to_change.sort()  # Sort when debugging to check correctness easily
+            # indices_to_change.sort()  # Sort when debugging to check correctness easily
 
             mismatching_labels = np.random.choice(non_neutral_emotions, size=len(indices_to_change))
+            positive_or_negative_batch = np.ones_like(labels)
+            positive_or_negative_batch[indices_to_change] = np.random.randint(0, 2, size=len(indices_to_change))
+            
             labels[indices_to_change] = mismatching_labels
 
-        return tf.cond(
-            tf.less(tf.random.uniform([]), self.occlusion_probability),
-            lambda: occlude(images, labels, image_landmarks, image_hashes),
-            lambda: images
-        )
+
+        batch_size = images.shape[0]
+        num_to_occlude = int(batch_size * self.occlusion_probability)
+
+        # Nothing to occlude
+        if num_to_occlude == 0:
+            return images
+
+        # Randomly select indices to occlude
+        all_indices = np.arange(batch_size)
+        np.random.shuffle(all_indices)
+        occlude_indices = all_indices[:num_to_occlude]
+
+        # Slice sub-batch
+        images_sub = images[occlude_indices]
+        labels_sub = labels[occlude_indices]
+        landmarks_sub = image_landmarks[occlude_indices]
+        hashes_sub = image_hashes[occlude_indices]
+        posneg_sub = positive_or_negative_batch[occlude_indices]
+
+        # Apply occlusion only to sub-batch
+        occluded_sub = occlude(images_sub, labels_sub, landmarks_sub, hashes_sub, posneg_sub)
+        images[occlude_indices] = occluded_sub
+
+        for image in images:
+            if DEBUG_OCCLUSION: # Visualize occluded images
+                nop_variable = 0
+                for image, landmarks_emotions_index, hash in zip(images, labels, image_hashes):
+                    print(f"Hash for the current image: {hash}")
+                    landmarks_that_should_be = load_landmark_coordinates(hash)
+                    plot_image(image, title=f"landmarks for emotion {EMOTIONS[landmarks_emotions_index]} (index {landmarks_emotions_index})\nHash: {hash}")
+                    nop_variable += 1
+
+        return images
 
 class CustomBalancedDataGenerator(Sequence):
     def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, **kwargs):
@@ -248,7 +289,6 @@ class CustomBalancedDataGenerator(Sequence):
 
         # Applica il rescale o le trasformazioni per augmentation
         batch_x = self.occlusion_layer(batch_x, np.argmax(batch_y, axis=1), batch_x_landmarks, batch_x_hashes, training=(self.data_inf != 'test'))
-        batch_x = np.array(batch_x)
         augmented_batch_x = np.zeros_like(batch_x)
         for i in range(len(batch_x)):
             augmented_batch_x[i] = self.augmentations.random_transform(batch_x[i])

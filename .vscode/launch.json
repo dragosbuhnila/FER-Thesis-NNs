@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [ 
-
         {
             "name": "Python: Current File",
             "type": "python",
@@ -36,7 +35,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                     // -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false
-                    "-o", "1.0",    // occlusion ratio
+                    "-o", "0.5",    // occlusion ratio
                     "-f", "lines",  // masking function
                     "-l", "True",   // use label smoothing
                     "-r", "False",  // redirect output
@@ -53,9 +52,9 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                    // --occ-prob 0.2 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
+                    // --occ-prob 0.6 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
                     "--batch_size", "64",
-                    "--occ-prob", "0.2",
+                    "--occ-prob", "0.6",
                     "--model_name", "ConvNeXt",
                     "--FT_EPOCH", "300",
                     "--dropout_rate", "0.5",

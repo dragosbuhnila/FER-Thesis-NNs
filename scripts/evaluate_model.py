@@ -10,7 +10,7 @@ from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH 
 from modules.data import load_test_generator
 from modules.model import load_model
-from modules.eval import evaluate_model
+from modules.train_eval import evaluate_model
 
 
 
