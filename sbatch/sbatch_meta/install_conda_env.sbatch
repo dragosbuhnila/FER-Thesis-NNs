@@ -59,9 +59,12 @@ echo "==========================================================================
 echo "Installed tf!"
 echo "=========================================================================="
 
-python -m pip install h5py "numpy>=1.23.5,<2.0.0" Pillow scikit-learn ultralytics gdown mediapipe
+
+# protobuf should be 4.25.8 tho
+python -m pip install h5py "numpy>=1.23.5,<2.0.0" Pillow scikit-learn ultralytics gdown mediapipe mlflow waitress argparse
+python -m pip install --force-reinstall --no-deps "protobuf==4.25.8"
 echo "=========================================================================="
-echo "Installed other dependencies! (h5, np, PIL, skl, ultralytics)"
+echo "Installed other dependencies! (h5py, numpy, Pillow, scikit-learn, ultralytics, gdown, mediapipe, mlflow, waitress, argparse)"
 echo "=========================================================================="
 
 

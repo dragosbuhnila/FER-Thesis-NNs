@@ -24,9 +24,9 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install mediapipe
+python -m pip install argparse
 echo "=========================================================================="
-echo "Installed other dependencies! (mediapipe)"
+echo "Installed other dependencies! (argparse)"
 echo "=========================================================================="
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"

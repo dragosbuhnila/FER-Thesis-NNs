@@ -8,7 +8,7 @@ from tensorflow import keras
 
 from modules.data__load import load_data_generators
 from modules.model import build_model_occfinetuning
-from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
+from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, MLFLOW_DIR
 from modules.train_eval import addestra_modello, salva_modello, valuta_modello; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 
@@ -28,6 +28,7 @@ def main():
 
     # Definisci gli argomenti della linea di comando
     parser = argparse.ArgumentParser(description='Training parameters for occlusion finetuning')
+    parser.add_argument('--no_mlflow_server', action='store_true', help='If set, do not use MLflow for logging')
     parser.add_argument('--l2_reg', type=float, required=True, help='L2 regularization parameter')
     parser.add_argument('--learning_rate', type=float, required=True, help='Learning rate')
     parser.add_argument('--dropout_rate', type=float, required=True, help='Dropout rate')
@@ -50,10 +51,20 @@ def main():
     matching_amount = args.matching_amount
     batch_size = args.batch_size
 
-    mlflow.set_tracking_uri("http://localhost:5000")
-    mlflow.set_experiment(f"try_training_{model_name}")
+    if args.no_mlflow_server:
+        tracking_uri = f"file://{os.path.abspath(MLFLOW_DIR)}"
+        mlflow.set_tracking_uri(tracking_uri)
+        mlflow.set_experiment(f"try_training_{model_name}")
+    else:
+        raise NotImplementedError("Only no_mlflow_server option is implemented currently as the server solution can't seem to work.")
+        # mlflow.set_tracking_uri("http://localhost:5000")
+        # mlflow.set_experiment(f"try_training_{model_name}")
+
 
     # Carica i dati
+    # For the time being, I want the training to use 
+    #   > 50% occlusions, in which 20% are matching positives, 40% are mismatching positive, 40% are mismatching negatives
+    #   >
     train_generator, valid_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, 
                                                                                           occlusion_probability=occlusion_probability, 
                                                                                           masking_function="lines", 
@@ -77,6 +88,7 @@ def main():
     # }
     run = None
 
+
     with mlflow.start_run():
         mlflow.log_param("model_name", model_name)
         mlflow.log_param("learning_rate", FT_LR)
@@ -89,13 +101,8 @@ def main():
         mlflow.log_param("val_occlusion_probability", val_occlusion_probability)
         mlflow.log_param("matching_amount", matching_amount)
 
-        
         history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, 50, 15, 0.003, 1e-6, run, model_name)
-
-        # Valuta il modello
         _, _ = valuta_modello(model, test_generator, run, model_name)
-
-        # Salva il modello e la storia dell'addestramento
         salva_modello(model, run, model_name)
 
 

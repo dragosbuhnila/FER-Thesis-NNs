@@ -2,10 +2,10 @@
 #SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_v100
-#SBATCH --time=00:10:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=1G
+#SBATCH --mem=40G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
@@ -40,6 +40,11 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
+
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 8 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
+SCRIPT="./scripts/trying_things/try_training.py --no_mlflow_server --batch_size 256 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.4 --model_name ConvNeXt --FT_EPOCH 15 --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451"
+echo "Now running $SCRIPT"
+python $SCRIPT
 
 
 

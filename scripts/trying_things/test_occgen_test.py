@@ -56,7 +56,7 @@ if __name__ == "__main__":
     if USE_PROFILER:
         profiler = cProfile.Profile()
         profiler.enable()
-    test_generator = load_test_generator(DATASET, occlusion_probability, masking_function)
+    test_generator = load_test_generator(DATASET, occlusion_probability=occlusion_probability, masking_function=masking_function)
 
     for batch in test_generator:
         if isinstance(batch, (list, tuple)) and len(batch) >= 2:

@@ -12,7 +12,11 @@ from modules.loss import categorical_focal_loss
 
 
 
-custom_objects = {'loss': categorical_focal_loss()}
+# ============================= Custom Objects ============================
+
+custom_objects = {
+    'loss': categorical_focal_loss(),
+}
 
 class ExpandDimsLayer(Layer):
     def __init__(self, axis, **kwargs):
@@ -29,6 +33,8 @@ class SqueezeLayer(Layer):
 
     def call(self, inputs):
         return tf.squeeze(inputs, axis=self.axis)
+
+# ========================= End of Custom Objects ============================
 
 # INFO: build final-layers and build finetuning should yield the same architecture, the only difference lying in freeze/unfreeze of layers
 
@@ -329,8 +335,6 @@ def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias,
 
 
 def load_model(model_name, model_path_subset, debug=False):
-    custom_objects = {'loss': categorical_focal_loss()}
-
     if not model_name in model_path_subset.keys():
         raise ValueError(f"Model name '{model_name}' not found in the provided model path subset.")
 
@@ -340,6 +344,7 @@ def load_model(model_name, model_path_subset, debug=False):
         #
         # The other models have everything encapsulated in the saved model, so we can just load them directly.
         #   > I'm not sure why efficient need can't do that tho, I'll ask chatgpt
+        print(f"Loading EfficientNet model: {model_name} from {model_path_subset[model_name]}")
         return load_model_efficientnet(model_name, model_path_subset, custom_objects)
 
     if "yolo" in model_name:
@@ -350,6 +355,7 @@ def load_model(model_name, model_path_subset, debug=False):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if debug:
             print(f"Loading YOLO model on device: {device}")
+        print(f"Loading YOLO model: {model_name} from {model_path_subset[model_name]}")
         return YOLO(model_path_subset[model_name]).to(device)
     
     # For other models. Probably: resnet, vgg, inception, convnext, pattlite
@@ -357,7 +363,14 @@ def load_model(model_name, model_path_subset, debug=False):
         # One of these three should work:
         # model = keras.layers.TFSMLayer(model_path_subset[model_name], call_endpoint='serve')
         # model = keras.layers.TFSMLayer(model_path_subset[model_name], call_endpoint='serving_default')
+        print(f"Loading model: {model_name} from {model_path_subset[model_name]}. Custom objects: {custom_objects.keys()}")
         model = keras.models.load_model(model_path_subset[model_name])
+
+        # print(f"Loading model (no weights): {model_name} from {model_path_subset[model_name]}. Custom objects: {custom_objects.keys()}")
+        # model = keras.models.load_model(model_path_subset[model_name], custom_objects=custom_objects, compile=False)
+        # print(f"Loading weights")
+        # model.load_weights(model_path_subset[model_name], by_name=True, skip_mismatch=True)
+
         return model
     
 def load_model_efficientnet(model_name, model_path_subset, custom_objects):

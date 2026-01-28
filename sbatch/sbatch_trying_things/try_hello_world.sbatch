@@ -2,15 +2,14 @@
 #SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=00:10:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=00:05:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=1G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-
-
 
 # =====================================================================================
 # ============================= Preliminary Setups ====================================
@@ -20,6 +19,9 @@ module load miniconda3/3.13.25
 
 source activate base
 conda activate fer-thesis
+
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 
 echo "=========================================================================="
 echo "Activated venv!"
@@ -36,6 +38,14 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
+
+# # same node where you start MLflow
+# lsof -i @192.168.122.131:5001
+# curl -I http://192.168.122.131:5001
+
+echo "running python ./scripts/hello_world.py"
+cd /home/dbuhnila/models/FER-Thesis-NNs/scripts
+python hello_world.py
 
 
 # =====================================================================================

@@ -2,10 +2,10 @@
 #SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_v100
-#SBATCH --time=00:30:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=01:15:00
 #SBATCH --nodes=1
-#SBATCH --mem=1G
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
@@ -25,29 +25,30 @@ conda activate fer-thesis
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
 export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 
-
-
-# =====================================================================================
-# =================================== Run Code ========================================
-# =====================================================================================
-
 echo "=========================================================================="
 echo "Activated venv!"
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
-echo 'running ./scripts/evaluate_model.py "ADELE"'
-python ./scripts/evaluate_model.py "ADELE"
-echo 'running ./scripts/evaluate_model.py "OCCLUDED"'
-python ./scripts/evaluate_model.py "OCCLUDED"
+cd /home/dbuhnila/models/FER-Thesis-NNs
+pwd
 
+
+
+# =====================================================================================
+# =================================== Run Code ========================================
+# =====================================================================================
+
+
+COMMAND_TO_RUN="./scripts/trying_things/test_occgens_all.py -o 1.0 -f lines -l true -r false -m true -a 0.2 -s false"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
 
 # =====================================================================================
 # ============================= Copy Logs Outside =====================================
 # =====================================================================================
-
 DEST_ROOT="$HOME/fer-thesis-logs-to-push"
 mkdir -p "$DEST_ROOT"
 

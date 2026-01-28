@@ -2,12 +2,11 @@
 #SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
-#SBATCH --time=01:15:00
+#SBATCH --partition=cpu_skylake
+#SBATCH --time=01:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=20G
+#SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
 
@@ -21,9 +20,6 @@ module load miniconda3/3.13.25
 
 source activate base
 conda activate fer-thesis
-
-export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
-export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 
 echo "=========================================================================="
 echo "Activated venv!"
@@ -41,8 +37,26 @@ pwd
 # =====================================================================================
 
 
-echo "Now running ./scripts/trying_things/test_occgens_all.py -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false"
-python ./scripts/trying_things/test_occgens_all.py -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false
+PORT=5050
+
+# FQDN used by clients
+HOST=$(hostname -f)
+
+# Bind to all interfaces
+BIND_HOST=0.0.0.0
+
+export MLFLOW_TRACKING_URI="http://${HOST}:${PORT}"
+export MLFLOW_DISABLE_HOST_VALIDATION=true
+
+echo "MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}" | tee mlflow_server_info.env
+
+COMMAND_TO_RUN="./scripts/run_mlflow_webapp_server.py --port ${PORT} --host ${BIND_HOST}"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+
+echo "Job ended at:"
+python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

@@ -2,13 +2,14 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import argparse
 import time
 import tensorflow as tf
 
 from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             ADELE_TEST_SET_H5_PATH, ADELE_TEST_SET_YAML_PATH, ADELE_TEST_SET_IMAGES_PATH, \
                             OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH 
-from modules.data import load_test_generator
+from modules.data__load import load_test_generator
 from modules.model import load_model
 from modules.train_eval import evaluate_model
 
@@ -31,16 +32,27 @@ PATHS = {
     }
 }
 
-MODEL_PATHS_SUBSET = ALL_MODELS_PATHS
-TEST_SET = "ADELE"  # Options: "ADELE", "OCCLUDED"
-# MODELS_NAMES = ["resnet_finetuning", "pattlite_finetuning", "vgg19_finetuning", "inceptionv3_finetuning", "convnext_finetuning", "efficientnet_finetuning", "yolo_last"]
-MODELS_NAMES = ["yolo_last"]
+available_models = list(ALL_MODELS_PATHS.keys())
 
-REDIRECT_OUTPUT = False
+# 0) Setup macros as args
+parser = argparse.ArgumentParser(description='Evaluate model on test sets')
+parser.add_argument('--test_set', nargs='?', required=True, choices=list(PATHS.keys()), help=f'Test set to use for evaluation. Options: {list(PATHS.keys())}')
+parser.add_argument('--model_name', type=str, required=True, choices=available_models, help=f'Name of the model to evaluate. Options: {available_models}')
+
+args = parser.parse_args()
+TEST_SET = args.test_set
+MODEL_NAME = args.model_name
+
+
+MODEL_PATHS_SUBSET = ALL_MODELS_PATHS
 LOG_FILE = os.path.join(ACCURACY_RESULTS_PATH, f"{time.strftime('%Y%m%d-%H%M%S')}_accuracies_{TEST_SET.lower()}.log")
 
-DEBUG = True
+REDIRECT_OUTPUT = False
+DEBUG = False
 YOLO_FOLDERS_INSTEAD_OF_GENERATOR = False  # only for YOLO models, to test accuracy issues
+
+if YOLO_FOLDERS_INSTEAD_OF_GENERATOR and "yolo" not in MODEL_NAME.lower():
+    raise ValueError("YOLO_FOLDERS_INSTEAD_OF_GENERATOR can only be True for YOLO models, to test accuracy issues using different evaluation methods.")
 
 # =========== END OF MACROS ===========
 
@@ -73,54 +85,41 @@ else:
 
 
 # ================= Main ==================
-
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe c:/Users/Dragos/Roba/Lectures/YM2.2/models_repo_fixing/FER-Thesis-NNs/scripts/evaluate_model.py --test_set OCCLUDED --model_name convnext_finetuning
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe c:/Users/Dragos/Roba/Lectures/YM2.2/models_repo_fixing/FER-Thesis-NNs/scripts/evaluate_model.py --test_set OCCLUDED --model_name occft_convnext
 if __name__ == "__main__":
-    # 0) Setup macros as args
-    if sys.argv.__len__() == 2:
-        TEST_SET = sys.argv[1]
-        if TEST_SET not in PATHS.keys():
-            print(f"Unknown TEST_SET: {TEST_SET}. Available options: {list(PATHS.keys())}")
-            sys.exit(1)
-    elif sys.argv.__len__() > 2:
-        print("Usage: python evaluate_model.py [TEST_SET]")
-        sys.exit(1)
-
     # 1) Load the test set
     # # if you can't find the h5 file, generate it from the images
     # # ACTUALLY, JUST GENERATE IT BEFORE RUNNING THIS, I DON'T WANT POSSIBLE BUGS FROM THIS
     # if not os.path.exists(PATHS[TEST_SET]["test_set_h5"]):
-    #     generate_h5_from_images(PATHS[TEST_SET]["test_set"], PATHS[TEST_SET]["test_set_resized"], PATHS[TEST_SET]["test_set_h5"])
-    test_generator = load_test_generator(PATHS[TEST_SET]["test_set_h5"], 'test', 0.0, False)
+    #     generate_h5_from_images(PATHS[TEST_SET]["test_set"], PATHS[TEST_SET]["test_set_resized"], PATHS[TEST_SET]["test_set_h5"]
+    
+    # (path, occlusion_probability, masking_function, mismatch)
+    test_generator = load_test_generator(PATHS[TEST_SET]["test_set_h5"])
 
     print(f"Loaded {TEST_SET} test set with {len(test_generator.x_data)} samples.")
 
     # 2) Run the evaluations on the test set
-    models_results = {name: {"test_loss": None, "test_acc": None} for name in MODELS_NAMES}
+    models_results = {name: {"test_loss": None, "test_acc": None} for name in [MODEL_NAME]}
 
-    for model_name in MODELS_NAMES:
-        print("======================================")
-        print(f"Evaluating model: {model_name}")
+    print("======================================")
+    print(f"Evaluating model: {MODEL_NAME}")
 
-        if DEBUG:
-            print(f"GPUs: {tf.config.list_physical_devices('GPU')}")
+    # a) Load the model
+    model = load_model(MODEL_NAME, MODEL_PATHS_SUBSET, debug=DEBUG)
 
-        # a) Load the model
-        model = load_model(model_name, MODEL_PATHS_SUBSET, debug=DEBUG)
-        if DEBUG:
-            print(f"GPUs: {tf.config.list_physical_devices('GPU')}")
-        if model is None:
-            print("Model loading not implemented for this model type.")
-            continue
+    if model is None:
+        raise ValueError(f"load_model returned None. Model loading not implemented for this model type. Model name: {MODEL_NAME}")
+    else:
+        # b) Evaluate the model
+        if not YOLO_FOLDERS_INSTEAD_OF_GENERATOR or "yolo" not in MODEL_NAME.lower():
+            test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=DEBUG)
         else:
-            # b) Evaluate the model
-            if not YOLO_FOLDERS_INSTEAD_OF_GENERATOR or "yolo" not in model_name:
-                test_loss, test_acc = evaluate_model(model, model_name, test_generator, debug=DEBUG)
-            else:
-                # THIS EXISTS FOR YOLO. FOR NOW THE "CORRECT" VERSION IS THE ONE WITH FOLDERS
-                test_loss, test_acc = evaluate_model(model, model_name, None, PATHS[TEST_SET]["test_set_small"], debug=DEBUG)
-            
-            models_results[model_name]["test_loss"] = test_loss
-            models_results[model_name]["test_acc"] = test_acc
+            # THIS EXISTS FOR YOLO. FOR NOW THE "CORRECT" VERSION IS THE ONE WITH FOLDERS
+            test_loss, test_acc = evaluate_model(model, MODEL_NAME, None, PATHS[TEST_SET]["test_set_small"], debug=DEBUG)
+        
+        models_results[MODEL_NAME]["test_loss"] = test_loss
+        models_results[MODEL_NAME]["test_acc"] = test_acc
     print("======================================")
 
     # 3) Print the final results

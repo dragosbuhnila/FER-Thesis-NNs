@@ -7,11 +7,15 @@ from tensorflow.keras.utils import to_categorical
 from tqdm import tqdm
 
 from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
-from modules.data import CustomBalancedDataGenerator
+from modules.data import CustomBalancedDataGenerator, OldCustomBalancedDataGenerator
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
 from modules.misc import hash_image
 
 
+
+# ==================================================================================================
+# ==================================== Auxiliary Functions =========================================
+# ==================================================================================================
 
 # def occlude_debug(images, labels, image_landmarks, image_hashes):
 #         # images is a tf.Tensor
@@ -92,34 +96,6 @@ def load_data_and_labels(file_path, info):
         else:
             raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
 
-def load_test_generator(path, occlusion_probability, masking_function, mismatch, batch_size=64):
-    X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test')
-
-    for emotion in EMOTIONS:
-        if emotion not in class_names:
-            raise ValueError(f"Class '{emotion}' not found in class names from H5 file.")
-    NUM_CLASSES = len(class_names)
-
-    y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
-    X_test_hashes = np.array([hash_image(img) for img in X_test])
-
-    data_generator = CustomBalancedDataGenerator(
-        x_data=X_test,
-        y_data=y_test_one_hot,
-        x_hashes=X_test_hashes,
-        paths_data=test_paths,
-
-        data_inf='test',
-        batch_size=batch_size,        
-        augmentations={},
-        label_smoothing=0,
-
-        masking_function=masking_function,
-        occlusion_probability=occlusion_probability,
-        mismatch=mismatch,
-    )
-
-    return data_generator
 
 def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove):
     indices_to_remove = sorted(indices_to_remove)
@@ -128,6 +104,183 @@ def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove):
     y_data = np.delete(y_data, indices_to_remove, axis=0)
     paths_data = np.delete(paths_data, indices_to_remove, axis=0) if paths_data is not None else None
     return X_data, y_data, paths_data
+
+
+
+# ==================================================================================================
+# ==================================   Loading functions ===========================================
+# ======================    load test, load train, load val, load all ==============================
+# ==================================================================================================
+
+def load_test_generator(path, batch_size=64):
+    """
+    Load only the test generator from a test H5 file (path).
+    """
+    X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test')
+
+    # Test has no dupes, so no need to remove them
+    # if remove_dupes:
+    #     for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
+    #         if split == 'X_test':
+    #             X_test, y_test, test_paths = remove_indices_from_data(X_test, y_test, test_paths, indices)
+
+    for emotion in EMOTIONS:
+        if emotion not in class_names:
+            raise ValueError(f"Class '{emotion}' not found in class names from H5 file.")
+    NUM_CLASSES = len(class_names)
+
+    y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
+    # X_test_hashes = np.array([hash_image(img) for img in X_test])
+
+    # if parallelize:
+    #     X_test_landmarks = np.array(Parallel(n_jobs=-1)(
+    #         delayed(load_landmark_coordinates)(h) for h in tqdm(X_test_hashes, desc="Loading test landmarks")
+    #     ))
+    # else:
+    #     X_test_landmarks = np.array([load_landmark_coordinates(h) for h in tqdm(X_test_hashes, desc="Loading test landmarks")])
+
+    # valid_indices = [i for i, lm in enumerate(X_test_landmarks) if len(lm) > 0]
+    # if len(valid_indices) != len(X_test):
+    #     X_test = X_test[valid_indices]
+    #     y_test_one_hot = y_test_one_hot[valid_indices]
+    #     # X_test_hashes = X_test_hashes[valid_indices]
+    #     # X_test_landmarks = X_test_landmarks[valid_indices]
+    #     test_paths = test_paths[valid_indices] if test_paths is not None else None
+
+    data_generator = OldCustomBalancedDataGenerator(
+        x_data=X_test,
+        y_data=y_test_one_hot,
+        data_inf='test',
+        batch_size=batch_size,
+        augmentations={},
+        label_smoothing=0,
+    )
+
+    return data_generator
+
+
+def load_train_generator(train_path, occlusion_probability, masking_function, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2, label_smoothing=0.0):
+    """
+    Load only the train generator from a train H5 file (train_path).
+    """
+    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
+
+    if remove_dupes:
+        for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
+            if split == 'X_train':
+                X_train, y_train, train_paths_data = remove_indices_from_data(X_train, y_train, train_paths_data, indices)
+
+    for emotion in EMOTIONS:
+        if emotion not in trainval_class_names:
+            raise ValueError(f"Class '{emotion}' not found in training/validation class names from H5 file.")
+
+    NUM_CLASSES = len(trainval_class_names)
+    y_train_one_hot = to_categorical(y_train, num_classes=NUM_CLASSES)
+    X_train_hashes = np.array([hash_image(img) for img in X_train])
+
+    if parallelize:
+        X_train_landmarks = np.array(Parallel(n_jobs=-1)(
+            delayed(load_landmark_coordinates)(h) for h in tqdm(X_train_hashes, desc="Loading training landmarks")
+        ))
+    else:
+        X_train_landmarks = np.array([load_landmark_coordinates(h) for h in tqdm(X_train_hashes, desc="Loading training landmarks")])
+
+    valid_indices = [i for i, lm in enumerate(X_train_landmarks) if len(lm) > 0]
+    if len(valid_indices) != len(X_train):
+        X_train = X_train[valid_indices]
+        y_train_one_hot = y_train_one_hot[valid_indices]
+        X_train_hashes = X_train_hashes[valid_indices]
+        X_train_landmarks = X_train_landmarks[valid_indices]
+        train_paths_data = train_paths_data[valid_indices] if train_paths_data is not None else None
+
+    train_augmentations = {
+        'rotation_range': 10,
+        'width_shift_range': 0.2,
+        'shear_range': 0.3,
+        'horizontal_flip': True,
+        'fill_mode': 'wrap',
+    }
+
+    train_generator = CustomBalancedDataGenerator(
+        x_data=X_train,
+        y_data=y_train_one_hot,
+        x_hashes=X_train_hashes,
+        x_landmarks=X_train_landmarks,
+        paths_data=train_paths_data,
+        data_inf='train',
+        batch_size=batch_size,
+        augmentations=train_augmentations,
+        label_smoothing=label_smoothing,
+        masking_function=masking_function,
+        occlusion_probability=occlusion_probability,
+        mismatch=mismatch,
+        matching_amount=matching_amount,
+    )
+
+    return train_generator
+
+
+def load_valid_generator(train_path, occlusion_probability, masking_function, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2):
+    """
+    Load only the validation generator from a train H5 file (train_path).
+    """
+    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
+
+    if remove_dupes:
+        for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
+            if split == 'X_val':
+                X_val, y_val, val_paths_data = remove_indices_from_data(X_val, y_val, val_paths_data, indices)
+
+    for emotion in EMOTIONS:
+        if emotion not in trainval_class_names:
+            raise ValueError(f"Class '{emotion}' not found in training/validation class names from H5 file.")
+
+    NUM_CLASSES = len(trainval_class_names)
+    y_val_one_hot = to_categorical(y_val, num_classes=NUM_CLASSES)
+    X_val_hashes = np.array([hash_image(img) for img in X_val])
+
+    if parallelize:
+        X_val_landmarks = np.array(Parallel(n_jobs=-1)(
+            delayed(load_landmark_coordinates)(h) for h in tqdm(X_val_hashes, desc="Loading validation landmarks")
+        ))
+    else:
+        X_val_landmarks = np.array([load_landmark_coordinates(h) for h in tqdm(X_val_hashes, desc="Loading validation landmarks")])
+
+    # filter out entries with zero-length landmarks
+    valid_indices = [i for i, lm in enumerate(X_val_landmarks) if len(lm) > 0]
+    if len(valid_indices) != len(X_val):
+        X_val = X_val[valid_indices]
+        y_val_one_hot = y_val_one_hot[valid_indices]
+        X_val_hashes = X_val_hashes[valid_indices]
+        X_val_landmarks = X_val_landmarks[valid_indices]
+        val_paths_data = val_paths_data[valid_indices] if val_paths_data is not None else None
+
+    augmentations = {
+        'rotation_range': 10,
+        'width_shift_range': 0.2,
+        'shear_range': 0.3,
+        'horizontal_flip': True,
+        'fill_mode': 'wrap',
+    }
+
+    val_generator = CustomBalancedDataGenerator(
+        x_data=X_val,
+        y_data=y_val_one_hot,
+        x_hashes=X_val_hashes,
+        x_landmarks=X_val_landmarks,
+        paths_data=val_paths_data,
+        data_inf='valid',
+        batch_size=batch_size,
+        augmentations=augmentations,
+        label_smoothing=0,
+        masking_function=masking_function,
+        occlusion_probability=occlusion_probability,
+        mismatch=mismatch,
+        matching_amount=matching_amount,
+    )
+
+    return val_generator
+
 
 def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5):
     # 1) Load training and validation data
@@ -141,8 +294,8 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
                 X_train, y_train, train_paths_data = remove_indices_from_data(X_train, y_train, train_paths_data, indices)
             elif split == 'X_val':
                 X_val, y_val, val_paths_data = remove_indices_from_data(X_val, y_val, val_paths_data, indices)
-            elif split == 'X_test':
-                X_test, y_test, test_paths_data = remove_indices_from_data(X_test, y_test, test_paths_data, indices)
+            # elif split == 'X_test':
+            #     X_test, y_test, test_paths_data = remove_indices_from_data(X_test, y_test, test_paths_data, indices)
 
     if small_subset:
         debug_limit = 100
@@ -160,7 +313,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
     # ____________________________________
     X_train_hashes = np.array([hash_image(img) for img in X_train])
     X_val_hashes = np.array([hash_image(img) for img in X_val])
-    X_test_hashes = np.array([hash_image(img) for img in X_test])
+    # X_test_hashes = np.array([hash_image(img) for img in X_test])
     
     # 1.c) Classes validations
     # ____________________________________
@@ -191,21 +344,21 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         if parallelize:
             X_train_landmarks = np.array(Parallel(n_jobs=-1)(   delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_train, X_train_hashes), desc="Detecting training landmarks")     ))
             X_val_landmarks = np.array(Parallel(n_jobs=-1)(     delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_val, X_val_hashes), desc="Detecting validation landmarks")     ))
-            X_test_landmarks = np.array(Parallel(n_jobs=-1)(    delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_test, X_test_hashes), desc="Detecting test landmarks")          ))
+            # X_test_landmarks = np.array(Parallel(n_jobs=-1)(    delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_test, X_test_hashes), desc="Detecting test landmarks")          ))
         else:
             X_train_landmarks = np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_train, X_train_hashes)])
             X_val_landmarks =   np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_val, X_val_hashes)])
-            X_test_landmarks =  np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_test, X_test_hashes)])
+            # X_test_landmarks =  np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_test, X_test_hashes)])
     else:
         if parallelize:
             X_train_landmarks = np.array(Parallel(n_jobs=-1)(   delayed(load_landmark_coordinates)(X_train_hash)    for X_train_hash in tqdm(X_train_hashes, desc="Loading training landmarks")     ))
             X_val_landmarks = np.array(Parallel(n_jobs=-1)(     delayed(load_landmark_coordinates)(X_val_hash)      for X_val_hash in   tqdm(X_val_hashes, desc="Loading validation landmarks")     ))
-            X_test_landmarks = np.array(Parallel(n_jobs=-1)(    delayed(load_landmark_coordinates)(X_test_hash)     for X_test_hash in  tqdm(X_test_hashes, desc="Loading test landmarks")          ))
+            # X_test_landmarks = np.array(Parallel(n_jobs=-1)(    delayed(load_landmark_coordinates)(X_test_hash)     for X_test_hash in  tqdm(X_test_hashes, desc="Loading test landmarks")          ))
         else:
             X_train_landmarks = np.array([load_landmark_coordinates(X_train_hash) for X_train_hash in tqdm(X_train_hashes, desc="Loading training landmarks")])
             X_val_landmarks =   np.array([load_landmark_coordinates(X_val_hash)   for X_val_hash in   tqdm(X_val_hashes, desc="Loading validation landmarks")])
-            X_test_landmarks =  np.array([load_landmark_coordinates(X_test_hash)  for X_test_hash in  tqdm(X_test_hashes, desc="Loading test landmarks")])
-    print(f"Landmarks detected for training, validation, and test sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}, X_test_landmarks length: {len(X_test_landmarks)}")
+            # X_test_landmarks =  np.array([load_landmark_coordinates(X_test_hash)  for X_test_hash in  tqdm(X_test_hashes, desc="Loading test landmarks")])
+    print(f"Landmarks detected for training and validation sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}")
 
     # 2b) Remove 0-length landmark entries (i.e. images where no landmarks were detected)
     #           I filter them here already so that I don't have to handle it at runtime
@@ -233,7 +386,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
 
     X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data = filter_zero_length_landmarks(X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data, name="train")
     X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data, name="val")
-    X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data, name="test")
+    # X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data, name="test")
     
     train_length = len(X_train); val_length = len(X_val); test_length = len(X_test)
     print(f"After filtering zero-length landmarks: X_train length: {train_length}, X_val length: {val_length}, X_test length: {test_length}. Cumulated length: {train_length + val_length + test_length}")
@@ -287,6 +440,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
 
     # 7) Create generators
     # ____________________________________
+    # Train generator should have 
     train_generator = CustomBalancedDataGenerator(
         x_data=X_train, 
         y_data=y_train_one_hot,
@@ -317,20 +471,13 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         mismatch=mismatch,
         matching_amount=matching_amount,
         )
-    test_generator = CustomBalancedDataGenerator(
+    test_generator = OldCustomBalancedDataGenerator(
         x_data=X_test,
         y_data=y_test_one_hot,
-        x_hashes=X_test_hashes,
-        x_landmarks=X_test_landmarks,
-        paths_data=test_paths_data,
         data_inf='test',
         batch_size=batch_size,
         augmentations={},
         label_smoothing=0,
-        masking_function=masking_function,
-        occlusion_probability=1.0,
-        mismatch=mismatch,
-        matching_amount=matching_amount,
-        )
+    )
     
     return train_generator, val_generator, test_generator, initial_bias

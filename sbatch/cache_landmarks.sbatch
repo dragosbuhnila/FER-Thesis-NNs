@@ -3,13 +3,15 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
-#SBATCH --time=00:05:00
+#SBATCH --time=01:15:00
 #SBATCH --nodes=1
-#SBATCH --mem=1G
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+
+
 
 # =====================================================================================
 # ============================= Preliminary Setups ====================================
@@ -38,10 +40,9 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-echo "running python ./scripts/hello_world.py"
-cd /home/dbuhnila/models/FER-Thesis-NNs/scripts
-python hello_world.py
 
+echo "Now running ./scripts/cache_landmarks.py"
+python ./scripts/cache_landmarks.py
 
 
 # =====================================================================================

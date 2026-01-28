@@ -19,6 +19,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__fi
 DATA_BASE_DIR = os.path.join(PROJECT_ROOT, "data")
 AUXILIARY_DATA_DIR = os.path.join(DATA_BASE_DIR, "auxiliary")
 MODULES_DIR = os.path.join(PROJECT_ROOT, "modules")
+MODELS_DIR = os.path.join(DATA_BASE_DIR, "models")
+MLFLOW_DIR = os.path.join(PROJECT_ROOT, "mlruns")
 
 # 1a) Emotions
 # ______________________________________________________________________
@@ -81,10 +83,14 @@ CONSOLE_OUTPUTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "console_outputs")
 # ______________________________________________________________________
 MODELS_PATH = os.path.join(DATA_BASE_DIR, "models")
 # ______________________________________________________________________
-# > FEDERICA MODELS
+# > FEDERICA AND OCCFT MODELS
 FEDERICA_MODELS_FOLDER = os.path.join(MODELS_PATH, "federica")
 FINETUNING_MODELS_FOLDER = os.path.join(FEDERICA_MODELS_FOLDER, "finetuning")
+
+OCCFT_MODELS_FOLDER = os.path.join(MODELS_PATH, "occft")
+
 ALL_MODELS_PATHS = {
+	# ----------------------------------- FEDERICA'S FINAL MODELS
     "resnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ResNet_finetuning"),
     "pattlite_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_PattLite_finetuning"),
     "vgg19_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_VGG19_finetuning"),
@@ -92,7 +98,10 @@ ALL_MODELS_PATHS = {
     "convnext_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ConvNeXt_finetuning"),
     "efficientnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
     "yolo_last": os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
+	# ----------------------------------- MY MODELS (occft -- i.e. occlusion finetuning)
+	"occft_convnext": os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_checkpoints", "20260127-175611_epoch-03-valacc-0.1535"),
 }
+
 # ______________________________________________________________________
 # > MY MODELS (occft -- i.e. occlusion finetuning)
 OCCFT_MODELS_FOLDER = os.path.join(MODELS_PATH, "occft")
