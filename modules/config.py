@@ -10,6 +10,10 @@ GLOBALS = {
     "TOTAL_IMAGES_LANDMARKS_SAVED": 0,                      # Counter for total images saved during masking
     "TOTAL_IMAGES_LANDMARKS_LOADED": 0,                     # Counter for total images loaded during masking
     "UNLANDMARKABLE_IMAGES_LIST": [],
+	"DATALOADER_SHOW_IMAGES_B4AUG": False,
+	"DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE": True,
+	"DATALOADER_SHOW_IMAGES_FINAL": False,
+	"DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE": True,
 }
 
 # 1) Core Configurations

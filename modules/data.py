@@ -5,15 +5,47 @@ import tensorflow.keras as keras
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-from modules.config import EMOTIONS
+from modules.config import EMOTIONS, GLOBALS
 from modules.landmark_utils import get_landmark_coordinate_sets_by_emotion__batch, load_landmark_coordinates
 from modules.mask import apply_mask_to__batch
 from modules.visualize import plot_image
 
 
 
-DEBUG_OCCLUSION = False
+SHOW_IMAGES_B4AUG = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG", False)
+SHOW_IMAGES_B4AUG_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE", True)
+SHOW_IMAGES_FINAL = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL", False)
+SHOW_IMAGES_FINAL_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE", True)
 
+SHOW_IMAGES_B4AUG_REMAINING = {
+    'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
+    'valid': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
+    'test' : 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
+}
+SHOW_IMAGES_FINAL_REMAINING = {
+    'train': 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
+    'valid': 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
+    'test' : 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
+}
+
+
+def show_dataloader_batch_images(before_or_final: str, split: str, batch_x, batch_y, generator_name, batch_x_hashes=None):
+    if before_or_final.lower() not in ["before", "final"]:
+        raise ValueError(f"before_or_final must be either 'before' or 'final', but found is {before_or_final}")
+    split = split.lower()
+    if split not in ["train", "valid", "test"]:
+        raise ValueError(f"split must be either 'train', 'valid', or 'test', instead found {split}")
+
+    dictionary_for_remaining = SHOW_IMAGES_B4AUG_REMAINING if before_or_final.lower() == "before" else SHOW_IMAGES_FINAL_REMAINING
+
+    if dictionary_for_remaining[split] > 0:
+        caption = "image(s) before augmentation" if before_or_final.lower() == "before" else "final augmented image(s)"
+        print(f"[DEBUG] Showing {caption} for split={split} ({generator_name}).")
+        for i in range(len(batch_x)):
+            ith_hash = batch_x_hashes[i] if batch_x_hashes is not None else "N/A"
+            argmaxed_y = np.argmax(batch_y[i])
+            plot_image(batch_x[i], title=f"{split}: {caption}\nHash: {ith_hash}. Emotion: {EMOTIONS[argmaxed_y]} (idx {argmaxed_y})")
+        dictionary_for_remaining[split] -= 1
 
 
 class RandomOcclusion(keras.layers.Layer):
@@ -147,14 +179,14 @@ class RandomOcclusion(keras.layers.Layer):
         occluded_sub = occlude(images_sub, labels_sub, landmarks_sub, hashes_sub, posneg_sub)
         images[occlude_indices] = occluded_sub
 
-        for image in images:
-            if DEBUG_OCCLUSION: # Visualize occluded images
-                nop_variable = 0
-                for image, landmarks_emotions_index, hash in zip(images, labels, image_hashes):
-                    print(f"Hash for the current image: {hash}")
-                    landmarks_that_should_be = load_landmark_coordinates(hash)
-                    plot_image(image, title=f"landmarks for emotion {EMOTIONS[landmarks_emotions_index]} (index {landmarks_emotions_index})\nHash: {hash}")
-                    nop_variable += 1
+        # for image in images:
+        #     if SHOW_IMAGES: # Visualize occluded images
+        #         nop_variable = 0
+        #         for image, landmarks_emotions_index, hash in zip(images, labels, image_hashes):
+        #             print(f"Hash for the current image: {hash}")
+        #             landmarks_that_should_be = load_landmark_coordinates(hash)
+        #             plot_image(image, title=f"landmarks for emotion {EMOTIONS[landmarks_emotions_index]} (index {landmarks_emotions_index})\nHash: {hash}")
+        #             nop_variable += 1
 
         return images
 
@@ -289,11 +321,15 @@ class CustomBalancedDataGenerator(Sequence):
 
         # Applica il rescale o le trasformazioni per augmentation
         batch_x = self.occlusion_layer(batch_x, np.argmax(batch_y, axis=1), batch_x_landmarks, batch_x_hashes, training=(self.data_inf != 'test'))
-        augmented_batch_x = np.zeros_like(batch_x)
-        for i in range(len(batch_x)):
-            augmented_batch_x[i] = self.augmentations.random_transform(batch_x[i])
+        if SHOW_IMAGES_B4AUG:
+            show_dataloader_batch_images(before_or_final="before", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes)
 
-        return augmented_batch_x, batch_y
+        for i in range(len(batch_x)):
+            batch_x[i] = self.augmentations.random_transform(batch_x[i])
+        if SHOW_IMAGES_FINAL:
+            show_dataloader_batch_images(before_or_final="final", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes)
+
+        return batch_x, batch_y
 
     def on_epoch_end(self):
         if self.data_inf != 'test':
@@ -386,15 +422,17 @@ class OldCustomBalancedDataGenerator(Sequence):
                 batch_y = self.apply_label_smoothing(batch_y)
 
 
+        if SHOW_IMAGES_B4AUG:
+            show_dataloader_batch_images(before_or_final="before", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="OldCustomBalancedDataGenerator")
 
         # Applica il rescale o le trasformazioni per augmentation
-        augmented_batch_x = np.zeros_like(batch_x)
         for i in range(len(batch_x)):
-            augmented_batch_x[i] = self.augmentations.random_transform(batch_x[i])
+            batch_x[i] = self.augmentations.random_transform(batch_x[i])
+        if SHOW_IMAGES_FINAL:
+            show_dataloader_batch_images(before_or_final="final", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="OldCustomBalancedDataGenerator")
 
         # train_generator, valid_generator, test_generator, initial_bias
-        return augmented_batch_x, batch_y
-
+        return batch_x, batch_y
 
     def on_epoch_end(self):
         if self.data_inf != 'test':

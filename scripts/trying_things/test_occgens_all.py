@@ -1,7 +1,4 @@
 # Don't run this script directly. Provide arguments!
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_occgens_all.py" -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false
-
-
 
 import os; import sys
 from tqdm import tqdm; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -11,6 +8,9 @@ import argparse
 import pstats
 
 from modules.mask import MASKING_FUNCTIONS
+from modules.config import ADELE_TEST_SET_H5_PATH, BOSPHORUS_TEST_HQ_H5_PATH, CONSOLE_OUTPUTS_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, GLOBALS
+from modules.data__load import load_data_generators
+from modules.visualize import plot_image
 
 
 
@@ -23,9 +23,13 @@ parser.add_argument("-r", "--redirect_output",  type=str, required=True, default
 parser.add_argument("-m", "--mismatch",         type=str, required=True, default=False, help="Whether to use mismatched occlusions (boolean).")
 parser.add_argument("-a", "--matching_amount",  type=float, required=False, help="Amount of matching for occlusions (float). Exaple: 0.2 is 20%, i.e. out of 50 images 10 will be matching, the rest will be of some mismatch type (every 4)")
 parser.add_argument("-s", "--small_subset",     type=str, required=True, default=False, help="Whether to use a small subset of the data for quick testing (boolean).")
-
+parser.add_argument("-b", "--batch_size",       type=int,   required=True, default=32, help="Batch size for the data generator (int).")
+parser.add_argument("--show_loader_images_b4aug",     action='store_true', help="Whether to show images loaded by the data generator (for debugging).")
+parser.add_argument("--show_loader_images_final",     action='store_true', help="Whether to show final images output by the data generator (for debugging).")
 args = parser.parse_args()
 
+
+# Setup the arguments
 args.label_smoothing =  True if str(args.label_smoothing).lower()   in ['true', '1', 'yes'] else False
 args.redirect_output =  True if str(args.redirect_output).lower()   in ['true', '1', 'yes'] else False
 args.mismatch =         True if str(args.mismatch).lower()          in ['true', '1', 'yes'] else False
@@ -39,10 +43,8 @@ elif args.mismatch == False:
     if args.matching_amount is not None:
         print("Warning: matching_amount is provided but mismatch is False. Ignoring matching_amount.")
 
-from modules.config import ADELE_TEST_SET_H5_PATH, BOSPHORUS_TEST_HQ_H5_PATH, CONSOLE_OUTPUTS_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, GLOBALS
-from modules.data__load import load_data_generators
-from modules.visualize import plot_image
-
+GLOBALS["DATALOADER_SHOW_IMAGES_B4AUG"] = args.show_loader_images_b4aug
+GLOBALS["DATALOADER_SHOW_IMAGES_FINAL"] = args.show_loader_images_final
 
 
 # ============================= MACROS ============================
@@ -54,7 +56,6 @@ TEST_SET_PATH = ADELE_TEST_SET_H5_PATH
 TRAINVAL_SET_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH
 
 USE_PROFILER = False
-STOP_AFTER_IMAGES = 0
 
 # __________________-REDIRECTION-_________________
 REDIRECT_OUTPUT = args.redirect_output
@@ -64,7 +65,6 @@ print("SETTINGS selected:")
 print(f"  TEST_SET_PATH = {TEST_SET_PATH}")
 print(f"  TRAINVAL_SET_PATH = {TRAINVAL_SET_PATH}")
 print(f"  USE_PROFILER = {USE_PROFILER}")
-print(f"  STOP_AFTER_IMAGES = {STOP_AFTER_IMAGES}")
 print(f"  LOG_FILE = {LOG_FILE}")
 print()
 print(f"  OCCLUSION_PROBABILITY = {args.occlusion_probability}")
@@ -73,6 +73,10 @@ print(f"  LABEL_SMOOTHING = {args.label_smoothing}")
 print(f"  REDIRECT_OUTPUT = {REDIRECT_OUTPUT}")
 print(f"  MISMATCH = {args.mismatch}")
 print(f"  SMALL_SUBSET = {args.small_subset}")
+print(f"  BATCH_SIZE = {args.batch_size}")
+print()
+print(f"  GLOBALS:")
+print(GLOBALS)
 print()
 
 # ========================== END OF MACROS ========================
@@ -90,7 +94,7 @@ if REDIRECT_OUTPUT:
     sys.stderr = sys.stdout
 
 
-
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_occgens_all.py" -o 1.0  -f lines -l true -r false -m true -a 0.2 -s false -b 16 --show_loader_images_b4aug --show_loader_images_final
 if __name__ == "__main__":
     # 0) Access arguments
     occlusion_probability = args.occlusion_probability
@@ -98,7 +102,14 @@ if __name__ == "__main__":
     use_label_smoothing = args.label_smoothing
 
     # 1) First time run with occlusions      
-    train_generator, val_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, occlusion_probability, masking_function, use_label_smoothing, args.mismatch, small_subset=args.small_subset, matching_amount=args.matching_amount)
+    train_generator, val_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH,
+                                                                                        occlusion_probability,
+                                                                                        masking_function,
+                                                                                        use_label_smoothing,
+                                                                                        args.mismatch,
+                                                                                        small_subset=args.small_subset,
+                                                                                        matching_amount=args.matching_amount,
+                                                                                        batch_size=args.batch_size)
 
     for generator, name in [(train_generator, "train"), (val_generator, "validation"), (test_generator, "test")]:
         start_time = time.time() 
@@ -120,14 +131,7 @@ if __name__ == "__main__":
 
                 i = 0
                 for image in X_batch:
-                    if STOP_AFTER_IMAGES == 0:
-                        continue
-                    else:
-                        print(f"Image shape: {image.shape}")
-                        plot_image(image)
-                        i += 1
-                        if i >= STOP_AFTER_IMAGES:
-                            break
+                    nop_thing = 3
                 # break  # Just test one batch for timing purposes  
             print(f"Last: Batch X shape: {X_batch.shape}, Batch y shape: {y_batch.shape}")
         except Exception as e:
