@@ -98,7 +98,7 @@ if __name__ == "__main__":
     val_generator = load_valid_generator(
         train_path=TRAINVAL_SET_PATH,
         occlusion_probability=occlusion_probability,
-        masking_function=masking_function,
+        masking_function_name=masking_function,
         mismatch=args.mismatch,
         matching_amount=args.matching_amount,
     )

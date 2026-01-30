@@ -61,6 +61,24 @@
                     "--learning_rate", "0.0001",
                     "--l2_reg", "0.00200041712955451"
                 ]
-        }
+        },
+        {
+            "name": "occlude_dataset_offline",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/occlude_dataset_offline.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                    // --mismatch angry --pos_or_neg positive --batch_size 16 --small_subset --show_images -d
+                    "--mismatch", "angry",
+                    "--pos_or_neg", "positive",
+                    "--batch_size", "16",
+                    "--small_subset",
+                    "--show_images",
+                    "-d",
+                ]
+        },
+
     ]
 }

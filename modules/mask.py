@@ -9,8 +9,13 @@ import numpy as np
 from math import ceil
 import warnings
 
+from modules.landmark_utils import get_landmark_coordinate_sets_by_emotion__batch
 from modules.visualize import plot_image
-from modules.config import DEBUG_MASKING, DEBUG_MASKING_TIER2, MASK_COLOR
+from modules.config import DEBUG_MASKING, DEBUG_MASKING_TIER2, EMOTIONS, MASK_COLOR
+
+
+
+# ================================== Masking Original ===================================
 
 DISPLAY_OPTIONS = {
     "default":  {"radius": 200.0, "axis_ratio": 0.45, "gradient_exp": 1.5},
@@ -246,54 +251,12 @@ def mask_face_lines(image, landmark_coordinates,
     return out.astype(np.uint8)
 
 
-
 MASKING_FUNCTIONS = {
     "circles": mask_face_circles,
     "lines": mask_face_lines, # standard
     # "random_rectangles": mask_random_rectangles, # TODO: implement this function
-
 }
 
-
-
-def apply_mask_to_all_sets(image, landmark_sets, masking_function_name, positive_or_negative, debug=DEBUG_MASKING):
-    """
-    Apply facial landmark masks to all sets of landmarks for a batch of images.
-    images : list of np.ndarray
-    landmark_sets : list of list of (x, y)
-    masking_function : function to apply the mask
-    """
-    if positive_or_negative not in [0, 1]:
-        warnings.warn(f"positive_or_negative must be either 1 (positive) or 0 (negative). Got '{positive_or_negative}'. Defaulting to 1 (positive).")
-        positive_or_negative = 1
-
-    if positive_or_negative == 1:
-        i = 0
-        for landmark_set in landmark_sets:
-            image = MASKING_FUNCTIONS[masking_function_name](image, landmark_set)
-            i += 1
-    else:
-        image = apply_inverse_masks(image, landmark_sets, mask_color=MASK_COLOR)
-
-    if debug:
-        plot_image(image, title=f"Mask with {i} landmark sets")
-
-    return image
-
-def apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name, positive_or_negative_batch):
-    """
-    images : list of np.ndarray
-    list_of_landmark_sets : list of list of (x, y)
-    masking_function : function to apply the mask
-    """
-    # if masking_function.__name__ != "mask_face_lines":
-    #     raise ValueError("masking_function must be mask_face_lines for the time being, as I have not tested yet the loopability (on landmark sets) of the other ones")
-
-    if len(images) != len(list_of_landmark_sets):
-        raise ValueError(f"Number of images must match number of landmark sets. Got {len(images)} images and {len(list_of_landmark_sets)} lists of landmark sets.")
-
-    results = [apply_mask_to_all_sets(image, landmark_sets, masking_function_name, positive_or_negative) for image, landmark_sets, positive_or_negative in zip(images, list_of_landmark_sets, positive_or_negative_batch)]
-    return results
 
 def apply_inverse_masks(image, landmark_sets, mask_color=(0, 0, 0)):
     """
@@ -387,6 +350,12 @@ def apply_inverse_masks(image, landmark_sets, mask_color=(0, 0, 0)):
     out = image.astype(np.float32) * alpha_3ch + color_layer * (1.0 - alpha_3ch)
 
     return out.astype(np.uint8)
+
+# ================================== End Of Masking Original ===================================
+
+
+
+# =================================== ROIs ===================================
 
 def get_roi_matrix(image_shape, landmark_coordinates, fill,
               expansion=37,
@@ -485,3 +454,93 @@ def invert_heatmap(heatmap):
     # Zeros and NaNs remain zero
 
     return inverse_heatmap
+
+# =================================== End Of ROIs ===================================
+
+
+
+# =================================== Batch Masking ===================================
+
+def apply_mask_to_all_sets(image, landmark_sets, masking_function_name, positive_or_negative, debug=DEBUG_MASKING):
+    """
+    Apply facial landmark masks to all sets of landmarks for a batch of images.
+    images : list of np.ndarray
+    landmark_sets : list of list of (x, y)
+    masking_function : function to apply the mask
+    """
+    if positive_or_negative not in [0, 1]:
+        warnings.warn(f"positive_or_negative must be either 1 (positive) or 0 (negative). Got '{positive_or_negative}'. Defaulting to 1 (positive).")
+        positive_or_negative = 1
+
+    if positive_or_negative == 1:
+        i = 0
+        for landmark_set in landmark_sets:
+            image = MASKING_FUNCTIONS[masking_function_name](image, landmark_set)
+            i += 1
+    else:
+        image = apply_inverse_masks(image, landmark_sets, mask_color=MASK_COLOR)
+
+    if debug:
+        plot_image(image, title=f"Mask with {i} landmark sets")
+
+    return image
+
+def apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name, positive_or_negative_batch):
+    """
+    images : list of np.ndarray
+    list_of_landmark_sets : list of list of (x, y)
+    masking_function : function to apply the mask
+    """
+    # if masking_function.__name__ != "mask_face_lines":
+    #     raise ValueError("masking_function must be mask_face_lines for the time being, as I have not tested yet the loopability (on landmark sets) of the other ones")
+
+    if len(images) != len(list_of_landmark_sets):
+        raise ValueError(f"Number of images must match number of landmark sets. Got {len(images)} images and {len(list_of_landmark_sets)} lists of landmark sets.")
+
+    results = [apply_mask_to_all_sets(image, landmark_sets, masking_function_name, positive_or_negative) for image, landmark_sets, positive_or_negative in zip(images, list_of_landmark_sets, positive_or_negative_batch)]
+    return results
+
+def occlude_batch(images, labels, image_landmarks, image_hashes, positive_or_negative_batch, masking_function_name):
+            # images is a np array
+
+            # a) Get all the landmarks, in the form of coordinates, for each image
+            #       i.e. for each image every single face point, even unnecessary ones, will be there (they should be cached already)
+            # ____________________________________________________________________________________________
+            # If no landmarks are detected, then occlusion isn't possible for the approach we're currently using (i.e. masking based on AU landmarks),
+            #   so leave the unprocessable image out and reinsert it with no occlusion
+            error_indices = []
+            for i, landmarks_all in enumerate(image_landmarks):
+                if len(landmarks_all) == 0:
+                    error_indices.append(i)
+
+            # # a1) Prepare unoccludable images to be reinserted later (won't do it in this version as I am already removing the problem images)
+            # unoccludable_images = dict()
+            # # sort error indices in reverse order so that the insertion has correct indices (deleting from the end first)
+            # error_indices.sort(reverse=True)
+            # for i in error_indices:
+            #     # Save the image without occlusion and remove it from the batch
+            #     unoccludable_images[i] = numpy_images[i]
+            #     image_landmarks = np.delete(image_landmarks, i, axis=0) 
+            # # ____________________________________________________________________________________________           
+            
+            # b) Get the coordinates relating to just the specific emotion needed, for each image
+            # ____________________________________________________________________________________________
+            emotions = [EMOTIONS[label] for label in labels]
+            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(image_landmarks, emotions)
+            # ____________________________________________________________________________________________
+
+            # c) Apply occlusion based on the landmarks
+            # ____________________________________________________________________________________________
+            occluded = apply_mask_to__batch(images, list_of_landmark_sets, masking_function_name, positive_or_negative_batch)
+            # ___________________________________________________________________________________________   
+
+            # # a2) Reinsert unoccludable images without occlusion (won't do it in this version as I am already removing the problem images)
+            # # sort unoccludable images by key in reverse order (so double reverse means original order) so that the insertion has correct indices (inserting from the start again)
+            # for i, img in sorted(unoccludable_images.items()):
+            #     occluded = np.insert(occluded, i, img, axis=0)
+
+            # If I implemented the pipeline correctly, when cache miss doesn't happen this is already a tensor, else it's a list
+            # But since the augmentation pipeline is not GPU compatible RN, I convert to numpy before passing to augmentation
+            return occluded
+            
+# =================================== End Of Batch Occlusion ===================================

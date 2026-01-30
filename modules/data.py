@@ -6,30 +6,36 @@ from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from modules.config import EMOTIONS, GLOBALS
-from modules.landmark_utils import get_landmark_coordinate_sets_by_emotion__batch, load_landmark_coordinates
-from modules.mask import apply_mask_to__batch
+from modules.mask import occlude_batch
 from modules.visualize import plot_image
 
 
 
-SHOW_IMAGES_B4AUG = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG", False)
-SHOW_IMAGES_B4AUG_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE", True)
-SHOW_IMAGES_FINAL = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL", False)
-SHOW_IMAGES_FINAL_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE", True)
+# =============================== SETTINGS AND DEBUG ================================
 
-SHOW_IMAGES_B4AUG_REMAINING = {
-    'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
-    'valid': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
-    'test' : 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
-}
-SHOW_IMAGES_FINAL_REMAINING = {
-    'train': 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
-    'valid': 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
-    'test' : 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
-}
+def refresh_show_flags():
+    global SHOW_IMAGES_B4AUG, SHOW_IMAGES_B4AUG_ONLYONCE, SHOW_IMAGES_FINAL, SHOW_IMAGES_FINAL_ONLYONCE
+    global SHOW_IMAGES_B4AUG_REMAINING, SHOW_IMAGES_FINAL_REMAINING
 
+    SHOW_IMAGES_B4AUG = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG", False)
+    SHOW_IMAGES_B4AUG_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE", True)
+    SHOW_IMAGES_FINAL = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL", False)
+    SHOW_IMAGES_FINAL_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE", True)
 
-def show_dataloader_batch_images(before_or_final: str, split: str, batch_x, batch_y, generator_name, batch_x_hashes=None):
+    SHOW_IMAGES_B4AUG_REMAINING = {
+        'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
+        'valid': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
+        'test' : 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
+    }
+    SHOW_IMAGES_FINAL_REMAINING = {
+        'train': 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
+        'valid': 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
+        'test' : 1 if SHOW_IMAGES_FINAL_ONLYONCE else float('inf'),
+    }
+
+refresh_show_flags()
+
+def show_dataloader_batch_images(before_or_final: str, split: str, batch_x, batch_y, generator_name, batch_x_hashes=None, mismatched_y=None, positive_or_negative_batch=None):
     if before_or_final.lower() not in ["before", "final"]:
         raise ValueError(f"before_or_final must be either 'before' or 'final', but found is {before_or_final}")
     split = split.lower()
@@ -44,154 +50,150 @@ def show_dataloader_batch_images(before_or_final: str, split: str, batch_x, batc
         for i in range(len(batch_x)):
             ith_hash = batch_x_hashes[i] if batch_x_hashes is not None else "N/A"
             argmaxed_y = np.argmax(batch_y[i])
-            plot_image(batch_x[i], title=f"{split}: {caption}\nHash: {ith_hash}. Emotion: {EMOTIONS[argmaxed_y]} (idx {argmaxed_y})")
+            height, width = batch_x[i].shape[0], batch_x[i].shape[1]
+            title = f"{split}: {caption} ({height}x{width})\n" + \
+                    f"Hash: {ith_hash}. Emotion: {EMOTIONS[argmaxed_y]} (idx {argmaxed_y})"
+            if mismatched_y is not None and positive_or_negative_batch is not None:
+                mismatched_emotion = EMOTIONS[mismatched_y[i]]
+                posneg = "Positive" if positive_or_negative_batch[i] else "Negative"
+                title += f"\nMismatched Emotion: {mismatched_emotion} ({posneg})"
+            plot_image(batch_x[i], title=title)
         dictionary_for_remaining[split] -= 1
+
+# =============================== END OF SETTINGS AND DEBUG ================================
+
+
+
+# =============================== DATA GENERATOR WITH RANDOM OCCLUSION LAYER ================================
+
+def uniform_mismatch(labels, matching_amount, positive_or_negative_batch):
+    # Allow for mismatching emotion-landmarks (e.g. putting 'happy' landmarks on a 'sad' image)
+    #   > overwrite labels to have a uniform distribution of emotions, except for NEUTRAL (4)
+
+    # 0) Determine amount of matching occlusions
+    amt_of_matching_occlusions = int(len(labels) * matching_amount)
+    amt_of_mismatching_occlusions = len(labels) - amt_of_matching_occlusions
+
+    # # 1) Select emotions to use for mismatching
+    num_emotions = len(EMOTIONS)  # Total number of emotions
+    if num_emotions != 7:
+        raise ValueError(f"Expected 7 emotions, but got {num_emotions}. Check EMOTIONS mapping.")
+    mismatching_emotions_to_apply = [i for i in range(num_emotions) if i != 4] # Exclude NEUTRAL (4) from pool
+    mismatching_labels = np.random.choice(mismatching_emotions_to_apply, size=amt_of_mismatching_occlusions)
+
+    # Here there's the choice of keeping always ratios that mirror the test sets (i.e. always having a 20% of the masked images being matched and so on) or allow for the 
+    #   non occluded images to substitute any of these, meaning that the ratio may fluctuate inside of the single batch, but should stay kind of consisten throughout the epochs instead.
+    # I'll keep this choice of picking the occlusions first (mirroring ratio) and then selecting which images will be occluded or not, since it's the easier approach, 
+    #   and should also grant variety to the descent towards optimality.
+    # The same philosophy applies to the choice of positive/negative. The distribution within a single batch of every of the 10 kinds of occlusion (nof_occlusion_types = 5 * 2  # 5 occlusion types (each unmatched emotion), each with +/- occlusion)
+    #   won't be exaclty uniform since negative/positive isn't really chained to the choice of the mismatching emotion in the following code, but again, 
+    #   it should uniform itself throughout the epochs, plus add variability between batches.
+
+    # 2) Find/Decide which indices will have mismatching emotions
+    # keep **matching_amount** of labels the same, change the rest
+    labels = labels.astype(int)
+    indices_randomized = np.arange(len(labels))
+    np.random.shuffle(indices_randomized) # This makes indices just a vector with non-repeating random integers, ranging from 0 to len(labels)-1
+    mismatch_indices = indices_randomized[amt_of_matching_occlusions:] # Excludes the first *{matching_amount}* of indices
+    # mismatch_indices.sort()  # Sort when debugging to check correctness easily
+
+    # 3) Overwrite labels with mismatching ones
+    for i, idx in enumerate(mismatch_indices):
+        # Get a mismatching label that is different from the original
+        original_label = labels[idx]
+        mismatched_label = mismatching_labels[i]
+
+        time_spent_in_while_loop = 0
+        while mismatched_label == original_label:
+            mismatched_label = np.random.choice(mismatching_emotions_to_apply)
+            time_spent_in_while_loop += 1
+
+        GLOBALS['MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH'] = max(GLOBALS.get('MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH', 0), time_spent_in_while_loop)
+
+        labels[idx] = mismatched_label
+
+    # 4) Find/Decide which indices (among the mismatching ones) will have positive/negative occlusion
+    positive_or_negative_batch[mismatch_indices] = np.random.randint(0, 2, size=len(mismatch_indices))
+
+    return labels, positive_or_negative_batch
+
+def specific_mismatch(labels, emotion_name):
+    if emotion_name.upper() == 'NEUTRAL':
+        raise ValueError("NEUTRAL emotion cannot be used for specific_mismatch, as it is not allowed to mismatch to NEUTRAL.")
+    if emotion_name not in EMOTIONS:
+        raise ValueError(f"emotion_name must be one of {', '.join(EMOTIONS)}, but found '{emotion_name}'")
+
+    target_emotion_idx = EMOTIONS.index(emotion_name) # Get index of the target emotion
+
+    # 1) Overwrite all labels with the specific mismatching one
+    labels = np.array([target_emotion_idx] * len(labels))
+
+    return labels
 
 
 class RandomOcclusion(keras.layers.Layer):
-    def __init__(self, occlusion_probability, masking_function, mismatch, matching_amount, **kwargs):
+    def __init__(self, occlusion_probability: float, masking_function_name: str, mismatch: str, matching_amount: float, pos_or_neg: str = None, **kwargs):
         super().__init__(**kwargs)
         self.occlusion_probability = occlusion_probability
-        self.masking_function = masking_function
+        self.masking_function_name = masking_function_name
         self.mismatch = mismatch
         self.matching_amount = matching_amount
-
-    def call(self, images, labels, image_landmarks, image_hashes, training=None):
-        # labels = tf.convert_to_tensor(labels) if not tf.is_tensor(labels) else labels
-        # image_landmarks = tf.convert_to_tensor(image_landmarks) if not tf.is_tensor(image_landmarks) else image_landmarks
-
-        # TODO: check if this really is needed AND if training not being a tf.Tensor slows things down
-        if training is None:
-            training = keras.backend.learning_phase()
-        
+        self.pos_or_neg = pos_or_neg
+    def call(self, images, labels, image_landmarks, image_hashes):        
+        # 1) Preparing parameters
         images = images.numpy()
 
-        def occlude(images, labels, image_landmarks, image_hashes, positive_or_negative_batch):
-            # images is a np array
-
-            # a) Get all the landmarks, in the form of coordinates, for each image
-            #       i.e. for each image every single face point, even unnecessary ones, will be there (they should be cached already)
-            # ____________________________________________________________________________________________
-            # If no landmarks are detected, then occlusion isn't possible for the approach we're currently using (i.e. masking based on AU landmarks),
-            #   so leave the unprocessable image out and reinsert it with no occlusion
-            error_indices = []
-            for i, landmarks_all in enumerate(image_landmarks):
-                if len(landmarks_all) == 0:
-                    error_indices.append(i)
-
-            # # a1) Prepare unoccludable images to be reinserted later (won't do it in this version as I am already removing the problem images)
-            # unoccludable_images = dict()
-            # # sort error indices in reverse order so that the insertion has correct indices (deleting from the end first)
-            # error_indices.sort(reverse=True)
-            # for i in error_indices:
-            #     # Save the image without occlusion and remove it from the batch
-            #     unoccludable_images[i] = numpy_images[i]
-            #     image_landmarks = np.delete(image_landmarks, i, axis=0) 
-            # # ____________________________________________________________________________________________           
-            
-            # b) Get the coordinates relating to just the specific emotion needed, for each image
-            # ____________________________________________________________________________________________
-            emotions = [EMOTIONS[label] for label in labels]
-            list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(image_landmarks, emotions)
-            # ____________________________________________________________________________________________
-
-            # c) Apply occlusion based on the landmarks
-            # ____________________________________________________________________________________________
-            occluded = apply_mask_to__batch(images, list_of_landmark_sets, self.masking_function, positive_or_negative_batch)
-            # ___________________________________________________________________________________________   
-
-            # if DEBUG_OCCLUSION: # Visualize occluded images
-            #     nop_variable = 0
-            #     for image, landmarks_emotion, landmarks_emotions_index, hash in zip(occluded, emotions, labels, image_hashes):
-            #         print(f"Hash for the current image: {hash}")
-            #         landmarks_that_should_be = load_landmark_coordinates(hash)
-            #         plot_image(image, title=f"landmarks for emotion {landmarks_emotion} (index {landmarks_emotions_index})\nHash: {hash}")
-            #         nop_variable += 1
-
-            # # a2) Reinsert unoccludable images without occlusion (won't do it in this version as I am already removing the problem images)
-            # # sort unoccludable images by key in reverse order (so double reverse means original order) so that the insertion has correct indices (inserting from the start again)
-            # for i, img in sorted(unoccludable_images.items()):
-            #     occluded = np.insert(occluded, i, img, axis=0)
-
-            # If I implemented the pipeline correctly, when cache miss doesn't happen this is already a tensor, else it's a list
-            # But since the augmentation pipeline is not GPU compatible RN, I convert to numpy before passing to augmentation
-            if tf.is_tensor(occluded):
-                return occluded.numpy()
-            elif isinstance(occluded, list):
-                occluded = np.array(occluded)
-                return occluded
-            else:
-                raise TypeError("Occluded images must be either a tf.Tensor or a list, there must have been an issue.")
-
-        if self.mismatch:
-            # Allow for mismatching emotion-landmarks (e.g. putting 'happy' landmarks on a 'sad' image)
-            #   > overwrite labels to have a uniform distribution of emotions, except for NEUTRAL (4)
-            num_emotions = len(EMOTIONS)  # Total number of emotions
-            if num_emotions != 7:
-                raise ValueError(f"Expected 7 emotions, but got {num_emotions}. Check EMOTIONS mapping.")
-
-            # 1) Exclude NEUTRAL (4) from pool
-            non_neutral_emotions = [i for i in range(num_emotions) if i != 4] 
-
-            # Here there's the choice of keeping always ratios that mirror the test sets (i.e. always having a 20% of the masked images being matched and so on) or allow for the 
-            #   non occluded images to substitute any of these, meaning that the ratio may fluctuate inside of the single batch, but should stay kind of consisten throughout the epochs instead.
-            # I'll keep this choice of picking the occlusions first (mirroring ratio) and then selecting which images will be occluded or not, since it's the easier approach, 
-            #   and should also grant variety to the descent towards optimality.
-            # The same philosophy applies to the choice of positive/negative. The distribution within a single batch of every of the 10 kinds of occlusion (nof_occlusion_types = 5 * 2  # 5 occlusion types (each unmatched emotion), each with +/- occlusion)
-            #   won't be exaclty uniform since negative/positive isn't really chained to the choice of the mismatching emotion in the following code, but again, 
-            #   it should uniform itself throughout the epochs, plus add variability between batches.
-
-            # keep **matching_amount** of labels the same, change the rest
-            labels = labels.astype(int)
-            num_to_match = int(len(labels) * self.matching_amount)
-            indices = np.arange(len(labels))
-            np.random.shuffle(indices)
-            indices_to_change = indices[num_to_match:]
-            # indices_to_change.sort()  # Sort when debugging to check correctness easily
-
-            mismatching_labels = np.random.choice(non_neutral_emotions, size=len(indices_to_change))
-            positive_or_negative_batch = np.ones_like(labels)
-            positive_or_negative_batch[indices_to_change] = np.random.randint(0, 2, size=len(indices_to_change))
-            
-            labels[indices_to_change] = mismatching_labels
-
-
         batch_size = images.shape[0]
-        num_to_occlude = int(batch_size * self.occlusion_probability)
+        amt_to_occlude = int(batch_size * self.occlusion_probability)
+        
+        if self.pos_or_neg is None:
+            positive_or_negative_batch = np.ones_like(labels) # Matching indices will always be positive occlusion (1)
+        elif self.pos_or_neg.lower() == 'positive':
+            positive_or_negative_batch = np.ones_like(labels) # All occlusions will be positive (1)
+        elif self.pos_or_neg.lower() == 'negative':
+            positive_or_negative_batch = np.zeros_like(labels) # All occlusions will be negative (0)
 
-        # Nothing to occlude
-        if num_to_occlude == 0:
-            return images
+        if amt_to_occlude == 0:
+            return images, labels, positive_or_negative_batch
 
-        # Randomly select indices to occlude
-        all_indices = np.arange(batch_size)
-        np.random.shuffle(all_indices)
-        occlude_indices = all_indices[:num_to_occlude]
+        # 2) Prepare for mismatched occlusion (if needed)
+        if self.mismatch.lower() == 'uniform':
+            # uniform mismatch across all emotions except NEUTRAL (4). 
+            labels, positive_or_negative_batch = uniform_mismatch(labels, self.matching_amount, positive_or_negative_batch) 
+        elif self.mismatch.upper() in EMOTIONS:
+            labels = specific_mismatch(labels, self.mismatch.upper())
+        elif self.mismatch.lower() != 'none' and self.mismatch.lower() != 'no':
+            raise ValueError(f"mismatch must be either 'uniform', 'none'/'no', or an emotion name ({', '.join(EMOTIONS)}), but found '{self.mismatch}'")
 
-        # Slice sub-batch
+        # 3) Prepare for occlusion
+        # > Decide which images to occlude
+        indices_randomized = np.arange(len(labels))
+        np.random.shuffle(indices_randomized) # This makes indices just a vector with non-repeating random integers, ranging from 0 to len(labels)-1
+        occlude_indices = indices_randomized[:amt_to_occlude]
+
+        # > Sub-batch to occlude
         images_sub = images[occlude_indices]
         labels_sub = labels[occlude_indices]
         landmarks_sub = image_landmarks[occlude_indices]
         hashes_sub = image_hashes[occlude_indices]
         posneg_sub = positive_or_negative_batch[occlude_indices]
 
-        # Apply occlusion only to sub-batch
-        occluded_sub = occlude(images_sub, labels_sub, landmarks_sub, hashes_sub, posneg_sub)
+        # 4) Apply occlusion only to sub-batch
+        occluded_sub = occlude_batch(images_sub, labels_sub, landmarks_sub, hashes_sub, posneg_sub, self.masking_function_name)
+        if tf.is_tensor(occluded_sub):
+            occluded_sub = occluded_sub.numpy()
+        elif isinstance(occluded_sub, list):
+            occluded_sub = np.array(occluded_sub)
+        else:
+            raise TypeError("Occluded images must be either a tf.Tensor or a list, there must have been an issue.")
+        
+        # 5) Reinsert occluded sub-batch into original batch
         images[occlude_indices] = occluded_sub
 
-        # for image in images:
-        #     if SHOW_IMAGES: # Visualize occluded images
-        #         nop_variable = 0
-        #         for image, landmarks_emotions_index, hash in zip(images, labels, image_hashes):
-        #             print(f"Hash for the current image: {hash}")
-        #             landmarks_that_should_be = load_landmark_coordinates(hash)
-        #             plot_image(image, title=f"landmarks for emotion {EMOTIONS[landmarks_emotions_index]} (index {landmarks_emotions_index})\nHash: {hash}")
-        #             nop_variable += 1
+        return images, labels, positive_or_negative_batch
 
-        return images
-
-class CustomBalancedDataGenerator(Sequence):
-    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, **kwargs):
+class OnlineOcclusionGenerator(Sequence):
+    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function_name, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, pos_or_neg=None, **kwargs):
         super().__init__(**kwargs)
         if data_inf not in ['train', 'valid', 'test']:
             raise ValueError(f"data_inf must be 'train', 'valid', or 'test', but is '{data_inf}'")
@@ -206,7 +208,7 @@ class CustomBalancedDataGenerator(Sequence):
         self.data_inf = data_inf
         self.batch_size = batch_size
         self.label_smoothing = label_smoothing
-        self.occlusion_layer = RandomOcclusion(occlusion_probability, masking_function, mismatch, matching_amount)
+        self.occlusion_layer = RandomOcclusion(occlusion_probability, masking_function_name, mismatch, matching_amount, pos_or_neg=pos_or_neg)
 
         if data_inf in ['train', 'valid']:
             #print(y_data)
@@ -320,14 +322,15 @@ class CustomBalancedDataGenerator(Sequence):
                 batch_y = self.apply_label_smoothing(batch_y)
 
         # Applica il rescale o le trasformazioni per augmentation
-        batch_x = self.occlusion_layer(batch_x, np.argmax(batch_y, axis=1), batch_x_landmarks, batch_x_hashes, training=(self.data_inf != 'test'))
+        batch_x, mismatched_y, positive_or_negative_batch = self.occlusion_layer(batch_x, np.argmax(batch_y, axis=1), batch_x_landmarks, batch_x_hashes)
+        # print(f"[DEBUG] SHOW_IMAGES_B4AUG={SHOW_IMAGES_B4AUG}, SHOW_IMAGES_FINAL={SHOW_IMAGES_FINAL} for data_inf={self.data_inf} (CustomBalancedDataGenerator).")
         if SHOW_IMAGES_B4AUG:
-            show_dataloader_batch_images(before_or_final="before", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes)
+            show_dataloader_batch_images(before_or_final="before", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
 
         for i in range(len(batch_x)):
             batch_x[i] = self.augmentations.random_transform(batch_x[i])
         if SHOW_IMAGES_FINAL:
-            show_dataloader_batch_images(before_or_final="final", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes)
+            show_dataloader_batch_images(before_or_final="final", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
 
         return batch_x, batch_y
 
@@ -351,6 +354,9 @@ class CustomBalancedDataGenerator(Sequence):
         else:
             return labels
 
+
+class OfflineOcclusionGenerator(Sequence):
+    pass
 
 
 class OldCustomBalancedDataGenerator(Sequence):

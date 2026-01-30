@@ -7,7 +7,7 @@ from tensorflow.keras.utils import to_categorical
 from tqdm import tqdm
 
 from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
-from modules.data import CustomBalancedDataGenerator, OldCustomBalancedDataGenerator
+from modules.data import OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
 from modules.misc import hash_image
 
@@ -159,7 +159,7 @@ def load_test_generator(path, batch_size=64):
     return data_generator
 
 
-def load_train_generator(train_path, occlusion_probability, masking_function, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2, label_smoothing=0.0):
+def load_train_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2, label_smoothing=0.0):
     """
     Load only the train generator from a train H5 file (train_path).
     """
@@ -201,7 +201,7 @@ def load_train_generator(train_path, occlusion_probability, masking_function, mi
         'fill_mode': 'wrap',
     }
 
-    train_generator = CustomBalancedDataGenerator(
+    train_generator = OnlineOcclusionGenerator(
         x_data=X_train,
         y_data=y_train_one_hot,
         x_hashes=X_train_hashes,
@@ -211,7 +211,7 @@ def load_train_generator(train_path, occlusion_probability, masking_function, mi
         batch_size=batch_size,
         augmentations=train_augmentations,
         label_smoothing=label_smoothing,
-        masking_function=masking_function,
+        masking_function_name=masking_function_name,
         occlusion_probability=occlusion_probability,
         mismatch=mismatch,
         matching_amount=matching_amount,
@@ -220,7 +220,7 @@ def load_train_generator(train_path, occlusion_probability, masking_function, mi
     return train_generator
 
 
-def load_valid_generator(train_path, occlusion_probability, masking_function, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2):
+def load_valid_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2):
     """
     Load only the validation generator from a train H5 file (train_path).
     """
@@ -263,7 +263,7 @@ def load_valid_generator(train_path, occlusion_probability, masking_function, mi
         'fill_mode': 'wrap',
     }
 
-    val_generator = CustomBalancedDataGenerator(
+    val_generator = OnlineOcclusionGenerator(
         x_data=X_val,
         y_data=y_val_one_hot,
         x_hashes=X_val_hashes,
@@ -273,7 +273,7 @@ def load_valid_generator(train_path, occlusion_probability, masking_function, mi
         batch_size=batch_size,
         augmentations=augmentations,
         label_smoothing=0,
-        masking_function=masking_function,
+        masking_function_name=masking_function_name,
         occlusion_probability=occlusion_probability,
         mismatch=mismatch,
         matching_amount=matching_amount,
@@ -282,10 +282,10 @@ def load_valid_generator(train_path, occlusion_probability, masking_function, mi
     return val_generator
 
 
-def load_data_generators(train_path, test_path, occlusion_probability, masking_function, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5):
+def load_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False):
     # 1) Load training and validation data
     # ____________________________________
-    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
+    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(trainval_path, 'train')
     X_test, y_test, test_class_names, test_paths_data = load_data_and_labels(test_path, 'test')
 
     if remove_dupes:
@@ -327,9 +327,9 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
     # 1.d) Paths validations
     # ____________________________________
     if train_paths_data is not None and val_paths_data is None:
-        raise ValueError(f"Training paths are provided but validation paths are missing, which is weird, so check the dataset at {train_path}.")
+        raise ValueError(f"Training paths are provided but validation paths are missing, which is weird, so check the dataset at {trainval_path}.")
     if train_paths_data is None and val_paths_data is not None:
-        raise ValueError(f"Validation paths are provided but training paths are missing, which is weird, so check the dataset at {train_path}.")
+        raise ValueError(f"Validation paths are provided but training paths are missing, which is weird, so check the dataset at {trainval_path}.")
     
     # 2) Landmarking
     # ____________________________________
@@ -423,13 +423,18 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
     # 5)  Augmentations
     # ____________________________________
     # TODO: make them GPUable as right now they can only run on CPU so I have to convert them to numpy arrays
-    train_augmentations = {
-        'rotation_range': 10,
-        'width_shift_range': 0.2,
-        'shear_range': 0.3,
-        'horizontal_flip': True,
-        'fill_mode': 'wrap',
-    }
+    if dont_augment:
+        train_augmentations = {}
+    else:
+        train_augmentations = {
+            'rotation_range': 10,
+            'width_shift_range': 0.2,
+            'shear_range': 0.3,
+            'horizontal_flip': True,
+            # 'fill_mode': 'wrap', # Idk why this was here but it makes zero sense, 
+            # 'fill_mode': 'nearest', # Distorst the image if it's near the edges
+            'fill_mode': 'constant', # Fill with zeros (black)
+        }
 
     # 6) Label smoothing
     # ____________________________________
@@ -441,7 +446,7 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
     # 7) Create generators
     # ____________________________________
     # Train generator should have 
-    train_generator = CustomBalancedDataGenerator(
+    train_generator = OnlineOcclusionGenerator(
         x_data=X_train, 
         y_data=y_train_one_hot,
         x_hashes=X_train_hashes,
@@ -451,12 +456,13 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         batch_size=batch_size,
         augmentations=train_augmentations,
         label_smoothing=label_smoothing_value,
-        masking_function=masking_function,
-        occlusion_probability=occlusion_probability,
+        masking_function_name=masking_function_name,
+        occlusion_probability=training_occlusion_probability,
         mismatch=mismatch,
         matching_amount=matching_amount,
+        pos_or_neg=pos_or_neg,
         )
-    val_generator = CustomBalancedDataGenerator(
+    val_generator = OnlineOcclusionGenerator(
         x_data=X_val,
         y_data=y_val_one_hot,
         x_hashes=X_val_hashes,
@@ -466,10 +472,11 @@ def load_data_generators(train_path, test_path, occlusion_probability, masking_f
         batch_size=batch_size,
         augmentations=train_augmentations,
         label_smoothing=0,
-        masking_function=masking_function,
+        masking_function_name=masking_function_name,
         occlusion_probability=validation_occlusion_probability,
         mismatch=mismatch,
         matching_amount=matching_amount,
+        pos_or_neg=pos_or_neg,
         )
     test_generator = OldCustomBalancedDataGenerator(
         x_data=X_test,

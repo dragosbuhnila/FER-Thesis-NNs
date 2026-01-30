@@ -66,8 +66,8 @@ def main():
     #   > 50% occlusions, in which 20% are matching positives, 40% are mismatching positive, 40% are mismatching negatives
     #   >
     train_generator, valid_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, 
-                                                                                          occlusion_probability=occlusion_probability, 
-                                                                                          masking_function="lines", 
+                                                                                          training_occlusion_probability=occlusion_probability, 
+                                                                                          masking_function_name="lines", 
                                                                                           use_label_smoothing=True, 
                                                                                           mismatch=True,
                                                                                           small_subset=False, 

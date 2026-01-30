@@ -14,17 +14,18 @@ GLOBALS = {
 	"DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE": True,
 	"DATALOADER_SHOW_IMAGES_FINAL": False,
 	"DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE": True,
+	"MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH": 0,
 }
 
 # 1) Core Configurations
 # ______________________________________________________________________
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+PROJECT_ROOT = 			os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 # ______________________________________________________________________
-DATA_BASE_DIR = os.path.join(PROJECT_ROOT, "data")
-AUXILIARY_DATA_DIR = os.path.join(DATA_BASE_DIR, "auxiliary")
-MODULES_DIR = os.path.join(PROJECT_ROOT, "modules")
-MODELS_DIR = os.path.join(DATA_BASE_DIR, "models")
-MLFLOW_DIR = os.path.join(PROJECT_ROOT, "mlruns")
+DATA_BASE_DIR = 		os.path.join(PROJECT_ROOT, "data")
+AUXILIARY_DATA_DIR = 	os.path.join(DATA_BASE_DIR, "auxiliary")
+MODULES_DIR = 			os.path.join(PROJECT_ROOT, "modules")
+MODELS_DIR = 			os.path.join(DATA_BASE_DIR, "models")
+MLFLOW_DIR = 			os.path.join(PROJECT_ROOT, "mlruns")
 
 # 1a) Emotions
 # ______________________________________________________________________
@@ -52,71 +53,76 @@ DATASETS_PATH = os.path.join(DATA_BASE_DIR, "datasets")
 
 # ______________________________________________________________________
 # > ADELE_TEST_SET
-ADELE_TEST_SET_BASE_PATH = os.path.join(DATASETS_PATH, "adele_test_set")
-ADELE_TEST_SET_H5_PATH = os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set.h5")
-ADELE_TEST_SET_IMAGES_PATH = os.path.join(ADELE_TEST_SET_BASE_PATH, "extracted_images")
-ADELE_TEST_SET_YAML_PATH = os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set_yaml")
+ADELE_TEST_SET_BASE_PATH = 			os.path.join(DATASETS_PATH, "adele_test_set")
+ADELE_TEST_SET_H5_PATH = 			os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set.h5")
+ADELE_TEST_SET_IMAGES_PATH = 		os.path.join(ADELE_TEST_SET_BASE_PATH, "extracted_images")
+ADELE_TEST_SET_YAML_PATH = 			os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set_yaml")
 # ______________________________________________________________________
 # > OCCLUDED_TEST_SET
-OCCLUDED_TEST_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_test_set")
-OCCLUDED_TEST_SET_H5_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
-OCCLUDED_TEST_SET_IMAGES_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ")
-OCCLUDED_TEST_SET_RESIZED_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "output_images_testset_resized")
-OCCLUDED_TEST_SET_YAML_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_yaml")
+OCCLUDED_TEST_SET_BASE_PATH = 		os.path.join(DATASETS_PATH, "occluded_test_set")
+OCCLUDED_TEST_SET_H5_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
+OCCLUDED_TEST_SET_IMAGES_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ")
+OCCLUDED_TEST_SET_RESIZED_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "output_images_testset_resized")
+OCCLUDED_TEST_SET_YAML_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_yaml")
 # ______________________________________________________________________
 # > ORIGINAL_TRAIN_VAL_SET
-ORIGINAL_TRAIN_VAL_SET_BASE_PATH = os.path.join(DATASETS_PATH, "original_train_val_set")
-ORIGINAL_TRAIN_VAL_SET_H5_PATH = os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset.h5")
-ORIGINAL_TRAIN_SET_IMAGES_PATH = os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted", "train")
-ORIGINAL_VAL_SET_IMAGES_PATH = os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted", "val")
+ORIGINAL_TRAIN_VAL_SET_BASE_PATH = 	os.path.join(DATASETS_PATH, "original_train_val_set")
+ORIGINAL_TRAIN_VAL_SET_H5_PATH = 	os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset.h5")
+ORIGINAL_TRAIN_SET_IMAGES_PATH = 	os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted", "train")
+ORIGINAL_VAL_SET_IMAGES_PATH = 		os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted", "val")
+# ______________________________________________________________________
+# > OCCLUDED_TRAIN_VAL_SET
+OCCLUDED_TRAIN_VAL_SET_BASE_PATH = 	os.path.join(DATASETS_PATH, "occluded_train_val_set")
+OCCLUDED_TRAIN_VAL_SET_H5_PATH = 	os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, "occluded_train_val_set.h5")
+OCCLUDED_TRAIN_SET_IMAGES_PATH = 	os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, "images", "train")
+OCCLUDED_VAL_SET_IMAGES_PATH = 		os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, "images", "val")
 # ______________________________________________________________________
 # > BOSPHORUS_TEST_HQ                   # this h5 will be full size not resized to small images
-BOSPHORUS_TEST_HQ_BASE_PATH = os.path.join(DATASETS_PATH, "bosphorus_test_HQ")
-BOSPHORUS_TEST_HQ_IMAGES_PATH = os.path.join(BOSPHORUS_TEST_HQ_BASE_PATH, "bosphorus_test_HQ")
-BOSPHORUS_TEST_HQ_H5_PATH = os.path.join(BOSPHORUS_TEST_HQ_BASE_PATH, "bosphorus_test_HQ.h5")
+BOSPHORUS_TEST_HQ_BASE_PATH = 		os.path.join(DATASETS_PATH, "bosphorus_test_HQ")
+BOSPHORUS_TEST_HQ_IMAGES_PATH = 	os.path.join(BOSPHORUS_TEST_HQ_BASE_PATH, "bosphorus_test_HQ")
+BOSPHORUS_TEST_HQ_H5_PATH = 		os.path.join(BOSPHORUS_TEST_HQ_BASE_PATH, "bosphorus_test_HQ.h5")
 
 # 2b) Results paths
 # ______________________________________________________________________
-RESULTS_LIGHT_PATH = os.path.join(PROJECT_ROOT, "results_light")
-RESULTS_HEAVY_PATH = os.path.join(PROJECT_ROOT, "results_heavy")
+RESULTS_LIGHT_PATH = 				os.path.join(PROJECT_ROOT, "results_light")
+RESULTS_HEAVY_PATH = 				os.path.join(PROJECT_ROOT, "results_heavy")
 # ______________________________________________________________________
-ACCURACY_RESULTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "accuracy_results")
-CONSOLE_OUTPUTS_PATH = os.path.join(RESULTS_LIGHT_PATH, "console_outputs")
-
+ACCURACY_RESULTS_PATH = 			os.path.join(RESULTS_LIGHT_PATH, "accuracy_results")
+CONSOLE_OUTPUTS_PATH = 				os.path.join(RESULTS_LIGHT_PATH, "console_outputs")
 # 3) Model paths
 # ______________________________________________________________________
-MODELS_PATH = os.path.join(DATA_BASE_DIR, "models")
+MODELS_PATH = 						os.path.join(DATA_BASE_DIR, "models")
 # ______________________________________________________________________
 # > FEDERICA AND OCCFT MODELS
-FEDERICA_MODELS_FOLDER = os.path.join(MODELS_PATH, "federica")
-FINETUNING_MODELS_FOLDER = os.path.join(FEDERICA_MODELS_FOLDER, "finetuning")
+FEDERICA_MODELS_FOLDER = 			os.path.join(MODELS_PATH, "federica")
+FINETUNING_MODELS_FOLDER = 			os.path.join(FEDERICA_MODELS_FOLDER, "finetuning")
 
-OCCFT_MODELS_FOLDER = os.path.join(MODELS_PATH, "occft")
+OCCFT_MODELS_FOLDER = 				os.path.join(MODELS_PATH, "occft")
 
 ALL_MODELS_PATHS = {
 	# ----------------------------------- FEDERICA'S FINAL MODELS
-    "resnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ResNet_finetuning"),
-    "pattlite_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_PattLite_finetuning"),
-    "vgg19_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_VGG19_finetuning"),
-    "inceptionv3_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_InceptionV3_finetuning"),
-    "convnext_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ConvNeXt_finetuning"),
-    "efficientnet_finetuning": os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
-    "yolo_last": os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
+    "resnet_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ResNet_finetuning"),
+    "pattlite_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_PattLite_finetuning"),
+    "vgg19_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_VGG19_finetuning"),
+    "inceptionv3_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_InceptionV3_finetuning"),
+    "convnext_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ConvNeXt_finetuning"),
+    "efficientnet_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
+    "yolo_last": 					os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
 	# ----------------------------------- MY MODELS (occft -- i.e. occlusion finetuning)
-	"occft_convnext": os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_checkpoints", "20260127-175611_epoch-03-valacc-0.1535"),
+	"occft_convnext": 				os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_checkpoints", "20260127-175611_epoch-03-valacc-0.1535"),
 }
 
 # ______________________________________________________________________
 # > MY MODELS (occft -- i.e. occlusion finetuning)
-OCCFT_MODELS_FOLDER = os.path.join(MODELS_PATH, "occft")
+OCCFT_MODELS_FOLDER = 				os.path.join(MODELS_PATH, "occft")
 
 
 # 4) Landmarks
 # ______________________________________________________________________
 # > MEDIAPIPE
-MEDIAPIPE_PATH = os.path.join(MODELS_PATH, "mediapipe")
-LANDMARKER_MODEL_PATH = os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
-LANDMARK_COORDINATES_FOLDER_PATH = os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
+MEDIAPIPE_PATH = 					os.path.join(MODELS_PATH, "mediapipe")
+LANDMARKER_MODEL_PATH = 			os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
+LANDMARK_COORDINATES_FOLDER_PATH = 	os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
 LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE = 26951 # expected number of landmark coordinate files. If the size of the db changes this should change accordingly
 
 
