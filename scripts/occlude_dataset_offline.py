@@ -10,7 +10,7 @@ from tqdm import tqdm
 from modules.visualize import plot_image
 from modules.config import EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TRAIN_SET_IMAGES_PATH, OCCLUDED_VAL_SET_IMAGES_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
 from modules.data__load import load_data_generators
-from modules.misc import hash_image;
+from modules.misc import create_occludedtrainvalset_filename_from_info, hash_image, StatsTracker
 
 
 
@@ -75,82 +75,6 @@ print(f"    Show Images: {args.show_images}")
 print(f"    Don't Parallelize Loading Landmarks: {args.dont_parallelize_loading_landmarks}")
 print("===============================================================================")
 
-
-
-class StatsTracker:
-    def __init__(self, emotions, generator_name, specific_mismatch, positive_or_negative):
-        self.generator_name = generator_name
-        self.specific_mismatch = specific_mismatch
-        self.positive_or_negative = positive_or_negative
-
-        # Initialize the stats dictionary
-        self.stats = {
-            # Processing
-            'processed_images': 0,
-            'skipped_images': 0,
-            'saved_images': 0,
-            # Types of images
-            'matching_images': 0,
-            'mismatching_images': 0,
-            'positive_images': 0,
-            'negative_images': 0,
-        }
-
-        # Add emotion-specific stats
-        for emotion in emotions:
-            self.stats[f'gt-{emotion.lower()}_images'] = 0
-            self.stats[f'occ-{emotion.lower()}_images'] = 0
-
-    def __str__(self):
-        stats_str =  "=== Stats Tracker ===\n"
-        stats_str += f"Generator Name: {self.generator_name}\n"
-        stats_str += f"Specific Mismatch: {self.specific_mismatch}\n"
-        stats_str += f"Positive or Negative: {self.positive_or_negative}\n"
-        for key, value in self.stats.items():
-            stats_str += f"{key}: {value}\n"
-        stats_str += "=====================\n"
-        return stats_str
-
-    def update_from_filename(self, filename):
-        # Parse the filename
-        _, gt_emotion, occ_emotion, mismatching, pos_or_neg = filename[:-4].split('_')
-
-        # Update matching/mismatching stats
-        if mismatching == "matching":
-            self.stats['matching_images'] += 1
-        elif mismatching == "mismatching":
-            self.stats['mismatching_images'] += 1
-        else:
-            raise ValueError(f"Filename parsing error for mismatching. Expected 'matching' or 'mismatching', got {mismatching}.")
-
-        # Update positive/negative stats
-        if pos_or_neg == "positive":
-            self.stats['positive_images'] += 1
-        elif pos_or_neg == "negative":
-            self.stats['negative_images'] += 1
-        else:
-            raise ValueError(f"Filename parsing error for pos_or_neg. Expected 'positive' or 'negative', got {pos_or_neg}.")
-
-        # Update emotion-specific stats
-        self.stats[f'{gt_emotion}_images'] += 1
-        self.stats[f'{occ_emotion}_images'] += 1
-
-    def check_consistency(self):
-        # Check if processed images match skipped + saved images
-        if self.stats['processed_images'] != (self.stats['skipped_images'] + self.stats['saved_images']):
-            print(f"[WARNING] Processed images ({self.stats['processed_images']}) != "
-                  f"Skipped images ({self.stats['skipped_images']}) + Saved images ({self.stats['saved_images']})")
-            print(str(self))
-            
-    def increase_processed(self):
-        self.stats['processed_images'] += 1
-
-    def increase_skipped(self):
-        self.stats['skipped_images'] += 1
-
-    def increase_saved(self):
-        self.stats['saved_images'] += 1
-
             
 
 def save_occluded_dataset_offline(data_generator, generator_name, save_folder_path, specific_mismatch, positive_or_negative):
@@ -162,7 +86,8 @@ def save_occluded_dataset_offline(data_generator, generator_name, save_folder_pa
             label_name = EMOTIONS[np.argmax(label)].lower()
             mismatching = "matching" if (label_name == specific_mismatch) else "mismatching"
             
-            filename = f"{img_hash}_gt-{label_name}_occ-{specific_mismatch}_{mismatching}_{positive_or_negative}.png"
+            filename = create_occludedtrainvalset_filename_from_info(img_hash, label_name, specific_mismatch, mismatching, positive_or_negative)
+            
             sub_folder = f"gt-{label_name}_occ-{specific_mismatch}"
             filepath = os.path.join(save_folder_path, sub_folder, filename)
             os.makedirs(os.path.dirname(filepath), exist_ok=True)

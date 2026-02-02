@@ -2,32 +2,69 @@ import os; import sys;
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import subprocess
+import argparse
 
 from modules.config import EMOTIONS
 
 # Define the path to the script
-script_path = os.path.join(os.path.dirname(__file__), 'occlude_dataset_offline.py')
+create_images_script_path = os.path.join(os.path.dirname(__file__), 'occlude_dataset_offline.py')
+create_h5_from_images_script_path = os.path.join(os.path.dirname(__file__), 'occluded_dataset_offline_h5.py')
 
-# Define the batch size
-batch_size = 16
+# --batch_size 16 --small_subset --show_images -d
+parser = argparse.ArgumentParser(description="Run occlude_dataset_offline.py for all emotions except neutral.")
+parser.add_argument("--create_images_script", action="store_true", help="Path to the create images script")
+parser.add_argument("--create_h5_script", action="store_true", help="Path to the create HDF5 script")
+parser.add_argument("--batch_size-images", type=int, default=16, help="Batch size for processing")
+parser.add_argument("--batch_size-h5", type=int, default=32768, help="Batch size for HDF5 creation")
+parser.add_argument("--small_subset", action="store_true", help="Use a small subset of the data")
+parser.add_argument("--show_images", action="store_true", help="Show images during processing")
+parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode")
 
-# Iterate over all emotions except "neutral"
-for emotion in EMOTIONS:
-    if emotion.lower() == "neutral":
-        continue
+args = parser.parse_args()
 
-    # Run for both positive and negative occlusions
-    for pos_or_neg in ["positive", "negative"]:
-        # Build the command
-        command = [
-            "python", script_path,
-            "--mismatch", emotion.lower(),
-            "--pos_or_neg", pos_or_neg,
-            "--batch_size", str(batch_size)
+if (not args.create_images_script) and (not args.create_h5_script):
+    print("No action specified. Use --create_images_script and/or --create_h5_script.")
+    sys.exit(1)
+
+
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/occlude_dataset_offline_run.py" --create_h5_script
+if __name__ == "__main__":
+    if args.create_images_script:
+        # Iterate over all emotions except "neutral"
+        for emotion in EMOTIONS:
+            if emotion.lower() == "neutral":
+                continue
+
+            # Run for both positive and negative occlusions
+            for pos_or_neg in ["positive", "negative"]:
+                # Build the command
+                command = [
+                    "python", create_images_script_path,
+                    "--mismatch", emotion.lower(),
+                    "--pos_or_neg", pos_or_neg,
+                    "--batch_size", str(args.batch_size_images),
+                ]
+
+                if args.small_subset:
+                    command.append("--small_subset")
+                if args.show_images:
+                    command.append("--show_images")
+                if args.debug:
+                    command.append("-d")
+
+                # Print the command for debugging
+                print(f"Running: {' '.join(command)}")
+
+                # Run the command
+                subprocess.run(command, check=True)
+
+    if args.create_h5_script:
+        # After processing all emotions and occlusion types, create the HDF5 dataset
+        h5_command = [
+            "python", create_h5_from_images_script_path,
+            "--batch_size", str(args.batch_size_h5)
         ]
 
-        # Print the command for debugging
-        print(f"Running: {' '.join(command)}")
 
-        # Run the command
-        subprocess.run(command, check=True)
+        print(f"Running: {' '.join(h5_command)}")
+        subprocess.run(h5_command, check=True)

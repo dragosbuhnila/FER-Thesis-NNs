@@ -4,6 +4,8 @@ import h5py
 import numpy as np
 import hashlib
 
+from modules.config import EMOTIONS
+
 def hash_image(image):
     # If a PIL Image, convert to numpy in a deterministic way
     if isinstance(image, Image.Image):
@@ -87,3 +89,102 @@ def generate_h5_from_images(test_set_path, resized_path, h5_path):
             raise ValueError(f"Expected 7 classes, but found {len(class_names_loaded)}.")
         if len(paths_loaded) != 350:
             raise ValueError(f"Expected 350 paths, but found {len(paths_loaded)}.")
+        
+def extract_info_from_occludedtrainvalset_filename(filename):
+    # Example of filename 00cd28ba22c246af733c4e0d8c6da551_gt-angry_occ-fear_mismatching_negative.png
+
+    # Remove png or jpg if present
+    if filename.endswith('.png'):
+        filename = filename[:-4]
+    elif filename.endswith('.jpg'):
+        filename = filename[:-4]
+    
+    # First of all check if the format is correct
+    parts = filename.split('_')
+    if len(parts) != 5:
+        raise ValueError(f"Filename {filename} does not conform to expected format. Should have 5 parts separated by underscores.")
+    
+    hash, gt_emotion_long, occ_emotion_long, mismatching, pos_or_neg = parts
+
+    gt_emotion = gt_emotion_long.split('-')[1]
+    occ_emotion = occ_emotion_long.split('-')[1]
+
+    return hash, gt_emotion, occ_emotion, mismatching, pos_or_neg
+
+def create_occludedtrainvalset_filename_from_info(hash, gt_emotion, occ_emotion, mismatching, pos_or_neg):
+    filename = f"{hash}_gt-{gt_emotion}_occ-{occ_emotion}_{mismatching}_{pos_or_neg}.png"
+    return filename
+
+class StatsTracker:
+    def __init__(self, emotions, generator_name, specific_mismatch, positive_or_negative):
+        self.generator_name = generator_name
+        self.specific_mismatch = specific_mismatch
+        self.positive_or_negative = positive_or_negative
+
+        # Initialize the stats dictionary
+        self.stats = {
+            # Processing
+            'processed_images': 0,
+            'skipped_images': 0,
+            'saved_images': 0,
+            # Types of images
+            'matching_images': 0,
+            'mismatching_images': 0,
+            'positive_images': 0,
+            'negative_images': 0,
+        }
+
+        # Add emotion-specific stats
+        for emotion in emotions:
+            self.stats[f'gt-{emotion.lower()}_images'] = 0
+            self.stats[f'occ-{emotion.lower()}_images'] = 0
+
+    def __str__(self):
+        stats_str =  "=== Stats Tracker ===\n"
+        stats_str += f"Generator Name: {self.generator_name}\n"
+        stats_str += f"Specific Mismatch: {self.specific_mismatch}\n"
+        stats_str += f"Positive or Negative: {self.positive_or_negative}\n"
+        for key, value in self.stats.items():
+            stats_str += f"{key}: {value}\n"
+        stats_str += "=====================\n"
+        return stats_str
+
+    def update_from_filename(self, filename):
+        # Parse the filename
+        _, gt_emotion, occ_emotion, mismatching, pos_or_neg = extract_info_from_occludedtrainvalset_filename(filename)
+
+        # Update matching/mismatching stats
+        if mismatching == "matching":
+            self.stats['matching_images'] += 1
+        elif mismatching == "mismatching":
+            self.stats['mismatching_images'] += 1
+        else:
+            raise ValueError(f"Filename parsing error for mismatching. Expected 'matching' or 'mismatching', got {mismatching}.")
+
+        # Update positive/negative stats
+        if pos_or_neg == "positive":
+            self.stats['positive_images'] += 1
+        elif pos_or_neg == "negative":
+            self.stats['negative_images'] += 1
+        else:
+            raise ValueError(f"Filename parsing error for pos_or_neg. Expected 'positive' or 'negative', got {pos_or_neg}.")
+
+        # Update emotion-specific stats
+        self.stats[f'gt-{gt_emotion}_images'] += 1
+        self.stats[f'occ-{occ_emotion}_images'] += 1
+
+    def check_consistency(self):
+        # Check if processed images match skipped + saved images
+        if self.stats['processed_images'] != (self.stats['skipped_images'] + self.stats['saved_images']):
+            print(f"[WARNING] Processed images ({self.stats['processed_images']}) != "
+                  f"Skipped images ({self.stats['skipped_images']}) + Saved images ({self.stats['saved_images']})")
+            print(str(self))
+            
+    def increase_processed(self):
+        self.stats['processed_images'] += 1
+
+    def increase_skipped(self):
+        self.stats['skipped_images'] += 1
+
+    def increase_saved(self):
+        self.stats['saved_images'] += 1
