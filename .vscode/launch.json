@@ -4,6 +4,11 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [ 
+    
+        
+
+
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -70,9 +75,9 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                    // --mismatch angry --pos_or_neg positive --batch_size 16 --small_subset --show_images -d
-                    "--mismatch", "angry",
-                    "--pos_or_neg", "positive",
+                    // --mismatch neutral --pos_or_neg positive --batch_size 16 --small_subset --show_images -d
+                    "--mismatch", "neutral",
+                    "--pos_or_neg", "negative",
                     "--batch_size", "16",
                     "--small_subset",
                     "--show_images",
