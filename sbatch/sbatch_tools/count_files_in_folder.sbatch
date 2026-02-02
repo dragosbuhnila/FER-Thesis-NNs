@@ -36,12 +36,10 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="./scripts/run_mlflow_webapp_server.py --port ${PORT} --host ${BIND_HOST}"
-echo "Now running $COMMAND_TO_RUN"
-python $COMMAND_TO_RUN
+SCRIPT="./scripts/tools/count_files_in_folder.py"
+echo "Now running $SCRIPT"
+python $SCRIPT
 
-
-echo "==================================================================================="
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 

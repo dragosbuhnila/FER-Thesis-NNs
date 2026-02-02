@@ -45,6 +45,8 @@ COMMAND_TO_RUN="./scripts/run_mlflow_webapp_server.py --port ${PORT} --host ${BI
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 
+
+echo "==================================================================================="
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 

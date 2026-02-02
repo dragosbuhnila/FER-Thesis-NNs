@@ -36,12 +36,13 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="./scripts/run_mlflow_webapp_server.py --port ${PORT} --host ${BIND_HOST}"
-echo "Now running $COMMAND_TO_RUN"
-python $COMMAND_TO_RUN
+SOURCE="/home/dbuhnila/data_backup_260129-155400/*"
+DEST="/home/dbuhnila/models/FER-Thesis-NNs/data"
 
+COMMAND="RUNNING: cp -r $SOURCE $DEST"
 
-echo "==================================================================================="
+cp -r $SOURCE $DEST
+
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
