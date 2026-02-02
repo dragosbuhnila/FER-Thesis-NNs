@@ -18,6 +18,7 @@ parser.add_argument("--batch_size-images", type=int, default=16, help="Batch siz
 parser.add_argument("--batch_size-h5", type=int, default=32768, help="Batch size for HDF5 creation")
 parser.add_argument("--small_subset", action="store_true", help="Use a small subset of the data")
 parser.add_argument("--show_images", action="store_true", help="Show images during processing")
+parser.add_argument("--dont_parallelize_loading_landmarks", action="store_true", help="Do not parallelize loading landmarks")
 parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode")
 
 args = parser.parse_args()
@@ -27,7 +28,7 @@ if (not args.create_images_script) and (not args.create_h5_script):
     sys.exit(1)
 
 
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/occlude_dataset_offline_run.py" --create_h5_script
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/occlude_dataset_offline_run.py" --create_h5_script --create_images_script
 if __name__ == "__main__":
     if args.create_images_script:
         # Iterate over all emotions except "neutral"
@@ -51,6 +52,8 @@ if __name__ == "__main__":
                     command.append("--show_images")
                 if args.debug:
                     command.append("-d")
+                if args.dont_parallelize_loading_landmarks:
+                    command.append("--dont_parallelize_loading_landmarks")
 
                 # Print the command for debugging
                 print(f"Running: {' '.join(command)}")

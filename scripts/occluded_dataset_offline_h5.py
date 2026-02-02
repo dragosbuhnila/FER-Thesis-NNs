@@ -106,6 +106,9 @@ def create_h5_datasets(output_path, train_dir, val_dir, batch_size):
         h5_file.create_dataset("mismatch_val", shape=(total_val_images,), dtype="uint8")
         h5_file.create_dataset("pos_or_neg_val", shape=(total_val_images,), dtype="uint8")
 
+        # add class names
+        h5_file.create_dataset("class_names", data=np.array(EMOTIONS, dtype='S'))
+
         # Process training data in batches
         print("Processing training data...")
         process_batch(train_dir, batch_size, h5_file, "train")

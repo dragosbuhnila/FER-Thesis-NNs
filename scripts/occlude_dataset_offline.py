@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from modules.visualize import plot_image
 from modules.config import EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TRAIN_SET_IMAGES_PATH, OCCLUDED_VAL_SET_IMAGES_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
-from modules.data__load import load_data_generators
+from modules.data__load import load_online_data_generators
 from modules.misc import create_occludedtrainvalset_filename_from_info, hash_image, StatsTracker
 
 
@@ -119,7 +119,7 @@ def save_occluded_dataset_offline(data_generator, generator_name, save_folder_pa
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/occlude_dataset_offline.py" --mismatch ANGRY --pos_or_neg positive --small_subset --batch_size 16 --show_images -d
 if __name__ == "__main__":
 
-    train_generator, val_generator, _, _ = load_data_generators(
+    train_generator, val_generator, _, _ = load_online_data_generators(
                                                                 # Paths ---------------------------------------------------
                                                                 trainval_path=TRAINVAL_SET_PATH, 
                                                                 test_path=TEST_SET_PATH,

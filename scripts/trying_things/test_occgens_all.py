@@ -9,7 +9,7 @@ import pstats
 
 from modules.mask import MASKING_FUNCTIONS
 from modules.config import ADELE_TEST_SET_H5_PATH, BOSPHORUS_TEST_HQ_H5_PATH, CONSOLE_OUTPUTS_PATH, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, GLOBALS
-from modules.data__load import load_data_generators
+from modules.data__load import load_online_data_generators
 from modules.data import refresh_show_flags
 from modules.visualize import plot_image
 
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     use_label_smoothing = args.label_smoothing
 
     # 1) First time run with occlusions      
-    train_generator, val_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH,
+    train_generator, val_generator, test_generator, initial_bias = load_online_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH,
                                                                                         occlusion_probability,
                                                                                         masking_function_name,
                                                                                         use_label_smoothing,

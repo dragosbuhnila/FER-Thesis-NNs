@@ -8,111 +8,18 @@ from tqdm import tqdm
 
 from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
 from modules.data import OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
+from modules.data__load__misc import load_data_and_labels, remove_indices_from_data
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
 from modules.misc import hash_image
 
 
 
 # ==================================================================================================
-# ==================================== Auxiliary Functions =========================================
-# ==================================================================================================
-
-# def occlude_debug(images, labels, image_landmarks, image_hashes):
-#         # images is a tf.Tensor
-#         # For now convert it to numpy for easier processing
-#         images = images.numpy()
-
-#         # a) Get all the landmarks, in the form of coordinates, for each image
-#         #       i.e. for each image every single face point, even unnecessary ones, will be there (they should be cached already)
-#         # ____________________________________________________________________________________________
-#         # If no landmarks are detected, then occlusion isn't possible for the approach we're currently using (i.e. masking based on AU landmarks),
-#         #   so leave the unprocessable image out and reinsert it with no occlusion
-#         error_indices = []
-#         for i, landmarks_all in enumerate(image_landmarks):
-#             if len(landmarks_all) == 0:
-#                 error_indices.append(i)
-
-#         # # a1) Prepare unoccludable images to be reinserted later (won't do it in this version as I am already removing the problem images)
-#         # unoccludable_images = dict()
-#         # # sort error indices in reverse order so that the insertion has correct indices (deleting from the end first)
-#         # error_indices.sort(reverse=True)
-#         # for i in error_indices:
-#         #     # Save the image without occlusion and remove it from the batch
-#         #     unoccludable_images[i] = numpy_images[i]
-#         #     image_landmarks = np.delete(image_landmarks, i, axis=0) 
-#         # # ____________________________________________________________________________________________           
-        
-#         # b) Get the coordinates relating to just the specific emotion needed, for each image
-#         # ____________________________________________________________________________________________
-#         emotions = [EMOTIONS[label] for label in labels]
-#         list_of_landmark_sets = get_landmark_coordinate_sets_by_emotion__batch(image_landmarks, emotions)
-#         # ____________________________________________________________________________________________
-
-#         # c) Apply occlusion based on the landmarks
-#         # ____________________________________________________________________________________________
-#         occluded = apply_mask_to__batch(images, list_of_landmark_sets, "lines")
-#         # ___________________________________________________________________________________________   
-
-#         nop_variable = 0
-#         for image, landmarks_emotion, landmarks_emotions_index, hash in zip(occluded, emotions, labels, image_hashes):
-#             print(f"Hash for the current image: {hash}")
-#             landmarks_that_should_be = load_landmark_coordinates(hash)
-#             plot_image(image, title=f"landmarks for emotion {landmarks_emotion} (index {landmarks_emotions_index})\nHash: {hash}")
-#             nop_variable += 1
-
-
-def load_data_and_labels(file_path, info):
-    class_names = None
-    with h5py.File(file_path, 'r') as f:
-        if info == 'train':
-            X_train = np.array(f['X_train'])
-            y_train = np.array(f['y_train'])
-            X_val = np.array(f['X_val'])
-            y_val = np.array(f['y_val'])
-            class_names = [name.decode('utf-8') for name in f['class_names']]
-
-            if 'paths' in f:
-                # Se 'paths' è un dataset di stringhe a lunghezza variabile
-                # con h5py.string_dtype, possiamo leggerlo direttamente:
-                train_paths_data = f['train_paths'][...]  # np array di stringhe
-                val_paths_data = f['val_paths'][...]  # np array di stringhe
-            else:
-                train_paths_data = None
-                val_paths_data = None
-            
-            return X_train, y_train, X_val, y_val, class_names, train_paths_data, val_paths_data
-        elif info == 'test':
-            X_test = np.array(f['X_test'])
-            y_test = np.array(f['y_test'])
-            class_names = [name.decode('utf-8') for name in f['class_names']]
-            
-            if 'paths' in f:
-                # Se 'paths' è un dataset di stringhe a lunghezza variabile
-                # con h5py.string_dtype, possiamo leggerlo direttamente:
-                paths_data = f['paths'][...]  # np array di stringhe
-            else:
-                paths_data = None
-            return X_test, y_test, class_names, paths_data
-        else:
-            raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
-
-
-def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove):
-    indices_to_remove = sorted(indices_to_remove)
-
-    X_data = np.delete(X_data, indices_to_remove, axis=0)
-    y_data = np.delete(y_data, indices_to_remove, axis=0)
-    paths_data = np.delete(paths_data, indices_to_remove, axis=0) if paths_data is not None else None
-    return X_data, y_data, paths_data
-
-
-
-# ==================================================================================================
-# ==================================   Loading functions ===========================================
+# ===============================   Online loading functions =======================================
 # ======================    load test, load train, load val, load all ==============================
 # ==================================================================================================
 
-def load_test_generator(path, batch_size=64):
+def load_online_test_generator(path, batch_size=64):
     """
     Load only the test generator from a test H5 file (path).
     """
@@ -159,7 +66,7 @@ def load_test_generator(path, batch_size=64):
     return data_generator
 
 
-def load_train_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2, label_smoothing=0.0):
+def load_online_train_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2, label_smoothing=0.0):
     """
     Load only the train generator from a train H5 file (train_path).
     """
@@ -220,7 +127,7 @@ def load_train_generator(train_path, occlusion_probability, masking_function_nam
     return train_generator
 
 
-def load_valid_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2):
+def load_online_valid_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2):
     """
     Load only the validation generator from a train H5 file (train_path).
     """
@@ -282,7 +189,7 @@ def load_valid_generator(train_path, occlusion_probability, masking_function_nam
     return val_generator
 
 
-def load_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False):
+def load_online_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(trainval_path, 'train')
@@ -488,3 +395,18 @@ def load_data_generators(trainval_path, test_path, training_occlusion_probabilit
     )
     
     return train_generator, val_generator, test_generator, initial_bias
+
+# ==================================================================================================
+# ==============================   Offline loading functions =======================================
+# ======================    load test, load train, load val, load all ==============================
+# ==================================================================================================
+
+def load_offline_data_generators(original_trainval_path: str, occluded_trainval_path: str, occluded_test_path: str,
+                                training_occlusion_probability: float = 0.2, validation_occlusion_probability: float = 0.5, # matching_amount=0.2, pos_or_neg=None
+                                masking_function_name: str = "lines", use_label_smoothing: bool = True, 
+                                small_subset=False, batch_size=64, dont_augment=False):
+    # 1) Load training and validation data
+    # ____________________________________
+    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(original_trainval_path, 'train')
+    X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, _, _ = load_data_and_labels(occluded_trainval_path, 'train')
+    X_test, y_test, test_class_names, test_paths_data = load_data_and_labels(occluded_test_path, 'test')

@@ -38,7 +38,7 @@ elif args.mismatch == False:
         print("Warning: matching_amount is provided but mismatch is False. Ignoring matching_amount.")
 
 from modules.config import ADELE_TEST_SET_H5_PATH, BOSPHORUS_TEST_HQ_H5_PATH, CONSOLE_OUTPUTS_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, GLOBALS
-from modules.data__load import load_data_generators, load_valid_generator
+from modules.data__load import load_online_data_generators, load_online_valid_generator
 from modules.visualize import plot_image
 
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     use_label_smoothing = args.label_smoothing
 
     # 1) First time run with occlusions      
-    val_generator = load_valid_generator(
+    val_generator = load_online_valid_generator(
         train_path=TRAINVAL_SET_PATH,
         occlusion_probability=occlusion_probability,
         masking_function_name=masking_function,

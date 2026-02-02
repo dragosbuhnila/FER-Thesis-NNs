@@ -6,7 +6,7 @@ import mlflow.tensorflow
 import tensorflow as tf
 from tensorflow import keras
 
-from modules.data__load import load_data_generators
+from modules.data__load import load_online_data_generators
 from modules.model import build_model_occfinetuning
 from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, MLFLOW_DIR
 from modules.train_eval import addestra_modello, salva_modello, valuta_modello; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -65,7 +65,7 @@ def main():
     # For the time being, I want the training to use 
     #   > 50% occlusions, in which 20% are matching positives, 40% are mismatching positive, 40% are mismatching negatives
     #   >
-    train_generator, valid_generator, test_generator, initial_bias = load_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, 
+    train_generator, valid_generator, test_generator, initial_bias = load_online_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, 
                                                                                           training_occlusion_probability=occlusion_probability, 
                                                                                           masking_function_name="lines", 
                                                                                           use_label_smoothing=True, 

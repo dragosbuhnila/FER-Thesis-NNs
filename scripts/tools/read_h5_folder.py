@@ -5,13 +5,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 import h5py
 
 from modules.config import BOSPHORUS_TEST_HQ_H5_PATH, BOSPHORUS_TEST_HQ_IMAGES_PATH, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, \
-                            ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
+                            ADELE_TEST_SET_H5_PATH, OCCLUDED_TRAIN_VAL_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
 
 
 
 # ================================== MACROS ==================================
 
-H5_PATHS = [  # OCCLUDED_TEST_SET_H5_PATH, EXAMPLE_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
+H5_PATHS = [ 
+    # OCCLUDED_TRAIN_VAL_SET_H5_PATH,
+    # OCCLUDED_TEST_SET_H5_PATH,
     ORIGINAL_TRAIN_VAL_SET_H5_PATH,
     ADELE_TEST_SET_H5_PATH,
 ]
