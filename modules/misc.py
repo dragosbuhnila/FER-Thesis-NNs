@@ -116,7 +116,7 @@ def create_occludedtrainvalset_filename_from_info(hash, gt_emotion, occ_emotion,
     return filename
 
 class StatsTracker:
-    def __init__(self, emotions, generator_name, specific_mismatch, positive_or_negative):
+    def __init__(self, emotions, generator_name, specific_mismatch=None, positive_or_negative=None):
         self.generator_name = generator_name
         self.specific_mismatch = specific_mismatch
         self.positive_or_negative = positive_or_negative
@@ -142,8 +142,8 @@ class StatsTracker:
     def __str__(self):
         stats_str =  "=== Stats Tracker ===\n"
         stats_str += f"Generator Name: {self.generator_name}\n"
-        stats_str += f"Specific Mismatch: {self.specific_mismatch}\n"
-        stats_str += f"Positive or Negative: {self.positive_or_negative}\n"
+        stats_str += f"Specific Mismatch: {self.specific_mismatch}\n" if self.specific_mismatch else ""
+        stats_str += f"Positive or Negative: {self.positive_or_negative}\n" if self.positive_or_negative else ""
         for key, value in self.stats.items():
             stats_str += f"{key}: {value}\n"
         stats_str += "=====================\n"

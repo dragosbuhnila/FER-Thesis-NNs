@@ -12,10 +12,10 @@ from modules.config import BOSPHORUS_TEST_HQ_H5_PATH, BOSPHORUS_TEST_HQ_IMAGES_P
 # ================================== MACROS ==================================
 
 H5_PATHS = [ 
-    # OCCLUDED_TRAIN_VAL_SET_H5_PATH,
-    # OCCLUDED_TEST_SET_H5_PATH,
-    ORIGINAL_TRAIN_VAL_SET_H5_PATH,
-    ADELE_TEST_SET_H5_PATH,
+    OCCLUDED_TRAIN_VAL_SET_H5_PATH,
+    OCCLUDED_TEST_SET_H5_PATH,
+    # ORIGINAL_TRAIN_VAL_SET_H5_PATH,
+    # ADELE_TEST_SET_H5_PATH,
 ]
 
 # =============================== END OF MACROS ===============================

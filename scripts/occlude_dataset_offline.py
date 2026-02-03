@@ -106,10 +106,14 @@ def save_occluded_dataset_offline(data_generator, generator_name, save_folder_pa
 
             # Save image
             try:
+                # check if image is already saved for some reason
+                if os.path.exists(filepath):
+                    print(f"[ERROR] Image already exists: {filepath}")
+                    continue
                 Image.fromarray(image).save(filepath)
                 stats_tracker.increase_saved()
             except Exception as e:
-                print(f"Error saving image {filepath}: {e}")
+                print(f"[ERROR] Error while saving image {filepath}: {e}")
 
     stats_tracker.check_consistency()
     print(str(stats_tracker))
