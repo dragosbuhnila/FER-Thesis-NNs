@@ -189,7 +189,7 @@ def load_online_valid_generator(train_path, occlusion_probability, masking_funct
     return val_generator
 
 
-def load_online_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False):
+def load_online_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False, dont_rebalance_trainval=False):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(trainval_path, 'train')
@@ -368,6 +368,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         mismatch=mismatch,
         matching_amount=matching_amount,
         pos_or_neg=pos_or_neg,
+        dont_rebalance_trainval=dont_rebalance_trainval,
         )
     val_generator = OnlineOcclusionGenerator(
         x_data=X_val,
@@ -384,6 +385,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         mismatch=mismatch,
         matching_amount=matching_amount,
         pos_or_neg=pos_or_neg,
+        dont_rebalance_trainval=dont_rebalance_trainval,
         )
     test_generator = OldCustomBalancedDataGenerator(
         x_data=X_test,

@@ -141,6 +141,7 @@ if __name__ == "__main__":
                                                                 masking_function_name='lines',
                                                                 use_label_smoothing=True,
                                                                 dont_augment=True,
+                                                                dont_rebalance_trainval=True,
                                                             )
 
     specific_mismatch = args.mismatch.lower()

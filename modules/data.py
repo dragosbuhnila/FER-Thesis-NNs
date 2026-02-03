@@ -193,7 +193,7 @@ class RandomOcclusion(keras.layers.Layer):
         return images, labels, positive_or_negative_batch
 
 class OnlineOcclusionGenerator(Sequence):
-    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function_name, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, pos_or_neg=None, **kwargs):
+    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function_name, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, pos_or_neg=None, dont_rebalance_trainval=False, **kwargs):
         super().__init__(**kwargs)
         if data_inf not in ['train', 'valid', 'test']:
             raise ValueError(f"data_inf must be 'train', 'valid', or 'test', but is '{data_inf}'")
@@ -209,6 +209,8 @@ class OnlineOcclusionGenerator(Sequence):
         self.batch_size = batch_size
         self.label_smoothing = label_smoothing
         self.occlusion_layer = RandomOcclusion(occlusion_probability, masking_function_name, mismatch, matching_amount, pos_or_neg=pos_or_neg)
+
+        self.dont_rebalance_trainval = dont_rebalance_trainval
 
         if data_inf in ['train', 'valid']:
             #print(y_data)
@@ -245,7 +247,7 @@ class OnlineOcclusionGenerator(Sequence):
         return self
     
     def __getitem__(self, index):
-        if self.data_inf == 'test':
+        if self.data_inf == 'test' or self.dont_rebalance_trainval==True:
             # Per il test set, usiamo semplicemente gli indici
             start_idx = index * self.batch_size
             end_idx = min((index + 1) * self.batch_size, len(self.x_data))
