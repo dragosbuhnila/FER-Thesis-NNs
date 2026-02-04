@@ -31,7 +31,7 @@ def process_batch(base_dir, batch_size, h5_file, dataset_prefix):
     """
     Process images in batches and write them to the HDF5 file.
     """
-    images, labels, occ_labels, mismatches, pos_or_negs = [], [], [], [], []
+    images, labels, original_hashes, occ_labels, mismatches, pos_or_negs = [], [], [], [], [], []
     total_images = sum(len(files) for _, _, files in os.walk(base_dir))
     current_index = 0
 
@@ -41,7 +41,7 @@ def process_batch(base_dir, batch_size, h5_file, dataset_prefix):
             continue
 
         for image_name in tqdm(os.listdir(folder_path), desc=f"Processing {dataset_prefix} data. Browsing folder {folder}"):
-            hash, gt_emotion, occ_emotion, mismatching, pos_or_neg = extract_info_from_occludedtrainvalset_filename(image_name)
+            original_hash, gt_emotion, occ_emotion, mismatching, pos_or_neg = extract_info_from_occludedtrainvalset_filename(image_name)
             gt_emotion_label = EMOTIONS.index(gt_emotion.upper())
             occ_emotion_label = EMOTIONS.index(occ_emotion.upper())
 
@@ -56,19 +56,19 @@ def process_batch(base_dir, batch_size, h5_file, dataset_prefix):
                 occ_labels.append(occ_emotion_label)
                 mismatches.append(0 if mismatching == "matching" else 1)
                 pos_or_negs.append(0 if pos_or_neg == "negative" else 1)
-
+                original_hashes.append(original_hash)
                 current_index += 1
 
                 # If the batch is full, write to HDF5 and reset the batch
                 if len(images) == batch_size or current_index == total_images:
-                    write_batch_to_h5(h5_file, dataset_prefix, images, labels, occ_labels, mismatches, pos_or_negs, current_index - len(images))
-                    images, labels, occ_labels, mismatches, pos_or_negs = [], [], [], [], []
+                    write_batch_to_h5(h5_file, dataset_prefix, images, labels, original_hashes, occ_labels, mismatches, pos_or_negs, current_index - len(images))
+                    images, labels, original_hashes, occ_labels, mismatches, pos_or_negs = [], [], [], [], [], []
 
             except Exception as e:
                 print(f"Error loading image {image_path}: {e}")
 
 
-def write_batch_to_h5(h5_file, dataset_prefix, images, labels, occ_labels, mismatches, pos_or_negs, start_index):
+def write_batch_to_h5(h5_file, dataset_prefix, images, labels, original_hashes, occ_labels, mismatches, pos_or_negs, start_index):
     """
     Write a batch of data to the HDF5 file.
     """
@@ -80,6 +80,7 @@ def write_batch_to_h5(h5_file, dataset_prefix, images, labels, occ_labels, misma
 
     h5_file[f"X_{dataset_prefix}"]  [start_index : start_index + len(images)] = images
     h5_file[f"y_{dataset_prefix}"][start_index : start_index + len(labels)] = labels
+    h5_file[f"original_hash_{dataset_prefix}"][start_index : start_index + len(original_hashes)] = np.array(original_hashes, dtype='S32')
     h5_file[f"occ_{dataset_prefix}"][start_index : start_index + len(occ_labels)] = occ_labels
     h5_file[f"mismatch_{dataset_prefix}"][start_index : start_index + len(mismatches)] = mismatches
     h5_file[f"pos_or_neg_{dataset_prefix}"][start_index : start_index + len(pos_or_negs)] = pos_or_negs
@@ -96,12 +97,14 @@ def create_h5_datasets(output_path, train_dir, val_dir, batch_size):
         # Create datasets with the total size pre-allocated
         h5_file.create_dataset("X_train", shape=(total_train_images, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype="uint8")
         h5_file.create_dataset("y_train", shape=(total_train_images,), dtype="uint8")
+        h5_file.create_dataset("original_hash_train", shape=(total_train_images,), dtype="S32")
         h5_file.create_dataset("occ_train", shape=(total_train_images,), dtype="uint8")
         h5_file.create_dataset("mismatch_train", shape=(total_train_images,), dtype="uint8")
         h5_file.create_dataset("pos_or_neg_train", shape=(total_train_images,), dtype="uint8")
 
         h5_file.create_dataset("X_val", shape=(total_val_images, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype="uint8")
         h5_file.create_dataset("y_val", shape=(total_val_images,), dtype="uint8")
+        h5_file.create_dataset("original_hash_val", shape=(total_val_images,), dtype="S32")
         h5_file.create_dataset("occ_val", shape=(total_val_images,), dtype="uint8")
         h5_file.create_dataset("mismatch_val", shape=(total_val_images,), dtype="uint8")
         h5_file.create_dataset("pos_or_neg_val", shape=(total_val_images,), dtype="uint8")
