@@ -231,6 +231,11 @@ class OnlineOcclusionGenerator(Sequence):
         print(f"Generator initialized: {data_inf} mode")
 
     def __len__(self):
+        # Note that, since we perform class balancing in train/valid mode, the number of batches per epoch is approximate.
+        #   i.e. each epoch may not see all samples exactly once AND it may not see all the samples.
+        #           (why? Because it will see unpopular classes a lot of times, taking slots in the batches, so the popular
+        #                   batches like happy will run out of time before the epoch ends because of reacing __len__(), 
+        #                   because len is defined in a way that does not take into account the rebalancing)
         return int(np.ceil(len(self.x_data) / self.batch_size))
     
     def __next__(self):
