@@ -221,7 +221,7 @@ class OnlineOcclusionGenerator(Sequence):
             self.classes = np.unique(np.argmax(y_data, axis=1))  # Ricaviamo le classi dai dati one-hot encoded
             self.class_indices = {cls: np.where(np.argmax(y_data, axis=1) == cls)[0] for cls in self.classes}
             self.num_classes = len(self.classes)
-            self.samples_per_class = max(1, self.batch_size // self.num_classes)
+            self.samples_per_class = max(1, self.batch_size // self.num_classes) # e.g. 7 classes and bs=64: 64/7=9 samples per class
             self.class_pointers = {cls: 0 for cls in self.classes} # Coda ciclica per le classi minoritarie
         elif data_inf == 'test':
             self.augmentations = ImageDataGenerator(**(augmentations or {}))
@@ -359,11 +359,157 @@ class OnlineOcclusionGenerator(Sequence):
                 smoothed_labels[i, true_class] = 1.0 - self.label_smoothing  # Imposta la probabilità della classe corretta
             return smoothed_labels
         else:
-            return labels
-
+            return labels    
 
 class OfflineOcclusionGenerator(Sequence):
-    pass
+    def __init__(self, split, 
+                 x_data, y_data, x_hashes, occlusion_indexer, types_of_occlusion,
+                 batch_size, augmentations=None, label_smoothing=0.1,
+                 occlusion_probability=0.2, masking_function_name="lines", # matching_amount=None, # Not implemented for now, just choose uniformly
+                 dont_rebalance_trainval=False, **kwargs):
+        super().__init__(**kwargs)
+
+        if split not in ['train', 'valid']: # Occlusion is only applied during training/validation. Test set is already occluded.
+            raise ValueError(f"split must be 'train' or 'valid', but is '{split}'")
+        self.split = split
+
+        self.x_data = x_data
+        self.y_data = y_data
+        self.x_hashes = x_hashes
+        self.indices = np.arange(len(x_data))
+        
+        self.batch_size = batch_size
+        self.augmentations = ImageDataGenerator(**augmentations)
+        self.label_smoothing = label_smoothing
+
+        self.occlusion_probability = occlusion_probability
+        self.masking_function_name = masking_function_name
+
+        self.rng = np.random.default_rng()
+
+        self.dont_rebalance_trainval = dont_rebalance_trainval
+        if not dont_rebalance_trainval:
+            self.classes = np.unique(np.argmax(y_data, axis=1))  # Ricaviamo le classi dai dati one-hot encoded
+            self.class_indices = {cls: np.where(np.argmax(y_data, axis=1) == cls)[0] for cls in self.classes}
+            self.num_classes = len(self.classes)
+            self.samples_per_class = max(1, self.batch_size // self.num_classes) # e.g. 7 classes and bs=64: 64/7=9 samples per class
+            self.class_pointers = {cls: 0 for cls in self.classes} # Coda ciclica per le classi minoritarie
+        
+        self.index = 0
+        self.on_epoch_end() # Shuffles data by shuffling indices (only in train/valid)
+        print(f"Generator initialized: {split} mode")
+
+    def __len__(self):
+        # Note that, since we perform class balancing in train/valid mode, the number of batches per epoch is approximate.
+        #   i.e. each epoch may not see all samples exactly once AND it may not see all the samples.
+        #           (why? Because it will see unpopular classes a lot of times, taking slots in the batches, so the popular
+        #                   batches like happy will run out of time before the epoch ends because of reacing __len__(), 
+        #                   because len is defined in a way that does not take into account the rebalancing)
+        return int(np.ceil(len(self.x_data) / self.batch_size))
+    
+    def __next__(self):
+        if self.index >= len(self):
+            raise StopIteration
+        batch = self.__getitem__(self.index)
+        self.index += 1
+        return batch
+
+    def __iter__(self):
+        self.index = 0
+        return self
+    
+    def __getitem__(self, index):
+        if self.dont_rebalance_trainval==True:
+            start_idx = index * self.batch_size
+            end_idx = min((index + 1) * self.batch_size, len(self.x_data))
+
+            batch_x, batch_y, batch_x_hashes = self.x_data[start_idx:end_idx], self.y_data[start_idx:end_idx], self.x_hashes[start_idx:end_idx]
+        else:
+            batch_x, batch_y, batch_x_hashes = [], [], []
+
+            # Balance batches by going through each class, taking samples_per_class samples from each, and shuffling each class independently.
+            # This is done by leveraging 
+            #       > the class_indices dictionary, that yields all the indices given a class,
+            #       > and a class_pointer dictionary, that keeps track of where we are in the circular queue for each class.
+            for cls in self.classes:
+                cls_indices = self.class_indices[cls]
+                cls_pointer = self.class_pointers[cls]
+
+                # Select indices from the class circular queue
+                selected_indices = cls_indices[cls_pointer:cls_pointer + self.samples_per_class]
+                selected_indices = np.asarray(selected_indices, dtype=int)
+
+                # Debug info (only prints if unusual types are present or sel is empty)
+                if selected_indices.size == 0:
+                    # nothing to take for this class this round
+                    # keep class pointer unchanged (pointer update below uses len(sel) so safe)
+                    continue
+
+                # Helper to index arrays or lists safely
+                def safe_index(container, indices):
+                    if isinstance(container, np.ndarray):
+                        return container[indices]
+                    else:
+                        # container is likely a list: convert indices to Python ints and use list comprehension
+                        return [container[int(i)] for i in indices]
+
+                try:
+                    batch_x.extend(safe_index(self.x_data, selected_indices))
+                    batch_y.extend(safe_index(self.y_data, selected_indices))
+                    batch_x_hashes.extend(safe_index(self.x_hashes, selected_indices))
+                except Exception as exc:
+                    raise
+
+                # Aggiorna il puntatore per la classe
+                self.class_pointers[cls] += len(selected_indices)
+
+                # Se abbiamo esaurito i dati per la classe, fai uno shuffle e riparti
+                if self.class_pointers[cls] >= len(cls_indices):
+                    self.class_pointers[cls] = 0
+                    np.random.shuffle(cls_indices)  # Shuffle della classe
+                    self.class_indices[cls] = cls_indices
+
+            batch_x, batch_y, batch_x_hashes = np.array(batch_x), np.array(batch_y), np.array(batch_x_hashes)
+            batch_x, batch_y, batch_x_hashes = shuffle(batch_x, batch_y, batch_x_hashes)
+
+            if self.label_smoothing > 0:
+                batch_y = self.apply_label_smoothing(batch_y)
+
+        # Augmentations (including occlusion)
+        occlude_or_not = np.random.rand(len(batch_x)) < self.occlusion_probability
+        occlusion_type = np.random.choice(list(self.types_of_occlusion), size=len(batch_x))
+        for i in range(len(batch_x)):
+            if occlude_or_not[i]:
+                batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
+
+        if SHOW_IMAGES_B4AUG:
+            show_dataloader_batch_images(before_or_final="before", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
+        for i in range(len(batch_x)):
+            batch_x[i] = self.augmentations.random_transform(batch_x[i])
+        if SHOW_IMAGES_FINAL:
+            show_dataloader_batch_images(before_or_final="final", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
+
+        return batch_x, batch_y
+
+    def on_epoch_end(self):
+        if self.split != 'test':
+            print("Epoch ended. Shuffling data.")
+            for cls in self.classes:
+                np.random.shuffle(self.class_indices[cls])  # Shuffle degli indici per ogni classe
+
+    def apply_label_smoothing(self, labels):
+        """Applica il label smoothing alle etichette one-hot"""
+        if self.label_smoothing > 0:
+            labels = labels.astype(np.float32)  # Assicurati che sia in formato float
+            num_classes = labels.shape[1]  # Ottieni il numero di classi (assumendo one-hot encoding)
+            smooth_value = self.label_smoothing / (num_classes - 1)  # Calcolo del valore per le classi non corrette
+            smoothed_labels = np.ones_like(labels, dtype=np.float32) * smooth_value  # Etichette smussate per tutte le classi
+            for i in range(len(labels)):
+                true_class = np.argmax(labels[i])  # Ottieni la classe corretta (indice della classe 1)
+                smoothed_labels[i, true_class] = 1.0 - self.label_smoothing  # Imposta la probabilità della classe corretta
+            return smoothed_labels
+        else:
+            return labels
 
 
 class OldCustomBalancedDataGenerator(Sequence):

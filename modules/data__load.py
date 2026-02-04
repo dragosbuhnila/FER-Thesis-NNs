@@ -7,7 +7,7 @@ from tensorflow.keras.utils import to_categorical
 from tqdm import tqdm
 
 from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
-from modules.data import OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
+from modules.data import OfflineOcclusionGenerator, OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
 from modules.data__load__misc import load_data_and_labels, remove_indices_from_data
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
 from modules.misc import hash_image
@@ -352,7 +352,6 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
 
     # 7) Create generators
     # ____________________________________
-    # Train generator should have 
     train_generator = OnlineOcclusionGenerator(
         x_data=X_train, 
         y_data=y_train_one_hot,
@@ -403,12 +402,156 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
 # ======================    load test, load train, load val, load all ==============================
 # ==================================================================================================
 
+def generate_occlusion_indexer(X_occ, X_train_occ_original_hashes, occs, pos_or_negs):
+    # Add parallelization for both cpu and tf gpu later
+    occlusion_indexer = {}
+    types_of_occlusion = set()
+    for img, original_hash, occ, pos_or_neg in zip(X_occ, X_train_occ_original_hashes, occs, pos_or_negs):
+        if original_hash not in occlusion_indexer:
+            occlusion_indexer[original_hash] = {}
+
+        occlusion_type = f"{occ}_{'pos' if pos_or_neg else 'neg'}"
+        types_of_occlusion.add(occlusion_type)
+        occlusion_indexer[original_hash][occlusion_type] = img
+
+    return occlusion_indexer, types_of_occlusion
+
 def load_offline_data_generators(original_trainval_path: str, occluded_trainval_path: str, occluded_test_path: str,
-                                training_occlusion_probability: float = 0.2, validation_occlusion_probability: float = 0.5, # matching_amount=0.2, pos_or_neg=None
+                                training_occlusion_probability: float = 0.8, validation_occlusion_probability: float = 1.0, # matching_amount=0.2, pos_or_neg=None
                                 masking_function_name: str = "lines", use_label_smoothing: bool = True, 
-                                small_subset=False, batch_size=64, dont_augment=False):
+                                small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False):
     # 1) Load training and validation data
-    # ____________________________________
-    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(original_trainval_path, 'train')
-    X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, _, _ = load_data_and_labels(occluded_trainval_path, 'train')
-    X_test, y_test, test_class_names, test_paths_data = load_data_and_labels(occluded_test_path, 'test')
+    # ____________________________________________________________________________________________________________________________________________
+    X_train, y_train, X_val, y_val, trainval_class_names    = load_data_and_labels(original_trainval_path, 'train')
+    X_test, y_test, test_class_names                        = load_data_and_labels(occluded_test_path, 'test')
+    X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, X_train_occ_original_hashes, X_val_occ_original_hashes, occ_train, mismatch_train, pos_or_neg_train, occ_val, mismatch_val, pos_or_neg_val = load_data_and_labels(occluded_trainval_path, 'train', occlusion_dataset=True)
+
+    for emotion in EMOTIONS:
+        if emotion not in trainval_class_names:
+            raise ValueError(f"Class '{emotion}' not found in training/validation class names from H5 file.")
+        if emotion not in test_class_names:
+            raise ValueError(f"Class '{emotion}' not found in test class names from H5 file.")
+    class_names = test_class_names
+
+
+    # 2) Remove duplicates and unlandmarkable images
+    # ____________________________________________________________________________________________________________________________________________
+    for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
+        if split == 'X_train':
+            X_train, y_train, _ =      remove_indices_from_data(X_train, y_train, None, indices)
+        elif split == 'X_val':
+            X_val, y_val, _ =          remove_indices_from_data(X_val, y_val, None, indices)
+        # elif split == 'X_test':
+        #     X_test, y_test, _ =      remove_indices_from_data(X_test, y_test, None, indices)
+
+    # 3) Small subset for debugging
+    # ____________________________________________________________________________________________________________________________________________
+    if small_subset:
+        debug_limit = 100
+        X_train =           X_train[:debug_limit]
+        y_train =           y_train[:debug_limit]
+        X_val =             X_val[:debug_limit]
+        y_val =             y_val[:debug_limit]
+        X_test =            X_test[:debug_limit]
+        y_test =            y_test[:debug_limit]
+
+
+    # 4) Make occlusion indexer
+    # ____________________________________________________________________________________________________________________________________________
+    X_train_hashes =    np.array([hash_image(img) for img in X_train])
+    X_val_hashes =      np.array([hash_image(img) for img in X_val])
+    # X_test_hashes =   np.array([hash_image(img) for img in X_test])
+
+    train_occlusion_indexer, types_of_occlusion = generate_occlusion_indexer(X_train_occ, X_train_occ_original_hashes, occ_train, pos_or_neg_train)
+    val_occlusion_indexer, _ =   generate_occlusion_indexer(X_val_occ, X_val_occ_original_hashes, occ_val, pos_or_neg_val)
+
+    emotions_without_neutral = EMOTIONS.copy()
+    emotions_without_neutral.remove('NEUTRAL')
+    expected_types_of_occlusions = [f"{occ.lower()}_pos" for occ in emotions_without_neutral] + [f"{occ.lower()}_neg" for occ in emotions_without_neutral]
+    for expected_type in expected_types_of_occlusions:
+        if expected_type not in types_of_occlusion:
+            raise ValueError(f"Expected occlusion type '{expected_type}' not found in occlusion indexer.")
+
+
+    # 5) Compute initial bias
+    # ____________________________________________________________________________________________________________________________________________
+    class_counts = np.bincount(y_train)
+    total_samples = len(y_train)
+    class_probabilities = class_counts / total_samples
+    initial_bias = np.log(class_probabilities / (1 - class_probabilities))
+
+
+    # 6) Shuffle training and validation data
+    # _____________________________________________________________________________________________________________________________________________
+    X_train, y_train, X_train_hashes, X_train_landmarks = shuffle(X_train, y_train, X_train_hashes, X_train_landmarks)
+    X_val, y_val, X_val_hashes, X_val_landmarks = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks)
+
+
+    # 7) One-hot encoding, augmentations, generators
+    # ____________________________________________________________________________________________________________________________________________
+    NUM_CLASSES = len(class_names)
+    y_train_one_hot = to_categorical(y_train, num_classes=NUM_CLASSES)
+    y_val_one_hot = to_categorical(y_val, num_classes=NUM_CLASSES)
+    y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
+
+
+    # 8) Augmentations
+    # ____________________________________________________________________________________________________________________________________________
+    if dont_augment:
+        train_augmentations = {}
+    else:
+        train_augmentations = {
+            'rotation_range': 10,
+            'width_shift_range': 0.2,
+            'shear_range': 0.3,
+            'horizontal_flip': True,
+            # 'fill_mode': 'wrap', # Idk why this was here but it makes zero sense, 
+            # 'fill_mode': 'nearest', # Distorst the image if it's near the edges
+            'fill_mode': 'constant', # Fill with zeros (black)
+        }
+
+
+    # 9) Generators
+    # ____________________________________________________________________________________________________________________________________________
+    train_generator = OfflineOcclusionGenerator(
+        split='train',
+        x_data=None, 
+        y_data=None,
+        x_hashes=None,
+        occlusion_indexer=train_occlusion_indexer,
+        types_of_occlusion=types_of_occlusion,
+
+        batch_size=batch_size,
+        augmentations=train_augmentations,
+        label_smoothing=0.05 if use_label_smoothing else 0.0,
+
+        masking_function_name=masking_function_name,
+        occlusion_probability=training_occlusion_probability,
+        dont_rebalance_trainval=dont_rebalance_trainval,
+        )
+    val_generator = OfflineOcclusionGenerator(
+        split='valid',
+        x_data=None,
+        y_data=None,
+        x_hashes=None,
+        occlusion_indexer=val_occlusion_indexer,
+        types_of_occlusion=types_of_occlusion,
+
+        batch_size=batch_size,
+        augmentations=train_augmentations,
+        label_smoothing=0,
+
+        masking_function_name=masking_function_name,
+        occlusion_probability=validation_occlusion_probability,
+        dont_rebalance_trainval=dont_rebalance_trainval,
+        )
+    test_generator = OldCustomBalancedDataGenerator(
+        x_data=X_test,
+        y_data=y_test_one_hot,
+        data_inf='test',
+        batch_size=batch_size,
+        augmentations={},
+        label_smoothing=0,
+    )
+    
+    return train_generator, val_generator, test_generator, initial_bias
