@@ -25,6 +25,7 @@ def refresh_show_flags():
     SHOW_IMAGES_B4AUG_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE", True)
     SHOW_IMAGES_FINAL = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL", False)
     SHOW_IMAGES_FINAL_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE", True)
+    SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT = GLOBALS.get("DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT", False)
 
     SHOW_IMAGES_B4AUG_REMAINING = {
         'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
@@ -61,7 +62,7 @@ def show_dataloader_batch_images(before_or_final: str, split: str, batch_x, batc
                 mismatched_emotion = EMOTIONS[mismatched_y[i]]
                 posneg = "Positive" if positive_or_negative_batch[i] else "Negative"
                 title += f"\nMismatched Emotion: {mismatched_emotion} ({posneg})"
-            plot_image(batch_x[i], title=title)
+            plot_image(batch_x[i], title=title, save_instead_of_plot=SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT)
         dictionary_for_remaining[split] -= 1
 
 # =============================== END OF SETTINGS AND DEBUG ================================
@@ -381,6 +382,9 @@ class OfflineOcclusionGenerator(Sequence):
         self.y_data = y_data
         self.x_hashes = x_hashes
         self.indices = np.arange(len(x_data))
+
+        self.occlusion_indexer = occlusion_indexer
+        self.types_of_occlusion = list(types_of_occlusion)
         
         self.batch_size = batch_size
         self.augmentations = ImageDataGenerator(**augmentations)
@@ -481,7 +485,7 @@ class OfflineOcclusionGenerator(Sequence):
 
         # Augmentations (including occlusion)
         occlude_or_not = np.random.rand(len(batch_x)) < self.occlusion_probability
-        occlusion_type = np.random.choice(list(self.types_of_occlusion), size=len(batch_x))
+        occlusion_type = np.random.choice(self.types_of_occlusion, size=len(batch_x))
         for i in range(len(batch_x)):
             if occlude_or_not[i]:
                 batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
