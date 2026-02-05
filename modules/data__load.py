@@ -192,17 +192,17 @@ def load_online_valid_generator(train_path, occlusion_probability, masking_funct
 def load_online_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False, dont_rebalance_trainval=False):
     # 1) Load training and validation data
     # ____________________________________
-    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(trainval_path, 'train')
-    X_test, y_test, test_class_names, test_paths_data = load_data_and_labels(test_path, 'test')
+    X_train, y_train, X_val, y_val, trainval_class_names = load_data_and_labels(trainval_path, 'train')
+    X_test, y_test, test_class_names = load_data_and_labels(test_path, 'test')
 
     if remove_dupes:
         for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
             if split == 'X_train':
-                X_train, y_train, train_paths_data = remove_indices_from_data(X_train, y_train, train_paths_data, indices)
+                X_train, y_train, _ = remove_indices_from_data(X_train, y_train, None, indices)
             elif split == 'X_val':
-                X_val, y_val, val_paths_data = remove_indices_from_data(X_val, y_val, val_paths_data, indices)
+                X_val, y_val, _ = remove_indices_from_data(X_val, y_val, None, indices)
             # elif split == 'X_test':
-            #     X_test, y_test, test_paths_data = remove_indices_from_data(X_test, y_test, test_paths_data, indices)
+            #     X_test, y_test, _ = remove_indices_from_data(X_test, y_test, None, indices)
 
     if small_subset:
         debug_limit = 100
@@ -210,18 +210,17 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         y_train = y_train[:debug_limit]
         X_val = X_val[:debug_limit]
         y_val = y_val[:debug_limit]
-        train_paths_data = train_paths_data[:debug_limit] if train_paths_data is not None else None
-        val_paths_data = val_paths_data[:debug_limit] if val_paths_data is not None else None
         X_test = X_test[:debug_limit]
         y_test = y_test[:debug_limit]
-        test_paths_data = test_paths_data[:debug_limit] if test_paths_data is not None else None
     
+
     # 1.b) Hashing
     # ____________________________________
     X_train_hashes = np.array([hash_image(img) for img in X_train])
     X_val_hashes = np.array([hash_image(img) for img in X_val])
     # X_test_hashes = np.array([hash_image(img) for img in X_test])
     
+
     # 1.c) Classes validations
     # ____________________________________
     for emotion in EMOTIONS:
@@ -231,13 +230,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
             raise ValueError(f"Class '{emotion}' not found in test class names from H5 file.")
     class_names = test_class_names
 
-    # 1.d) Paths validations
-    # ____________________________________
-    if train_paths_data is not None and val_paths_data is None:
-        raise ValueError(f"Training paths are provided but validation paths are missing, which is weird, so check the dataset at {trainval_path}.")
-    if train_paths_data is None and val_paths_data is not None:
-        raise ValueError(f"Validation paths are provided but training paths are missing, which is weird, so check the dataset at {trainval_path}.")
-    
+
     # 2) Landmarking
     # ____________________________________
     if not run_detection:
@@ -291,9 +284,9 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         else:
             return X_data_filtered, y_data_filtered, X_hashes_filtered, X_landmarks_filtered, paths_data
 
-    X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data = filter_zero_length_landmarks(X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data, name="train")
-    X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data, name="val")
-    # X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, test_paths_data, name="test")
+    X_train, y_train, X_train_hashes, X_train_landmarks, _ = filter_zero_length_landmarks(X_train, y_train, X_train_hashes, X_train_landmarks, None, name="train")
+    X_val, y_val, X_val_hashes, X_val_landmarks, _ = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, None, name="val")
+    # X_test, y_test, X_test_hashes, X_test_landmarks, _ = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, None, name="test")
     
     train_length = len(X_train); val_length = len(X_val); test_length = len(X_test)
     print(f"After filtering zero-length landmarks: X_train length: {train_length}, X_val length: {val_length}, X_test length: {test_length}. Cumulated length: {train_length + val_length + test_length}")
@@ -313,12 +306,8 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
     # ____________________________________
     # in data.py we shuffle the following:
     #       batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths = shuffle(batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths)
-    if train_paths_data is not None:
-        X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data = shuffle(X_train, y_train, X_train_hashes, X_train_landmarks, train_paths_data)
-        X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks, val_paths_data)
-    else:
-        X_train, y_train, X_train_hashes, X_train_landmarks = shuffle(X_train, y_train, X_train_hashes, X_train_landmarks)
-        X_val, y_val, X_val_hashes, X_val_landmarks = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks)
+    X_train, y_train, X_train_hashes, X_train_landmarks = shuffle(X_train, y_train, X_train_hashes, X_train_landmarks)
+    X_val, y_val, X_val_hashes, X_val_landmarks = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks)
     
     # 4) One-hot encoding, augmentations, generators
     # ____________________________________
@@ -357,7 +346,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         y_data=y_train_one_hot,
         x_hashes=X_train_hashes,
         x_landmarks=X_train_landmarks,
-        paths_data=train_paths_data,
+        paths_data=None,
         data_inf='train',
         batch_size=batch_size,
         augmentations=train_augmentations,
@@ -374,7 +363,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         y_data=y_val_one_hot,
         x_hashes=X_val_hashes,
         x_landmarks=X_val_landmarks,
-        paths_data=val_paths_data,
+        paths_data=None,
         data_inf='valid',
         batch_size=batch_size,
         augmentations=train_augmentations,
@@ -515,9 +504,9 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
     # ____________________________________________________________________________________________________________________________________________
     train_generator = OfflineOcclusionGenerator(
         split='train',
-        x_data=None, 
-        y_data=None,
-        x_hashes=None,
+        x_data=X_train, 
+        y_data=y_train_one_hot,
+        x_hashes=X_train_hashes,
         occlusion_indexer=train_occlusion_indexer,
         types_of_occlusion=types_of_occlusion,
 
@@ -531,9 +520,9 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         )
     val_generator = OfflineOcclusionGenerator(
         split='valid',
-        x_data=None,
-        y_data=None,
-        x_hashes=None,
+        x_data=X_val,
+        y_data=y_val_one_hot,
+        x_hashes=X_val_hashes,
         occlusion_indexer=val_occlusion_indexer,
         types_of_occlusion=types_of_occlusion,
 
