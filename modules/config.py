@@ -90,6 +90,7 @@ RESULTS_HEAVY_PATH = 				os.path.join(PROJECT_ROOT, "results_heavy")
 # ______________________________________________________________________
 ACCURACY_RESULTS_PATH = 			os.path.join(RESULTS_LIGHT_PATH, "accuracy_results")
 CONSOLE_OUTPUTS_PATH = 				os.path.join(RESULTS_LIGHT_PATH, "console_outputs")
+SAVED_IMAGES_PATH = 				os.path.join(RESULTS_LIGHT_PATH, "saved_images")
 # 3) Model paths
 # ______________________________________________________________________
 MODELS_PATH = 						os.path.join(DATA_BASE_DIR, "models")

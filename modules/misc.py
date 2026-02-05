@@ -6,6 +6,12 @@ import hashlib
 
 from modules.config import EMOTIONS
 
+def get_timestamp(format="date-time"):
+    if format == "date-time":
+        return time.strftime('%Y%m%d-%H%M%S')
+    else:
+        raise NotImplementedError(f"Timestamp format {format} is not implemented.")
+
 def hash_image(image):
     # If a PIL Image, convert to numpy in a deterministic way
     if isinstance(image, Image.Image):
