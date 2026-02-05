@@ -5,6 +5,7 @@ import h5py
 from sklearn.utils import shuffle
 from tensorflow.keras.utils import to_categorical
 from tqdm import tqdm
+import time
 
 from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
 from modules.data import OfflineOcclusionGenerator, OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
@@ -402,15 +403,20 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
 # ======================    load test, load train, load val, load all ==============================
 # ==================================================================================================
 
-def generate_occlusion_indexer(X_occ, X_train_occ_original_hashes, occs, pos_or_negs):
+def generate_occlusion_indexer(X_occ: np.ndarray, X_train_occ_original_hashes: np.ndarray, occs: np.ndarray, pos_or_negs: np.ndarray):
     # Add parallelization for both cpu and tf gpu later
     occlusion_indexer = {}
     types_of_occlusion = set()
     for img, original_hash, occ, pos_or_neg in zip(X_occ, X_train_occ_original_hashes, occs, pos_or_negs):
+        # Type hints for variables
+        # img: np.ndarray
+        # original_hash: str
+        # occ: int
+        # pos_or_neg: int
         if original_hash not in occlusion_indexer:
             occlusion_indexer[original_hash] = {}
 
-        occlusion_type = f"{occ}_{'pos' if pos_or_neg else 'neg'}"
+        occlusion_type = f"{occ}_{pos_or_neg}"
         types_of_occlusion.add(occlusion_type)
         occlusion_indexer[original_hash][occlusion_type] = img
 
@@ -420,11 +426,13 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
                                 training_occlusion_probability: float = 0.8, validation_occlusion_probability: float = 1.0, # matching_amount=0.2, pos_or_neg=None
                                 masking_function_name: str = "lines", use_label_smoothing: bool = True, 
                                 small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False):
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Loading data from H5 files...", flush=True)
     # 1) Load training and validation data
     # ____________________________________________________________________________________________________________________________________________
     X_train, y_train, X_val, y_val, trainval_class_names    = load_data_and_labels(original_trainval_path, 'train')
     X_test, y_test, test_class_names                        = load_data_and_labels(occluded_test_path, 'test')
     X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, X_train_occ_original_hashes, X_val_occ_original_hashes, occ_train, mismatch_train, pos_or_neg_train, occ_val, mismatch_val, pos_or_neg_val = load_data_and_labels(occluded_trainval_path, 'train', occlusion_dataset=True)
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Loaded data from: original train and validation dataset, occluded train and validation dataset, occluded test dataset.", flush=True)
 
     for emotion in EMOTIONS:
         if emotion not in trainval_class_names:
@@ -458,33 +466,48 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
 
     # 4) Make occlusion indexer
     # ____________________________________________________________________________________________________________________________________________
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Generating hashes occlusion indexers for training and validation sets...", flush=True)
     X_train_hashes =    np.array([hash_image(img) for img in X_train])
     X_val_hashes =      np.array([hash_image(img) for img in X_val])
     # X_test_hashes =   np.array([hash_image(img) for img in X_test])
 
     train_occlusion_indexer, types_of_occlusion = generate_occlusion_indexer(X_train_occ, X_train_occ_original_hashes, occ_train, pos_or_neg_train)
     val_occlusion_indexer, _ =   generate_occlusion_indexer(X_val_occ, X_val_occ_original_hashes, occ_val, pos_or_neg_val)
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Generated occlusion indexers for training and validation sets.", flush=True)
 
-    emotions_without_neutral = EMOTIONS.copy()
-    emotions_without_neutral.remove('NEUTRAL')
-    expected_types_of_occlusions = [f"{occ.lower()}_pos" for occ in emotions_without_neutral] + [f"{occ.lower()}_neg" for occ in emotions_without_neutral]
+    # Validate that all expected occlusion types are present
+    position_of_neutral = EMOTIONS.index("NEUTRAL")
+    emotion_indices = list(range(len(EMOTIONS)))
+    emotions_indices_without_neutral = emotion_indices[:position_of_neutral] + emotion_indices[position_of_neutral+1:]
+    expected_types_of_occlusions = [f"{occ}_1" for occ in emotions_indices_without_neutral] + [f"{occ}_0" for occ in emotions_indices_without_neutral]
     for expected_type in expected_types_of_occlusions:
         if expected_type not in types_of_occlusion:
-            raise ValueError(f"Expected occlusion type '{expected_type}' not found in occlusion indexer.")
+            error_message = f"Expected occlusion type '{expected_type}' not found in occlusion indexer."
+            error_message += f"\nExpected types of occlusion: {expected_types_of_occlusions}"
+            error_message += f"\nActual types of occlusion found: {types_of_occlusion}"
+            error_message += f"\nOcclusion indexer keys"
+            for key in train_occlusion_indexer.keys():
+                error_message += f"\n  {key}: {list(train_occlusion_indexer[key].keys())}"
+            raise ValueError(error_message)
 
 
     # 5) Compute initial bias
     # ____________________________________________________________________________________________________________________________________________
-    class_counts = np.bincount(y_train)
-    total_samples = len(y_train)
-    class_probabilities = class_counts / total_samples
-    initial_bias = np.log(class_probabilities / (1 - class_probabilities))
+    try:
+        class_counts = np.bincount(y_train)
+        total_samples = len(y_train)
+        class_probabilities = class_counts / total_samples
+        initial_bias = np.log(class_probabilities / (1 - class_probabilities))
+    except Exception as e:
+        print(f"[ERROR] {time.strftime('%Y%m%d-%H%M%S')} Error computing initial bias: {e}. class_counts: {class_counts}, total_samples: {total_samples}.", flush=True)
+        raise
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Initial bias computed. class_counts: {class_counts}, total_samples: {total_samples}. class_probabilities: {class_probabilities}, initial_bias: {initial_bias}", flush=True)
 
 
     # 6) Shuffle training and validation data
     # _____________________________________________________________________________________________________________________________________________
-    X_train, y_train, X_train_hashes, X_train_landmarks = shuffle(X_train, y_train, X_train_hashes, X_train_landmarks)
-    X_val, y_val, X_val_hashes, X_val_landmarks = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks)
+    X_train, y_train, X_train_hashes = shuffle(X_train, y_train, X_train_hashes)
+    X_val, y_val, X_val_hashes = shuffle(X_val, y_val, X_val_hashes)
 
 
     # 7) One-hot encoding, augmentations, generators
@@ -513,6 +536,7 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
 
     # 9) Generators
     # ____________________________________________________________________________________________________________________________________________
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} All set. Creating data generators...", flush=True)
     train_generator = OfflineOcclusionGenerator(
         split='train',
         x_data=None, 
@@ -553,5 +577,6 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         augmentations={},
         label_smoothing=0,
     )
+    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Data generators created.", flush=True)
     
     return train_generator, val_generator, test_generator, initial_bias

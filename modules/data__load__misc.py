@@ -29,14 +29,14 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False):
             #   y_val: [0 0 0 ... 6 6 6]
             X_train = np.array(f['X_train'])
             y_train = np.array(f['y_train'])
-            X_train_original_hashes = np.array(f['X_train_original_hashes'])
+            X_train_original_hashes = np.array(f['original_hash_train'])
             occ_train = np.array(f['occ_train'])
             mismatch_train = np.array(f['mismatch_train'])
             pos_or_neg_train = np.array(f['pos_or_neg_train'])
 
             X_val = np.array(f['X_val'])
             y_val = np.array(f['y_val'])
-            X_val_original_hashes = np.array(f['X_val_original_hashes'])
+            X_val_original_hashes = np.array(f['original_hash_val'])
             occ_val = np.array(f['occ_val'])
             mismatch_val = np.array(f['mismatch_val'])
             pos_or_neg_val = np.array(f['pos_or_neg_val'])

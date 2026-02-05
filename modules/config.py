@@ -14,6 +14,7 @@ GLOBALS = {
 	"DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE": True,
 	"DATALOADER_SHOW_IMAGES_FINAL": False,
 	"DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE": True,
+	"DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT": False, # if True, will save the images instead of plotting them. This is useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging
 	"MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH": 0,
 }
 

@@ -10,6 +10,10 @@ from modules.mask import occlude_batch
 from modules.visualize import plot_image
 
 
+print(f"TENSORFLOW_STATUS: (inside {__name__}) ")
+print(f'\ttf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'), flush=True)
+
+
 
 # =============================== SETTINGS AND DEBUG ================================
 
