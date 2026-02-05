@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 from tqdm import tqdm
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 import h5py
 from joblib import Parallel, delayed
 
