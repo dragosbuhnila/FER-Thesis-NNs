@@ -10,7 +10,7 @@ from modules.config import EMOTIONS
 create_images_script_path = os.path.join(os.path.dirname(__file__), 'occlude_dataset_offline.py')
 create_h5_from_images_script_path = os.path.join(os.path.dirname(__file__), 'occluded_dataset_offline_h5.py')
 count_files_in_folder_script_path = os.path.join(os.path.dirname(__file__), 'tools', 'count_files_in_folder.py')
-read_h5_folder_script_path = os.path.join(os.path.dirname(__file__), 'tools', 'read_h5_folder.py')
+read_h5_folder_script_path = os.path.join(os.path.dirname(__file__), 'tools', 'reading_files', 'read_h5_folder.py')
 
 # --batch_size 16 --small_subset --show_images -d
 parser = argparse.ArgumentParser(description="Run occlude_dataset_offline.py for all emotions except neutral.")

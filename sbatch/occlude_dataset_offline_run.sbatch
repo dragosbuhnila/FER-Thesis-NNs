@@ -41,7 +41,7 @@ pwd
 # =====================================================================================
 
 
-COMMAND_TO_RUN="./scripts/occlude_dataset_offline_run.py --batch_size-images 256 --create_h5_script --create_images_script"
+COMMAND_TO_RUN="./scripts/occlude_dataset_offline_run.py --batch_size-images 256 --create_h5_script --check_images --check_h5"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

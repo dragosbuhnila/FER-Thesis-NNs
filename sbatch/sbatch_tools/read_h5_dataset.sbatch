@@ -36,7 +36,7 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/tools/read_h5_folder.py"
+SCRIPT="./scripts/tools/reading_files/read_h5_folder.py"
 echo "Now running $SCRIPT"
 python $SCRIPT
 
