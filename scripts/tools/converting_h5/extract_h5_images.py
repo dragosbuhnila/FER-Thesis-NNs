@@ -1,4 +1,5 @@
-import sys; import os; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+import sys; import os;
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 import h5py
 from modules.config import ORIGINAL_TRAIN_VAL_SET_H5_PATH
