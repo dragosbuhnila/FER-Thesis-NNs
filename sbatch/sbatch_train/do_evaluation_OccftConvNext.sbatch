@@ -28,7 +28,6 @@ export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 echo "=========================================================================="
 echo "Activated venv!"
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
-python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
@@ -41,10 +40,14 @@ pwd
 # =====================================================================================
 
 
-PARAM_MODEL_NAME="convnext_finetuning"
+echo "====================== testing keras and tensorflow versions ==========================="
+python -c "import keras, tensorflow as tf; print(f'Keras: {keras.__version__}, TF: {tf.__version__}')"
+echo "====================== finished testing keras and tf versions =========================="
+
+PARAM_MODEL_NAME="occft_convnext"
 PARAM_TEST_SET="OCCLUDED"
 
-SCRIPT="./scripts/evaluate_model.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
+SCRIPT="./scripts/do_evaluation.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

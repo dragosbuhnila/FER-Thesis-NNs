@@ -221,120 +221,9 @@ def build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, mo
     
     return model
 
-def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias, model_name='PattLite', run=None):
-    # # Per ora identico a build_model_finetuning
-    # return build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, model_name, run)
-
-    if model_name == 'EfficientNetB1':
-        with tf.keras.utils.custom_object_scope(custom_objects):
-            model_path = ALL_MODELS_PATHS["efficientnet_finetuning"]
-            model = build_model_final_layers(learning_rate, dropout_rate, l2_reg, initial_bias, model_name)
-            model.load_weights(model_path)
-        backbone = model.get_layer('base_model')
-        backbone.trainable = True
-
-        preprocess_input = tf.keras.applications.efficientnet.preprocess_input
-        unfreeze = 114
-    elif model_name == 'VGG19':
-         # Scarica il modello dal server locale
-        with tf.keras.utils.custom_object_scope(custom_objects):
-            model_path = ALL_MODELS_PATHS["vgg19_finetuning"]
-            model = tf.keras.models.load_model(model_path)
-        backbone = model.get_layer('base_model')
-        backbone.trainable = True
-
-        preprocess_input = tf.keras.applications.vgg19.preprocess_input
-        unfreeze = 3
-    elif model_name == 'PattLite':
-        with tf.keras.utils.custom_object_scope(custom_objects):
-            model_path = ALL_MODELS_PATHS["pattlite_finetuning"]
-            model = tf.keras.models.load_model(model_path)
-        backbone = model.get_layer('base_model')
-        backbone.trainable = True
-        ### prima era unfreeze = 10
-        preprocess_input = tf.keras.applications.mobilenet.preprocess_input
-        unfreeze = 54
-    elif model_name == 'ResNet':
-        with tf.keras.utils.custom_object_scope(custom_objects):
-            model_path = ALL_MODELS_PATHS["resnet_finetuning"]
-            model = tf.keras.models.load_model(model_path)
-        backbone = model.get_layer('base_model')
-        backbone.trainable = True
-
-        preprocess_input = tf.keras.applications.resnet_v2.preprocess_input
-        ## prima era unfreeze = 20
-        unfreeze = 70
-    elif model_name == 'ConvNeXt':
-        with tf.keras.utils.custom_object_scope(custom_objects):
-            model_path = ALL_MODELS_PATHS["convnext_finetuning"]
-            model = tf.keras.models.load_model(model_path)
-        backbone = model.get_layer('base_model')
-        backbone.trainable = True
-        ## prima era unfreeze = 10
-        unfreeze = 241
-    elif model_name == 'InceptionV3':
-        with tf.keras.utils.custom_object_scope(custom_objects):
-            model_path = ALL_MODELS_PATHS["inceptionv3_finetuning"]
-            model = tf.keras.models.load_model(model_path)
-        backbone = model.get_layer('base_model')
-        backbone.trainable = True
-        
-        preprocess_input = tf.keras.applications.inception_v3.preprocess_input
-        ### prima era unfreeze = 20
-        unfreeze = 81
-
-    else:
-        raise ValueError(f"Modello '{model_name}' non supportato.")
-    
-
-    pre_classification = tf.keras.Sequential([tf.keras.layers.Dense(32, activation='relu', kernel_regularizer = l2(l2_reg)),
-                                              tf.keras.layers.BatchNormalization()], name='pre_classification')
-
-    fine_tune_from = len(backbone.layers) - unfreeze
-    for layer in backbone.layers[:fine_tune_from]:
-        layer.trainable = False
-    for layer in backbone.layers[fine_tune_from:]:
-        if isinstance(layer, tf.keras.layers.BatchNormalization):
-            layer.trainable = False
-
-    self_attention = model.get_layer('attention')
-    patch_extraction = model.get_layer('patch_extraction')
-
-    global_average_layer = model.get_layer('gap')
-    prediction_layer = model.get_layer('classification_head')
-    IMG_SHAPE = (128, 128, 3)
-    input_layer = tf.keras.Input(shape=IMG_SHAPE, name='universal_input')
-    #sample_resizing = tf.keras.layers.Resizing(128, 128, name="resize")
-    x = input_layer
-    if model_name != 'ConvNeXt':
-        x = preprocess_input(x)
-    x = backbone(x, training=False)
-    x = patch_extraction(x)
-    x = tf.keras.layers.SpatialDropout2D(dropout_rate)(x)
-    x = global_average_layer(x)
-    x = Dropout(dropout_rate)(x)
-    x = pre_classification(x)
-    x = ExpandDimsLayer(axis=-1)(x)
-    x = self_attention([x, x])
-    x = SqueezeLayer(axis=-1)(x)
-    x = tf.keras.layers.Dropout(dropout_rate)(x)
-    outputs = prediction_layer(x)
-
-    model = Model(inputs=input_layer, outputs=outputs, name='train-head')
-    model.summary(show_trainable=True)
-
-    ##### prima prova: alpa =0.25 e gamma = 2.0
-    #### seconda prova: alpha = 0.75 e gamma = 3.0
-    #### terza prova: alpha = 0.8 e gamma = 5.0
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, global_clipnorm=3.0),
-                  loss= categorical_focal_loss(alpha=0.25, gamma=2.0),
-                  metrics=['categorical_accuracy'])
-    
-    return model
 
 
-
-def load_model(model_name, model_path_subset, debug=False):
+def load_model(model_name, model_path_subset=ALL_MODELS_PATHS, debug=False):
     if not model_name in model_path_subset.keys():
         raise ValueError(f"Model name '{model_name}' not found in the provided model path subset.")
 
@@ -349,7 +238,7 @@ def load_model(model_name, model_path_subset, debug=False):
 
     if "yolo" in model_name:
         # Import ultralytics lazily to avoid pulling in PyTorch/CUDA at module import time
-        # which can conflict with TensorFlow's GPU initialization.
+        #   which can conflict with TensorFlow's GPU initialization.
         from ultralytics import YOLO
         import torch
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -426,3 +315,49 @@ def load_model_efficientnet(model_name, model_path_subset, custom_objects):
                 metrics=['categorical_accuracy'])
         
         return efficientnet
+
+def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias, model_name='PattLite', run=None, unfreeze=None):
+    # # Per ora identico a build_model_finetuning
+    # return build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, model_name, run)
+
+    if model_name == 'EfficientNetB1':
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            model = load_model("efficientnet_finetuning")
+    elif model_name == 'VGG19':
+         # Scarica il modello dal server locale
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            load_model("vgg19_finetuning")
+    elif model_name == 'PattLite':
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            load_model("pattlite_finetuning")
+    elif model_name == 'ResNet':
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            load_model("resnet_finetuning")
+    elif model_name == 'ConvNeXt':
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            load_model("convnext_finetuning")
+    elif model_name == 'InceptionV3':
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            load_model("inception_finetuning")
+    else:
+        raise ValueError(f"Modello '{model_name}' non supportato.")
+    
+    # Freeze everything
+    for layer in model.layers:
+        layer.trainable = True
+
+    fine_tune_from = len(model.layers) - unfreeze
+    for layer in model.layers[:fine_tune_from]:
+        layer.trainable = False
+    for layer in model.layers[fine_tune_from:]:
+        if isinstance(layer, tf.keras.layers.BatchNormalization):
+            layer.trainable = False
+
+    ##### prima prova: alpa =0.25 e gamma = 2.0
+    #### seconda prova: alpha = 0.75 e gamma = 3.0
+    #### terza prova: alpha = 0.8 e gamma = 5.0
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, global_clipnorm=3.0),
+                  loss= categorical_focal_loss(alpha=0.25, gamma=2.0),
+                  metrics=['categorical_accuracy'])
+    
+    return model

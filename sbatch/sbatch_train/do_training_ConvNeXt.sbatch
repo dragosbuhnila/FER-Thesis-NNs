@@ -3,9 +3,9 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
-#SBATCH --time=00:30:00
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=20G
+#SBATCH --mem=40G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
@@ -28,7 +28,6 @@ export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 echo "=========================================================================="
 echo "Activated venv!"
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
-python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
@@ -41,16 +40,11 @@ pwd
 # =====================================================================================
 
 
-echo "====================== testing keras and tensorflow versions ==========================="
-python -c "import keras, tensorflow as tf; print(f'Keras: {keras.__version__}, TF: {tf.__version__}')"
-echo "====================== finished testing keras and tf versions =========================="
-
-PARAM_MODEL_NAME="occft_convnext"
-PARAM_TEST_SET="OCCLUDED"
-
-SCRIPT="./scripts/evaluate_model.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 8 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
+SCRIPT="./scripts/do_training.py --no_mlflow_server --batch_size 256 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.4 --model_name ConvNeXt --FT_EPOCH 15 --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451"
 echo "Now running $SCRIPT"
 python $SCRIPT
+
 
 
 # =====================================================================================
