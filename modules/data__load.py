@@ -11,7 +11,7 @@ from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDM
 from modules.data import OfflineOcclusionGenerator, OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
 from modules.data__load__misc import load_data_and_labels, remove_indices_from_data
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
-from modules.misc import hash_image
+from modules.misc import hash_image, get_timestamp
 
 
 
@@ -415,13 +415,13 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
                                 training_occlusion_probability: float = 0.8, validation_occlusion_probability: float = 1.0, # matching_amount=0.2, pos_or_neg=None
                                 masking_function_name: str = "lines", use_label_smoothing: bool = True, 
                                 small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False):
-    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Loading data from H5 files...", flush=True)
+    print(f"[INFO] {get_timestamp()} Loading data from H5 files...", flush=True)
     # 1) Load training and validation data
     # ____________________________________________________________________________________________________________________________________________
     X_train, y_train, X_val, y_val, trainval_class_names    = load_data_and_labels(original_trainval_path, 'train')
     X_test, y_test, test_class_names                        = load_data_and_labels(occluded_test_path, 'test')
     X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, X_train_occ_original_hashes, X_val_occ_original_hashes, occ_train, mismatch_train, pos_or_neg_train, occ_val, mismatch_val, pos_or_neg_val = load_data_and_labels(occluded_trainval_path, 'train', occlusion_dataset=True)
-    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Loaded data from: original train and validation dataset, occluded train and validation dataset, occluded test dataset.", flush=True)
+    print(f"[INFO] {get_timestamp()} Loaded data from: original train and validation dataset, occluded train and validation dataset, occluded test dataset.", flush=True)
 
     for emotion in EMOTIONS:
         if emotion not in trainval_class_names:
@@ -455,14 +455,30 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
 
     # 4) Make occlusion indexer
     # ____________________________________________________________________________________________________________________________________________
-    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Generating hashes occlusion indexers for training and validation sets...", flush=True)
+    print(f"[INFO] {get_timestamp()} Generating hashes occlusion indexers for training and validation sets...", flush=True)
     X_train_hashes =    np.array([hash_image(img) for img in X_train])
     X_val_hashes =      np.array([hash_image(img) for img in X_val])
     # X_test_hashes =   np.array([hash_image(img) for img in X_test])
 
+    X_train_hashes_set = set(X_train_hashes)
+    X_train_occ_original_hashes_set = set(X_train_occ_original_hashes)
+    difference = X_train_occ_original_hashes_set - X_train_hashes_set
+    if len(difference) > 0:
+        print(f"[WARNING] {get_timestamp()} Hashes in occluded training set but not in original training set: {len(difference)}. This should be zero.", flush=True)
+        print(f"[WARNING] {get_timestamp()} Example hashes: {list(difference)[:10]}", flush=True)
+    del X_train_hashes_set
+    del X_train_occ_original_hashes_set
+    X_val_hashes_set = set(X_val_hashes)
+    X_val_occ_original_hashes_set = set(X_val_occ_original_hashes)
+    difference = X_val_occ_original_hashes_set - X_val_hashes_set
+    if len(difference) > 0:
+        print(f"[WARNING] {get_timestamp()} Hashes in occluded validation set but not in original validation set: {len(difference)}. This should be zero.", flush=True)
+        print(f"[WARNING] {get_timestamp()} Example hashes: {list(difference)[:10]}", flush=True)
+    del X_val_occ_original_hashes_set
+
     train_occlusion_indexer, types_of_occlusion = generate_occlusion_indexer(X_train_occ, X_train_occ_original_hashes, occ_train, pos_or_neg_train)
     val_occlusion_indexer, _ =   generate_occlusion_indexer(X_val_occ, X_val_occ_original_hashes, occ_val, pos_or_neg_val)
-    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Generated occlusion indexers for training and validation sets.", flush=True)
+    print(f"[INFO] {get_timestamp()} Generated occlusion indexers for training and validation sets.", flush=True)
 
     # Validate that all expected occlusion types are present
     position_of_neutral = EMOTIONS.index("NEUTRAL")
@@ -488,9 +504,9 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         class_probabilities = class_counts / total_samples
         initial_bias = np.log(class_probabilities / (1 - class_probabilities))
     except Exception as e:
-        print(f"[ERROR] {time.strftime('%Y%m%d-%H%M%S')} Error computing initial bias: {e}. class_counts: {class_counts}, total_samples: {total_samples}.", flush=True)
+        print(f"[ERROR] {get_timestamp()} Error computing initial bias: {e}. class_counts: {class_counts}, total_samples: {total_samples}.", flush=True)
         raise
-    print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Initial bias computed. class_counts: {class_counts}, total_samples: {total_samples}. class_probabilities: {class_probabilities}, initial_bias: {initial_bias}", flush=True)
+    print(f"[INFO] {get_timestamp()} Initial bias computed. class_counts: {class_counts}, total_samples: {total_samples}. class_probabilities: {class_probabilities}, initial_bias: {initial_bias}", flush=True)
 
 
     # 6) Shuffle training and validation data
