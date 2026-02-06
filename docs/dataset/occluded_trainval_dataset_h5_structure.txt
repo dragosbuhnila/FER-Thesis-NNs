@@ -1,25 +1,34 @@
 ======================
 Verifying new h5 contents:
-X_train.shape: (144469, 128, 128, 3)
+X_train.shape: (236286, 128, 128, 3)
 X_train dtype: uint8
-X_val.shape: (35736, 128, 128, 3)
+X_val.shape: (58418, 128, 128, 3)
 X_val dtype: uint8
-mismatch_train.shape: (144469,)
+class_names.shape: (7,)
+class_names: [b'ANGRY' b'DISGUST' b'FEAR' b'HAPPY' b'NEUTRAL' b'SAD' b'SURPRISE']
+mismatch_train.shape: (236286,)
 mismatch_train: [0 0 0 ... 0 0 0]
-mismatch_val.shape: (35736,)
+mismatch_val.shape: (58418,)
 mismatch_val: [0 0 0 ... 0 0 0]
-occ_train.shape: (144469,)
+occ_train.shape: (236286,)
 occ_train: [0 0 0 ... 6 6 6]
-occ_val.shape: (35736,)
-occ_val: [0 0 0 ... 6 6 6]
-pos_or_neg_train.shape: (144469,)
+occ_val.shape: (58418,)
+occ_val: [0 0 0 ... 0 0 0]
+original_hash_train.shape: (236286,)
+original_hash_train: [b'001054f4a171c85ae10f148b4acb51b8' b'00403cd4190286f994faa2fbf90d798b'
+ b'009b9fbfc3e3e45253740458c6b0f7a2' ...
+ b'ff9804b93bc48c2b348052ad58edf375' b'ffa09d5401e43235ac798ff9c184bb89'
+ b'fff34b7b76fadaecb0e1b82554ee1e73']
+original_hash_val.shape: (58418,)
+original_hash_val: [b'' b'' b'' ... b'' b'' b'']
+pos_or_neg_train.shape: (236286,)
 pos_or_neg_train: [1 1 1 ... 1 1 1]
-pos_or_neg_val.shape: (35736,)
-pos_or_neg_val: [1 1 1 ... 1 1 1]
-y_train.shape: (144469,)
+pos_or_neg_val.shape: (58418,)
+pos_or_neg_val: [0 0 0 ... 0 0 0]
+y_train.shape: (236286,)
 y_train: [0 0 0 ... 6 6 6]
-y_val.shape: (35736,)
-y_val: [0 0 0 ... 6 6 6]
+y_val.shape: (58418,)
+y_val: [0 0 0 ... 0 0 0]
 ======================
 ======================
 Verifying new h5 contents:
@@ -48,3 +57,4 @@ y_test: [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
  5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
  5 5 5 5 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
  6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6]
+======================

@@ -18,7 +18,7 @@ parser.add_argument("--create_images_script",               action="store_true",
 parser.add_argument("--create_h5_script",                   action="store_true", help="Path to the create HDF5 script")
 parser.add_argument("--check_images",                       action="store_true", help="Check the created images")
 parser.add_argument("--check_h5",                           action="store_true", help="Check the created HDF5")
-parser.add_argument("--batch_size-images",          type=int, default=16,        help="Batch size for processing")
+parser.add_argument("--batch_size-images",          type=int, default=32768,        help="Batch size for processing")
 parser.add_argument("--batch_size-h5",              type=int, default=32768,     help="Batch size for HDF5 creation")
 parser.add_argument("--small_subset",                       action="store_true", help="Use a small subset of the data")
 parser.add_argument("--show_images",                        action="store_true", help="Show images during processing")

@@ -7,7 +7,7 @@ from tensorflow.keras.utils import to_categorical
 from tqdm import tqdm
 import time
 
-from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH
+from modules.config import BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT, EMOTIONS, LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE, LANDMARK_COORDINATES_FOLDER_PATH, SMALL_SUBSET_SIZE
 from modules.data import OfflineOcclusionGenerator, OnlineOcclusionGenerator, OldCustomBalancedDataGenerator
 from modules.data__load__misc import load_data_and_labels, remove_indices_from_data
 from modules.landmark_utils import detect_facial_landmarks, load_landmark_coordinates
@@ -190,7 +190,7 @@ def load_online_valid_generator(train_path, occlusion_probability, masking_funct
     return val_generator
 
 
-def load_online_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False, dont_rebalance_trainval=False):
+def load_online_data_generators(trainval_path, test_path, training_occlusion_probability, masking_function_name, use_label_smoothing, mismatch, small_subset=False, run_detection=False, remove_dupes=True, parallelize=True, matching_amount=0.2, batch_size=64, validation_occlusion_probability=0.5, pos_or_neg=None, dont_augment=False, dont_rebalance_trainval=False, yield_hashes=False):
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names = load_data_and_labels(trainval_path, 'train')
@@ -206,7 +206,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
             #     X_test, y_test, _ = remove_indices_from_data(X_test, y_test, None, indices)
 
     if small_subset:
-        debug_limit = 100
+        debug_limit = SMALL_SUBSET_SIZE
         X_train = X_train[:debug_limit]
         y_train = y_train[:debug_limit]
         X_val = X_val[:debug_limit]
@@ -358,6 +358,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         matching_amount=matching_amount,
         pos_or_neg=pos_or_neg,
         dont_rebalance_trainval=dont_rebalance_trainval,
+        yield_hashes=yield_hashes,
         )
     val_generator = OnlineOcclusionGenerator(
         x_data=X_val,
@@ -375,6 +376,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         matching_amount=matching_amount,
         pos_or_neg=pos_or_neg,
         dont_rebalance_trainval=dont_rebalance_trainval,
+        yield_hashes=yield_hashes,
         )
     test_generator = OldCustomBalancedDataGenerator(
         x_data=X_test,
@@ -418,9 +420,9 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
     print(f"[INFO] {get_timestamp()} Loading data from H5 files...", flush=True)
     # 1) Load training and validation data
     # ____________________________________________________________________________________________________________________________________________
-    X_train, y_train, X_val, y_val, trainval_class_names    = load_data_and_labels(original_trainval_path, 'train')
-    X_test, y_test, test_class_names                        = load_data_and_labels(occluded_test_path, 'test')
-    X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, X_train_occ_original_hashes, X_val_occ_original_hashes, occ_train, mismatch_train, pos_or_neg_train, occ_val, mismatch_val, pos_or_neg_val = load_data_and_labels(occluded_trainval_path, 'train', occlusion_dataset=True)
+    X_train, y_train, X_val, y_val, trainval_class_names    = load_data_and_labels(original_trainval_path, 'train', small_subset=small_subset)
+    X_test, y_test, test_class_names                        = load_data_and_labels(occluded_test_path, 'test', small_subset=small_subset)
+    X_train_occ, y_train_occ, X_val_occ, y_val_occ, _, X_train_occ_original_hashes, X_val_occ_original_hashes, occ_train, mismatch_train, pos_or_neg_train, occ_val, mismatch_val, pos_or_neg_val = load_data_and_labels(occluded_trainval_path, 'train', occlusion_dataset=True, small_subset=small_subset)
     print(f"[INFO] {get_timestamp()} Loaded data from: original train and validation dataset, occluded train and validation dataset, occluded test dataset.", flush=True)
 
     for emotion in EMOTIONS:
@@ -435,22 +437,11 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
     # ____________________________________________________________________________________________________________________________________________
     for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
         if split == 'X_train':
-            X_train, y_train, _ =      remove_indices_from_data(X_train, y_train, None, indices)
+            X_train, y_train, _ =      remove_indices_from_data(X_train, y_train, None, indices, small_subset=small_subset)
         elif split == 'X_val':
-            X_val, y_val, _ =          remove_indices_from_data(X_val, y_val, None, indices)
+            X_val, y_val, _ =          remove_indices_from_data(X_val, y_val, None, indices, small_subset=small_subset)
         # elif split == 'X_test':
-        #     X_test, y_test, _ =      remove_indices_from_data(X_test, y_test, None, indices)
-
-    # 3) Small subset for debugging
-    # ____________________________________________________________________________________________________________________________________________
-    if small_subset:
-        debug_limit = 100
-        X_train =           X_train[:debug_limit]
-        y_train =           y_train[:debug_limit]
-        X_val =             X_val[:debug_limit]
-        y_val =             y_val[:debug_limit]
-        X_test =            X_test[:debug_limit]
-        y_test =            y_test[:debug_limit]
+        #     X_test, y_test, _ =      remove_indices_from_data(X_test, y_test, None, indices, small_subset=small_subset)
 
 
     # 4) Make occlusion indexer

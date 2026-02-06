@@ -1,4 +1,5 @@
 import os
+import sys
 from PIL import Image
 import h5py
 import numpy as np
@@ -7,11 +8,73 @@ import time
 
 from modules.config import EMOTIONS
 
+
+
+# =============================================================================================================================
+# ============================ Time and Filenames =============================================================================
+# ====== get_timestamp, extract_info_from_occludedtrainvalset_filename ======================================================== 
+# ======== create_occludedtrainvalset_filename_from_info, Tee =================================================================
+# =============================================================================================================================
+
 def get_timestamp(format="date-time"):
     if format == "date-time":
         return time.strftime('%Y%m%d-%H%M%S')
     else:
         raise NotImplementedError(f"Timestamp format {format} is not implemented.")
+
+def extract_info_from_occludedtrainvalset_filename(filename):
+    # Example of filename 00cd28ba22c246af733c4e0d8c6da551_gt-angry_occ-fear_mismatching_negative.png
+
+    # Remove png or jpg if present
+    if filename.endswith('.png'):
+        filename = filename[:-4]
+    elif filename.endswith('.jpg'):
+        filename = filename[:-4]
+    
+    # First of all check if the format is correct
+    parts = filename.split('_')
+    if len(parts) != 5:
+        raise ValueError(f"Filename {filename} does not conform to expected format. Should have 5 parts separated by underscores.")
+    
+    hash, gt_emotion_long, occ_emotion_long, mismatching, pos_or_neg = parts
+
+    gt_emotion = gt_emotion_long.split('-')[1]
+    occ_emotion = occ_emotion_long.split('-')[1]
+
+    return hash, gt_emotion, occ_emotion, mismatching, pos_or_neg
+
+def create_occludedtrainvalset_filename_from_info(hash, gt_emotion, occ_emotion, mismatching, pos_or_neg):
+    filename = f"{hash}_gt-{gt_emotion}_occ-{occ_emotion}_{mismatching}_{pos_or_neg}.png"
+    return filename
+
+class Tee:
+    def __init__(self, file_path):
+        self.file = open(file_path, "w")
+        self.stdout = sys.stdout
+
+    def write(self, data):
+        self.file.write(data)
+        self.file.flush()  # Ensure the file is updated immediately
+        self.stdout.write(data)
+        self.stdout.flush()  # Ensure the terminal displays the output immediately
+
+    def flush(self):
+        self.file.flush()
+        self.stdout.flush()
+
+    def close(self):
+        self.file.close()
+
+
+# ====================================================================================================================================
+# ============================ End of Time and Filenames =============================================================================
+# ====================================================================================================================================
+
+
+# ====================================================================================================================================
+# ============================ Computing Functions ===================================================================================
+# ================================ hash_image ======================================================================================== 
+# ====================================================================================================================================
 
 def hash_image(image):
     # If a PIL Image, convert to numpy in a deterministic way
@@ -23,6 +86,13 @@ def hash_image(image):
 
     arr = np.ascontiguousarray(arr)
     return hashlib.md5(arr.tobytes()).hexdigest()
+
+# ====================================================================================================================================
+# ============================ End of Computing Functions ============================================================================
+
+
+
+# ============================ Print and Visualization Functions =============================
 
 def print_npy(npy_file_path, output_file_path):
     data = np.load(npy_file_path, allow_pickle=True)
@@ -40,6 +110,12 @@ def print_npy(npy_file_path, output_file_path):
         else:
             f.write(f"Contents of {npy_file_path}:\n")
             f.write(data.__str__())
+
+# ============================ End of Print and Visualization Functions =============================
+
+
+
+# ============================ Highly Coupled Functions =============================
 
 def generate_h5_from_images(test_set_path, resized_path, h5_path):
     class_names = sorted(os.listdir(test_set_path))
@@ -96,31 +172,6 @@ def generate_h5_from_images(test_set_path, resized_path, h5_path):
             raise ValueError(f"Expected 7 classes, but found {len(class_names_loaded)}.")
         if len(paths_loaded) != 350:
             raise ValueError(f"Expected 350 paths, but found {len(paths_loaded)}.")
-        
-def extract_info_from_occludedtrainvalset_filename(filename):
-    # Example of filename 00cd28ba22c246af733c4e0d8c6da551_gt-angry_occ-fear_mismatching_negative.png
-
-    # Remove png or jpg if present
-    if filename.endswith('.png'):
-        filename = filename[:-4]
-    elif filename.endswith('.jpg'):
-        filename = filename[:-4]
-    
-    # First of all check if the format is correct
-    parts = filename.split('_')
-    if len(parts) != 5:
-        raise ValueError(f"Filename {filename} does not conform to expected format. Should have 5 parts separated by underscores.")
-    
-    hash, gt_emotion_long, occ_emotion_long, mismatching, pos_or_neg = parts
-
-    gt_emotion = gt_emotion_long.split('-')[1]
-    occ_emotion = occ_emotion_long.split('-')[1]
-
-    return hash, gt_emotion, occ_emotion, mismatching, pos_or_neg
-
-def create_occludedtrainvalset_filename_from_info(hash, gt_emotion, occ_emotion, mismatching, pos_or_neg):
-    filename = f"{hash}_gt-{gt_emotion}_occ-{occ_emotion}_{mismatching}_{pos_or_neg}.png"
-    return filename
 
 class StatsTracker:
     def __init__(self, emotions, generator_name, specific_mismatch=None, positive_or_negative=None):
@@ -195,3 +246,8 @@ class StatsTracker:
 
     def increase_saved(self):
         self.stats['saved_images'] += 1
+
+    
+
+# ============================ End of Highly Coupled Functions =============================
+

@@ -1,9 +1,12 @@
 import h5py
 import numpy as np
+from modules.config import SMALL_SUBSET_SIZE
 
 
-def load_data_and_labels(file_path, info, occlusion_dataset=False):
+def load_data_and_labels(file_path, info, occlusion_dataset=False, small_subset=False):
     class_names = None
+    subset_size = SMALL_SUBSET_SIZE if small_subset else None
+
     with h5py.File(file_path, 'r') as f:
         if occlusion_dataset and info == 'train':
             # Dataset looks like this:
@@ -27,19 +30,19 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False):
             #   y_train: [0 0 0 ... 6 6 6]
             #   y_val.shape: (35736,)
             #   y_val: [0 0 0 ... 6 6 6]
-            X_train = np.array(f['X_train'])
-            y_train = np.array(f['y_train'])
-            X_train_original_hashes = np.array(f['original_hash_train'])
-            occ_train = np.array(f['occ_train'])
-            mismatch_train = np.array(f['mismatch_train'])
-            pos_or_neg_train = np.array(f['pos_or_neg_train'])
+            X_train = np.array(f['X_train'][:subset_size]) 
+            y_train = np.array(f['y_train'][:subset_size])
+            X_train_original_hashes = np.array(f['original_hash_train'][:subset_size])
+            occ_train = np.array(f['occ_train'][:subset_size])
+            mismatch_train = np.array(f['mismatch_train'][:subset_size])
+            pos_or_neg_train = np.array(f['pos_or_neg_train'][:subset_size])
 
-            X_val = np.array(f['X_val'])
-            y_val = np.array(f['y_val'])
-            X_val_original_hashes = np.array(f['original_hash_val'])
-            occ_val = np.array(f['occ_val'])
-            mismatch_val = np.array(f['mismatch_val'])
-            pos_or_neg_val = np.array(f['pos_or_neg_val'])
+            X_val = np.array(f['X_val'][:subset_size])
+            y_val = np.array(f['y_val'][:subset_size])
+            X_val_original_hashes = np.array(f['original_hash_val'][:subset_size])
+            occ_val = np.array(f['occ_val'][:subset_size])
+            mismatch_val = np.array(f['mismatch_val'][:subset_size])
+            pos_or_neg_val = np.array(f['pos_or_neg_val'][:subset_size])
 
             class_names = [name.decode('utf-8') for name in f['class_names']]
 
@@ -60,10 +63,10 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False):
             #   y_train: [0 0 0 ... 6 6 6]
             #   y_val.shape: (5273,)
             #   y_val: [0 0 0 ... 6 6 6]
-            X_train = np.array(f['X_train'])
-            y_train = np.array(f['y_train'])
-            X_val = np.array(f['X_val'])
-            y_val = np.array(f['y_val'])
+            X_train = np.array(f['X_train'][:subset_size])
+            y_train = np.array(f['y_train'][:subset_size])
+            X_val = np.array(f['X_val'][:subset_size])
+            y_val = np.array(f['y_val'][:subset_size])
             class_names = [name.decode('utf-8') for name in f['class_names']]
             
             return X_train, y_train, X_val, y_val, class_names
@@ -78,8 +81,8 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False):
             #   y_test.shape: (350,)
             #   y_test: [0 0 ... 6 6]
 
-            X_test = np.array(f['X_test'])
-            y_test = np.array(f['y_test'])
+            X_test = np.array(f['X_test'][:subset_size])
+            y_test = np.array(f['y_test'][:subset_size])
             class_names = [name.decode('utf-8') for name in f['class_names']]
             
             return X_test, y_test, class_names
@@ -87,10 +90,12 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False):
             raise ValueError(f"Info must be 'train' or 'test', but is '{info}'")
         
 
-def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove):
+def remove_indices_from_data(X_data, y_data, paths_data, indices_to_remove, small_subset=False):
     indices_to_remove = sorted(indices_to_remove)
+    indices_to_remove = [idx for idx in indices_to_remove if idx < (SMALL_SUBSET_SIZE if small_subset else len(X_data))]
 
     X_data = np.delete(X_data, indices_to_remove, axis=0)
     y_data = np.delete(y_data, indices_to_remove, axis=0)
     paths_data = np.delete(paths_data, indices_to_remove, axis=0) if paths_data is not None else None
+    
     return X_data, y_data, paths_data

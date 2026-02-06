@@ -198,7 +198,7 @@ class RandomOcclusion(keras.layers.Layer):
         return images, labels, positive_or_negative_batch
 
 class OnlineOcclusionGenerator(Sequence):
-    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function_name, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, pos_or_neg=None, dont_rebalance_trainval=False, **kwargs):
+    def __init__(self, x_data, y_data, x_hashes, x_landmarks, batch_size, occlusion_probability, masking_function_name, mismatch, augmentations=None, data_inf=None, label_smoothing=0.1, paths_data=None, matching_amount=0.2, pos_or_neg=None, dont_rebalance_trainval=False, yield_hashes=False, **kwargs):
         super().__init__(**kwargs)
         if data_inf not in ['train', 'valid', 'test']:
             raise ValueError(f"data_inf must be 'train', 'valid', or 'test', but is '{data_inf}'")
@@ -216,6 +216,7 @@ class OnlineOcclusionGenerator(Sequence):
         self.occlusion_layer = RandomOcclusion(occlusion_probability, masking_function_name, mismatch, matching_amount, pos_or_neg=pos_or_neg)
 
         self.dont_rebalance_trainval = dont_rebalance_trainval
+        self.yield_hashes = yield_hashes
 
         if data_inf in ['train', 'valid']:
             #print(y_data)
@@ -343,6 +344,9 @@ class OnlineOcclusionGenerator(Sequence):
             batch_x[i] = self.augmentations.random_transform(batch_x[i])
         if SHOW_IMAGES_FINAL:
             show_dataloader_batch_images(before_or_final="final", split=self.data_inf, batch_x=batch_x, batch_y=batch_y, generator_name="CustomBalancedDataGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
+
+        if self.yield_hashes:
+            return batch_x, batch_y, batch_x_hashes
 
         return batch_x, batch_y
 

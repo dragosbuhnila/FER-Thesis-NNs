@@ -80,9 +80,8 @@ print("=========================================================================
 def save_occluded_dataset_offline(data_generator, generator_name, save_folder_path, specific_mismatch, positive_or_negative):
     stats_tracker = StatsTracker(EMOTIONS, generator_name, specific_mismatch, positive_or_negative)
 
-    for batch_x, batch_y in tqdm(data_generator, total=len(data_generator), desc=f"Saving occluded images for {generator_name} set"):
-        for image, label in zip(batch_x, batch_y):
-            img_hash = hash_image(image)
+    for batch_x, batch_y, batch_x_hashes in tqdm(data_generator, total=len(data_generator), desc=f"Saving occluded images for {generator_name} set"):
+        for image, label, img_hash in zip(batch_x, batch_y, batch_x_hashes):
             label_name = EMOTIONS[np.argmax(label)].lower()
             mismatching = "matching" if (label_name == specific_mismatch) else "mismatching"
             
@@ -142,6 +141,7 @@ if __name__ == "__main__":
                                                                 use_label_smoothing=True,
                                                                 dont_augment=True,
                                                                 dont_rebalance_trainval=True,
+                                                                yield_hashes=True,
                                                             )
 
     specific_mismatch = args.mismatch.lower()

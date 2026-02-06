@@ -1,20 +1,22 @@
 import os
 
 # 0) Debug Options
+SMALL_SUBSET_SIZE = 20000 												# if small_subset flag is True, will load only this many samples from the dataset. This is useful for debugging and for testing the data loading and training pipeline without having to wait for the entire dataset to load and train. Set to None to load the entire dataset.
+
 DEBUG_MASKING = False                                                   # If True, will plot images during masking for debugging
 DEBUG_MASKING_TIER2 = False if DEBUG_MASKING == False else True         # If True, will plot more images during masking for debugging
 
 FORCE_RECALCULATE_LANDMARKS = False                                     # If True, will recalculate and overwrite existing landmark coordinates even if they exist
 
 GLOBALS = {
-    "TOTAL_IMAGES_LANDMARKS_SAVED": 0,                      # Counter for total images saved during masking
-    "TOTAL_IMAGES_LANDMARKS_LOADED": 0,                     # Counter for total images loaded during masking
+    "TOTAL_IMAGES_LANDMARKS_SAVED": 0,                      			# Counter for total images saved during masking
+    "TOTAL_IMAGES_LANDMARKS_LOADED": 0,                     			# Counter for total images loaded during masking
     "UNLANDMARKABLE_IMAGES_LIST": [],
 	"DATALOADER_SHOW_IMAGES_B4AUG": False,
 	"DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE": True,
 	"DATALOADER_SHOW_IMAGES_FINAL": False,
 	"DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE": True,
-	"DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT": False, # if True, will save the images instead of plotting them. This is useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging
+	"DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT": False, 				# if True, will save the images instead of plotting them. This is useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging
 	"MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH": 0,
 }
 

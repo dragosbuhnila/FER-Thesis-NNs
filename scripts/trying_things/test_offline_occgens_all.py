@@ -11,6 +11,7 @@ from modules.config import CONSOLE_OUTPUTS_PATH, EMOTIONS, OCCLUDED_TEST_SET_H5_
 from modules.data__load import load_offline_data_generators
 from modules.data import refresh_show_flags
 from modules.visualize import plot_image
+from modules.misc import Tee
 
 
 
@@ -33,7 +34,7 @@ parser.add_argument("--dont_augment",               action='store_true', help="D
 parser.add_argument("--show_loader_images_b4aug",   action='store_true', help="Show images from the data loader before augmentations")
 parser.add_argument("--show_loader_images_final",   action='store_true', help="Show images from the data loader after all augmentations")
 parser.add_argument("--use_profiler",               action='store_true', help="Use cProfile to profile the data loading process")
-parser.add_argument("--redirect_output",            action='store_true', help="Redirect console output to a log file")
+parser.add_argument("--redirect_output",            action='store_true', help="Redirect console output to a log file. This does not mean terminal won't show stderr/out")
 parser.add_argument("-s", "--save_loader_images_instead_of_plot",         action='store_true', help="Save images from the data loader instead of plotting them (useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging)")
 args = parser.parse_args()
 
@@ -70,10 +71,9 @@ if args.use_profiler:
 
 if args.redirect_output:
     log_dir = os.path.dirname(LOG_FILE_PATH)
-    if log_dir and not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    sys.stdout = open(LOG_FILE_PATH, "w")
-    sys.stderr = sys.stdout
+    os.makedirs(log_dir, exist_ok=True)
+    sys.stdout = Tee(LOG_FILE_PATH)
+    sys.stderr = Tee(LOG_FILE_PATH) 
 
 
 
