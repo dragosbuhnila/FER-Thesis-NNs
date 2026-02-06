@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [ 
+
     
     
         
@@ -83,6 +84,21 @@
                     "--small_subset",
                     "--show_images",
                     "-d",
+                ]
+        },
+        {
+            "name": "offline gens with args",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_offline_occgens_all.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                    // --batch_size 32 --small_subset --show_loader_images_b4aug --show_loader_images_final
+                    "--batch_size", "32",
+                    "--small_subset",
+                    "--show_loader_images_b4aug",
+                    "--show_loader_images_final",
                 ]
         },
 

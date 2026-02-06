@@ -80,7 +80,7 @@ if args.redirect_output:
 # ========================== END OF MACROS ========================
 
 
-
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/test_offline_occgens_all.py" --batch_size 32 --small_subset --show_loader_images_b4aug --show_loader_images_final
 if __name__ == "__main__":
     # 1) First time run with occlusions      
     train_generator, val_generator, test_generator, initial_bias = load_offline_data_generators(
