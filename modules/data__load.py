@@ -472,19 +472,20 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
     print(f"[INFO] {get_timestamp()} Generated occlusion indexers for training and validation sets.", flush=True)
 
     # Validate that all expected occlusion types are present
-    position_of_neutral = EMOTIONS.index("NEUTRAL")
-    emotion_indices = list(range(len(EMOTIONS)))
-    emotions_indices_without_neutral = emotion_indices[:position_of_neutral] + emotion_indices[position_of_neutral+1:]
-    expected_types_of_occlusions = [f"{occ}_1" for occ in emotions_indices_without_neutral] + [f"{occ}_0" for occ in emotions_indices_without_neutral]
-    for expected_type in expected_types_of_occlusions:
-        if expected_type not in types_of_occlusion:
-            error_message = f"Expected occlusion type '{expected_type}' not found in occlusion indexer."
-            error_message += f"\nExpected types of occlusion: {expected_types_of_occlusions}"
-            error_message += f"\nActual types of occlusion found: {types_of_occlusion}"
-            error_message += f"\nOcclusion indexer keys"
-            for key in train_occlusion_indexer.keys():
-                error_message += f"\n  {key}: {list(train_occlusion_indexer[key].keys())}"
-            raise ValueError(error_message)
+    if not small_subset:
+        position_of_neutral = EMOTIONS.index("NEUTRAL")
+        emotion_indices = list(range(len(EMOTIONS)))
+        emotions_indices_without_neutral = emotion_indices[:position_of_neutral] + emotion_indices[position_of_neutral+1:]
+        expected_types_of_occlusions = [f"{occ}_1" for occ in emotions_indices_without_neutral] + [f"{occ}_0" for occ in emotions_indices_without_neutral]
+        for expected_type in expected_types_of_occlusions:
+            if expected_type not in types_of_occlusion:
+                error_message = f"Expected occlusion type '{expected_type}' not found in occlusion indexer."
+                error_message += f"\nExpected types of occlusion: {expected_types_of_occlusions}"
+                error_message += f"\nActual types of occlusion found: {types_of_occlusion}"
+                error_message += f"\nOcclusion indexer keys"
+                for key in train_occlusion_indexer.keys():
+                    error_message += f"\n  {key}: {list(train_occlusion_indexer[key].keys())}"
+                raise ValueError(error_message)
 
 
     # 5) Compute initial bias

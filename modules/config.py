@@ -1,7 +1,7 @@
 import os
 
 # 0) Debug Options
-SMALL_SUBSET_SIZE = 20000 												# if small_subset flag is True, will load only this many samples from the dataset. This is useful for debugging and for testing the data loading and training pipeline without having to wait for the entire dataset to load and train. Set to None to load the entire dataset.
+SMALL_SUBSET_SIZE = 60000 												# if small_subset flag is True, will load only this many samples from the dataset. This is useful for debugging and for testing the data loading and training pipeline without having to wait for the entire dataset to load and train. Set to None to load the entire dataset.
 
 DEBUG_MASKING = False                                                   # If True, will plot images during masking for debugging
 DEBUG_MASKING_TIER2 = False if DEBUG_MASKING == False else True         # If True, will plot more images during masking for debugging

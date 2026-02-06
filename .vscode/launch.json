@@ -3,15 +3,7 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [ 
-        
-
-
-    
-    
-        
-
-
+    "configurations": [      
 
         {
             "name": "Python: Current File",
@@ -96,8 +88,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                    // --batch_size 32 --small_subset --show_loader_images_b4aug --show_loader_images_final --redirect_output
-                    "--batch_size", "32",
+                    // --batch_size 64 --small_subset --show_loader_images_b4aug --show_loader_images_final --redirect_output
+                    "--batch_size", "64",
                     "--small_subset",
                     "--show_loader_images_b4aug",
                     "--show_loader_images_final",

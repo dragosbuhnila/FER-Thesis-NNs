@@ -7,6 +7,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from modules.config import EMOTIONS, GLOBALS
 from modules.mask import occlude_batch
+from modules.misc import get_timestamp
 from modules.visualize import plot_image
 
 
@@ -492,7 +493,10 @@ class OfflineOcclusionGenerator(Sequence):
         occlusion_type = np.random.choice(self.types_of_occlusion, size=len(batch_x))
         for i in range(len(batch_x)):
             if occlude_or_not[i]:
-                batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
+                try:
+                    batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
+                except KeyError as e:
+                    print(f"[WARNING] {get_timestamp()} KeyError: {e} for batch_x_hashes[{i}] = {batch_x_hashes[i]} and occlusion_type[{i}] = {occlusion_type[i]}")
 
         if SHOW_IMAGES_B4AUG:
             show_dataloader_batch_images(before_or_final="before", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)

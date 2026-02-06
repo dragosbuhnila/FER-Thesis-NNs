@@ -21,7 +21,7 @@ def trova_num_layers(initial_bias, model_name):
     model = build_model_occfinetuning(1e-4, 0.3, 1e-3, initial_bias, model_name)
     return len(model.layers)
 
-# & ... --model_name PattLite --learning_rate 1e-4 --l2_reg 0.002
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_find_unfreeze.py" --model_name PattLite --learning_rate 1e-4 --l2_reg 0.002
 def main():
     # Definisci gli argomenti della linea di comando
     parser = argparse.ArgumentParser(description='Testing different layers accuracy for Final Layers')
