@@ -180,14 +180,19 @@ BOSPHORUS_UNLANDMARKABLE_IMAGES = {
 	"612a10a1e3d726a9a97d5ae83fd49024": {"split": "X_val", "idx_to_remove": 4735},
 }
 
+config_do_remove_ok_idx_too = True # if True, will remove the ok_idx from the dataset as well, to be safe. This is because duplicate images may or do have conflicting labels
+
 BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT = {}
 for images_dict in [BOSPHORUS_DUPLICATE_IMAGES, BOSPHORUS_UNLANDMARKABLE_IMAGES]:
 	for image_hash, image_data in images_dict.items():
 		split = image_data["split"]
 		idx_to_remove = image_data["idx_to_remove"]
+		ok_idx = image_data.get("ok_idx", None)
 		if split not in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT:
 			BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT[split] = []
 		BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT[split].append(idx_to_remove)
+		if config_do_remove_ok_idx_too and ok_idx is not None:
+			BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT[split].append(ok_idx)
 
 
 if __name__ == "__main__":

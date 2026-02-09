@@ -19,7 +19,7 @@ print(f'\ttf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus
 # =============================== SETTINGS AND DEBUG ================================
 
 def refresh_show_flags():
-    global SHOW_IMAGES_B4AUG, SHOW_IMAGES_B4AUG_ONLYONCE, SHOW_IMAGES_FINAL, SHOW_IMAGES_FINAL_ONLYONCE
+    global SHOW_IMAGES_B4AUG, SHOW_IMAGES_B4AUG_ONLYONCE, SHOW_IMAGES_FINAL, SHOW_IMAGES_FINAL_ONLYONCE, SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT
     global SHOW_IMAGES_B4AUG_REMAINING, SHOW_IMAGES_FINAL_REMAINING
 
     SHOW_IMAGES_B4AUG = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG", False)
@@ -494,16 +494,27 @@ class OfflineOcclusionGenerator(Sequence):
         for i in range(len(batch_x)):
             if occlude_or_not[i]:
                 try:
+                    # Try applying the current occlusion type
                     batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
-                except KeyError as e:
-                    print(f"[WARNING] {get_timestamp()} KeyError: {e} for batch_x_hashes[{i}] = {batch_x_hashes[i]} and occlusion_type[{i}] = {occlusion_type[i]}")
+                    continue # If successful, move to the next image
+                except KeyError:
+                    # Since I removed all the unlandmarkable or duplicated samples (which turns out had different gt labels), the only possible KeyError is the negative occlusion on matching
+                    pos_neg = occlusion_type[i].split("_")[1] # occlusion type is like 6_0 meaning Surprise_Negative
+                    gt = np.argmax(batch_y[i])
+                    occ = occlusion_type[i].split("_")[0]
+                    if pos_neg == "0" and int(gt) == int(occ):
+                        # This is the case of a negative occlusion on a matching sample, which is not present in the pre-occluded dataset, so we can just do the positive occlusion
+                        batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][f"{occ}_1"]
+                        continue
+                    else:
+                        raise
 
         if SHOW_IMAGES_B4AUG:
-            show_dataloader_batch_images(before_or_final="before", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
+            show_dataloader_batch_images(before_or_final="before", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=None, positive_or_negative_batch=None)
         for i in range(len(batch_x)):
             batch_x[i] = self.augmentations.random_transform(batch_x[i])
         if SHOW_IMAGES_FINAL:
-            show_dataloader_batch_images(before_or_final="final", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=mismatched_y, positive_or_negative_batch=positive_or_negative_batch)
+            show_dataloader_batch_images(before_or_final="final", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=None, positive_or_negative_batch=None)
 
         return batch_x, batch_y
 
