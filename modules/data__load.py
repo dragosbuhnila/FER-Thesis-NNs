@@ -416,7 +416,8 @@ def generate_occlusion_indexer(X_occ: np.ndarray, X_train_occ_original_hashes: n
 def load_offline_data_generators(original_trainval_path: str, occluded_trainval_path: str, occluded_test_path: str,
                                 training_occlusion_probability: float = 0.8, validation_occlusion_probability: float = 1.0, # matching_amount=0.2, pos_or_neg=None
                                 masking_function_name: str = "lines", use_label_smoothing: bool = True, 
-                                small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False):
+                                small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False,
+                                debug_prints=False):
     print(f"[INFO] {get_timestamp()} Loading data from H5 files...", flush=True)
     # 1) Load training and validation data
     # ____________________________________________________________________________________________________________________________________________
@@ -466,6 +467,7 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         print(f"[WARNING] {get_timestamp()} Hashes in occluded validation set but not in original validation set: {len(difference)}. This should be zero.", flush=True)
         print(f"[WARNING] {get_timestamp()} Example hashes: {list(difference)[:10]}", flush=True)
     del X_val_occ_original_hashes_set
+    del X_val_hashes_set
 
     train_occlusion_indexer, types_of_occlusion = generate_occlusion_indexer(X_train_occ, X_train_occ_original_hashes, occ_train, pos_or_neg_train)
     val_occlusion_indexer, _ =   generate_occlusion_indexer(X_val_occ, X_val_occ_original_hashes, occ_val, pos_or_neg_val)
@@ -575,5 +577,33 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         label_smoothing=0,
     )
     print(f"[INFO] {time.strftime('%Y%m%d-%H%M%S')} Data generators created.", flush=True)
+
+    if debug_prints:
+        print(f"[DEBUG] {get_timestamp()} Printing all variables in data__load.py:")
+        print(f"\tPARAMS:")
+        print(f"\t\toriginal_trainval_path: {original_trainval_path}")
+        print(f"\t\toccluded_trainval_path: {occluded_trainval_path}")
+        print(f"\t\toccluded_test_path: {occluded_test_path}")
+        print(f"\t\ttraining_occlusion_probability: {training_occlusion_probability}")
+        print(f"\t\tvalidation_occlusion_probability: {validation_occlusion_probability}")
+        print(f"\t\tmasking_function_name: {masking_function_name}")
+        print(f"\t\tuse_label_smoothing: {use_label_smoothing}")
+        print(f"\t\tsmall_subset: {small_subset}")
+        print(f"\t\tbatch_size: {batch_size}")
+        print(f"\t\tdont_augment: {dont_augment}")
+        print(f"\t\tdont_rebalance_trainval: {dont_rebalance_trainval}")
+        print(f"\tVARIABLES:")
+        print(f"\t\tX_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
+        print(f"\t\tX_val shape: {X_val.shape}, y_val shape: {y_val.shape}")
+        print(f"\t\tX_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
+        print(f"\t\tX_train_occ shape: {X_train_occ.shape}, y_train_occ shape: {y_train_occ.shape}")
+        print(f"\t\tX_val_occ shape: {X_val_occ.shape}, y_val_occ shape: {y_val_occ.shape}")
+        print(f"\t\tX_train_hashes shape: {X_train_hashes.shape}")
+        print(f"\t\tX_val_hashes shape: {X_val_hashes.shape}")
+        print(f"\t\ttrain_occlusion_indexer (len is {len(train_occlusion_indexer)}) keys sample: {list(train_occlusion_indexer.keys())[:5]}")
+        print(f"\t\tval_occlusion_indexer (len is {len(val_occlusion_indexer)}) keys sample: {list(val_occlusion_indexer.keys())[:5]}")
+        print(f"\t\ttypes_of_occlusion: {list(types_of_occlusion)}")
+        print(f"\t\tinitial_bias: {initial_bias}")
+
     
     return train_generator, val_generator, test_generator, initial_bias

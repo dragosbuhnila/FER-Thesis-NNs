@@ -2,12 +2,11 @@
 #SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
-#SBATCH --time=01:15:00
+#SBATCH --partition=cpu_skylake
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
-#SBATCH --mem=40G
+#SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
 
@@ -22,16 +21,13 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
-export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
-export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
-
 echo "=========================================================================="
 echo "Activated venv!"
-python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
+echo "=========================================================================="
 
 
 
@@ -39,11 +35,15 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-BATCH_SIZE="128"
 
-COMMAND_TO_RUN="./scripts/trying_things/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} --show_loader_images_b4aug --show_loader_images_final --debug_prints -s"
+COMMAND_TO_RUN="./scripts/test_offline_occlusions_completeness.py"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
+
+
+echo "==================================================================================="
+echo "Job ended at:"
+python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

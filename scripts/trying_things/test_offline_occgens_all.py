@@ -35,6 +35,7 @@ parser.add_argument("--show_loader_images_b4aug",   action='store_true', help="S
 parser.add_argument("--show_loader_images_final",   action='store_true', help="Show images from the data loader after all augmentations")
 parser.add_argument("--use_profiler",               action='store_true', help="Use cProfile to profile the data loading process")
 parser.add_argument("--redirect_output",            action='store_true', help="Redirect console output to a log file. This does not mean terminal won't show stderr/out")
+parser.add_argument("--debug_prints",               action='store_true', help="Print additional debug information during data loading (such as all variable values in data__load.py, and the list of all images that had issues with landmark detection or face detection, if any)")
 parser.add_argument("-s", "--save_loader_images_instead_of_plot",         action='store_true', help="Save images from the data loader instead of plotting them (useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging)")
 args = parser.parse_args()
 
@@ -60,6 +61,7 @@ print(f"\tshow_loader_images_final: {args.show_loader_images_final}")
 print(f"\tuse_profiler: {args.use_profiler}")
 print(f"\tredirect_output: {args.redirect_output}")
 print(f"\tsave_loader_images_instead_of_plot: {args.save_loader_images_instead_of_plot}")
+print(f"\tdebug_prints: {args.debug_prints}")
 print("GLOBALS: ")
 for key, value in GLOBALS.items():
     print(f"\t{key}: {value}")
@@ -94,6 +96,7 @@ if __name__ == "__main__":
                                                             small_subset=args.small_subset,
                                                             batch_size=args.batch_size,
                                                             dont_augment=args.dont_augment,
+                                                            debug_prints=args.debug_prints
                                                         )
 
     for generator, name in [(train_generator, "train"), (val_generator, "validation"), (test_generator, "test")]:
