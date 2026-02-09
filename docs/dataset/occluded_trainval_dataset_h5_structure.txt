@@ -13,22 +13,25 @@ mismatch_val: [0 0 0 ... 0 0 0]
 occ_train.shape: (236286,)
 occ_train: [0 0 0 ... 6 6 6]
 occ_val.shape: (58418,)
-occ_val: [0 0 0 ... 0 0 0]
+occ_val: [0 0 0 ... 6 6 6]
 original_hash_train.shape: (236286,)
-original_hash_train: [b'001054f4a171c85ae10f148b4acb51b8' b'00403cd4190286f994faa2fbf90d798b'
- b'009b9fbfc3e3e45253740458c6b0f7a2' ...
- b'ff9804b93bc48c2b348052ad58edf375' b'ffa09d5401e43235ac798ff9c184bb89'
- b'fff34b7b76fadaecb0e1b82554ee1e73']
+original_hash_train: [b'001304d4e6b60c0d6747e366b85e42d8' b'003697b314995a6be89a134782c4f1ad'
+ b'0059157b4d6284a06610ac979e930b35' ...
+ b'ff40ded87185729c1851b25b1d909cde' b'ff4773346df2e02e9b7533a0bb42bc82'
+ b'ffb58cdb906afe8798ee03ad55c47062']
 original_hash_val.shape: (58418,)
-original_hash_val: [b'' b'' b'' ... b'' b'' b'']
+original_hash_val: [b'00bddf92a56828ac96ef34a09823857d' b'00f721dcfd30b2616ac2ebab951ef010'
+ b'0152337cd76eb88eab5af332d895be46' ...
+ b'fb1668ced0771b3d12672e1502407e50' b'fc750270c86195d436810d8309ebcce1'
+ b'feb3282a6aae64f571976b3f815c00fa']
 pos_or_neg_train.shape: (236286,)
 pos_or_neg_train: [1 1 1 ... 1 1 1]
 pos_or_neg_val.shape: (58418,)
-pos_or_neg_val: [0 0 0 ... 0 0 0]
+pos_or_neg_val: [1 1 1 ... 1 1 1]
 y_train.shape: (236286,)
 y_train: [0 0 0 ... 6 6 6]
 y_val.shape: (58418,)
-y_val: [0 0 0 ... 0 0 0]
+y_val: [0 0 0 ... 6 6 6]
 ======================
 ======================
 Verifying new h5 contents:
@@ -57,4 +60,3 @@ y_test: [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
  5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
  5 5 5 5 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
  6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6]
-======================
