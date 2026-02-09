@@ -494,20 +494,23 @@ class OfflineOcclusionGenerator(Sequence):
         for i in range(len(batch_x)):
             if occlude_or_not[i]:
                 try:
-                    # Try applying the current occlusion type
-                    batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
-                    continue # If successful, move to the next image
-                except KeyError:
-                    # Since I removed all the unlandmarkable or duplicated samples (which turns out had different gt labels), the only possible KeyError is the negative occlusion on matching
+                    # Try applying the current occlusion type, else do the positive alternative
                     pos_neg = occlusion_type[i].split("_")[1] # occlusion type is like 6_0 meaning Surprise_Negative
                     gt = np.argmax(batch_y[i])
                     occ = occlusion_type[i].split("_")[0]
                     if pos_neg == "0" and int(gt) == int(occ):
-                        # This is the case of a negative occlusion on a matching sample, which is not present in the pre-occluded dataset, so we can just do the positive occlusion
                         batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][f"{occ}_1"]
-                        continue
                     else:
-                        raise
+                        batch_x[i] = self.occlusion_indexer[batch_x_hashes[i]][occlusion_type[i]]
+                except KeyError:
+                    # Since I removed all the unlandmarkable or duplicated samples (which turns out had different gt labels), the only possible KeyError is the negative occlusion on matching
+                    #   so this error occurring is a really big issue (at least for this specific dataset, which is really complete)
+                    print(f"[ERROR] KeyError for hash {batch_x_hashes[i]} with occlusion type {occlusion_type[i]} in OfflineOcclusionGenerator. This should not happen, check the pre-occluded dataset and the occlusion_indexer construction.")
+                    print(f"\tShowing occlusion indexer fully:")
+                    for key in self.occlusion_indexer:
+                        print(f"\t\t{key}: {self.occlusion_indexer[key]}")
+                    raise
+
 
         if SHOW_IMAGES_B4AUG:
             show_dataloader_batch_images(before_or_final="before", split=self.split, batch_x=batch_x, batch_y=batch_y, generator_name="OfflineOcclusionGenerator", batch_x_hashes=batch_x_hashes, mismatched_y=None, positive_or_negative_batch=None)

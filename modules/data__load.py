@@ -433,6 +433,11 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
             raise ValueError(f"Class '{emotion}' not found in test class names from H5 file.")
     class_names = test_class_names
 
+    # 1.2) Convert S32 hashes to Unicode (<U32) 
+    X_train_occ_original_hashes = X_train_occ_original_hashes.astype('<U32')
+    X_val_occ_original_hashes = X_val_occ_original_hashes.astype('<U32')
+    print(f"[INFO] {get_timestamp()} Converted original hashes from S32 to <U32.", flush=True)
+
 
     # 2) Remove duplicates and unlandmarkable images
     # ____________________________________________________________________________________________________________________________________________
@@ -604,6 +609,21 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         print(f"\t\tval_occlusion_indexer (len is {len(val_occlusion_indexer)}) keys sample: {list(val_occlusion_indexer.keys())[:5]}")
         print(f"\t\ttypes_of_occlusion: {list(types_of_occlusion)}")
         print(f"\t\tinitial_bias: {initial_bias}")
+
+        # print(f"\tENTIRETY OF HASHES AND OCCLUSION INDEXERS (TRAIN):")
+        # print(f"\t\ttrain_occlusion_indexer keys and their occlusion types:")
+        # for key in train_occlusion_indexer.keys():
+        #     print(f"\t\t\t{key}: {list(train_occlusion_indexer[key].keys())}")
+        # print(f"\t\ttrain_hashes:")
+        # for i, (hash, occ) in enumerate(zip(X_train_hashes, occ_train)):
+        #     print(f"\t\t\tHash: {hash}, Occ: {occ}")
+        # print(f"\tENTIRETY OF HASHES AND OCCLUSION INDEXERS (VAL):")
+        # print(f"\t\tval_occlusion_indexer keys and their occlusion types:")
+        # for key in val_occlusion_indexer.keys():
+        #     print(f"\t\t\t{key}: {list(val_occlusion_indexer[key].keys())}")
+        # print(f"\t\tval_hashes:")
+        # for i, (hash, occ) in enumerate(zip(X_val_hashes, occ_val)):
+        #     print(f"\t\t\tHash: {hash}, Occ: {occ}")
 
     
     return train_generator, val_generator, test_generator, initial_bias

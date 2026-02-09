@@ -41,7 +41,7 @@ pwd
 
 BATCH_SIZE="128"
 
-COMMAND_TO_RUN="./scripts/trying_things/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} --show_loader_images_b4aug --show_loader_images_final --debug_prints -s"
+COMMAND_TO_RUN="./scripts/trying_things/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} --show_loader_images_b4aug --show_loader_images_final -s"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

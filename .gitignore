@@ -5,6 +5,8 @@
 !/results_heavy/placeholder
 /downloads/*
 /results_light/console_outputs
+/results_light/saved_images
+/results_light/saved_images/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
