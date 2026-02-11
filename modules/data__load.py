@@ -15,16 +15,11 @@ from modules.misc import hash_image, get_timestamp
 
 
 
-# ==================================================================================================
-# ===============================   Online loading functions =======================================
-# ======================    load test, load train, load val, load all ==============================
-# ==================================================================================================
-
-def load_online_test_generator(path, batch_size=64):
+def load_test_generator(path, batch_size=64):
     """
     Load only the test generator from a test H5 file (path).
     """
-    X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test')
+    X_test, y_test, class_names = load_data_and_labels(path, 'test')
 
     # Test has no dupes, so no need to remove them
     # if remove_dupes:
@@ -67,11 +62,17 @@ def load_online_test_generator(path, batch_size=64):
     return data_generator
 
 
+
+# ==================================================================================================
+# ===============================   Online loading functions =======================================
+# ===========================    load train, load val, load all ====================================
+# ==================================================================================================
+
 def load_online_train_generator(train_path, occlusion_probability, masking_function_name, mismatch, batch_size=64, parallelize=False, remove_dupes=True, matching_amount=0.2, label_smoothing=0.0):
     """
     Load only the train generator from a train H5 file (train_path).
     """
-    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
+    X_train, y_train, X_val, y_val, trainval_class_names = load_data_and_labels(train_path, 'train')
 
     if remove_dupes:
         for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
@@ -132,7 +133,7 @@ def load_online_valid_generator(train_path, occlusion_probability, masking_funct
     """
     Load only the validation generator from a train H5 file (train_path).
     """
-    X_train, y_train, X_val, y_val, trainval_class_names, train_paths_data, val_paths_data = load_data_and_labels(train_path, 'train')
+    X_train, y_train, X_val, y_val, trainval_class_names = load_data_and_labels(train_path, 'train')
 
     if remove_dupes:
         for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():

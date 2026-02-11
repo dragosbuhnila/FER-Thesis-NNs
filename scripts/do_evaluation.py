@@ -9,7 +9,7 @@ import tensorflow as tf
 from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             ADELE_TEST_SET_H5_PATH, ADELE_TEST_SET_YAML_PATH, ADELE_TEST_SET_IMAGES_PATH, \
                             OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH 
-from modules.data__load import load_online_test_generator
+from modules.data__load import load_test_generator
 from modules.model import load_model
 from modules.train_eval import evaluate_model
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     #     generate_h5_from_images(PATHS[TEST_SET]["test_set"], PATHS[TEST_SET]["test_set_resized"], PATHS[TEST_SET]["test_set_h5"]
     
     # (path, occlusion_probability, masking_function, mismatch)
-    test_generator = load_online_test_generator(PATHS[TEST_SET]["test_set_h5"])
+    test_generator = load_test_generator(PATHS[TEST_SET]["test_set_h5"])
 
     print(f"Loaded {TEST_SET} test set with {len(test_generator.x_data)} samples.")
 

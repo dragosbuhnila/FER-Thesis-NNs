@@ -136,10 +136,6 @@ def main():
         mlflow.log_param("epochs", FT_EPOCH)
         mlflow.log_param("batch_size", batch_size)
 
-        mlflow.log_param("occlusion_probability", occlusion_probability)
-        mlflow.log_param("val_occlusion_probability", val_occlusion_probability)
-        mlflow.log_param("matching_amount", matching_amount)
-
         history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name)
         _, _ = valuta_modello(model, test_generator, run, model_name)
         salva_modello(model, run, model_name)
