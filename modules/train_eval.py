@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 from modules.config import EMOTIONS, OCCFT_MODELS_FOLDER
+from modules.misc import get_timestamp
 
 
 def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
@@ -145,8 +146,8 @@ def valuta_modello(model, test_generator, run, model_name):
     return test_loss, test_acc
 
 def salva_modello(model, run, model_name):
-    base_path = OCCFT_MODELS_FOLDER
     base_name = f'{model_name}_occfinetuning'
+    base_path = os.path.join(OCCFT_MODELS_FOLDER, f"{base_name}_{get_timestamp()}")
     
     try:
         # Salva il modello in formato TensorFlow
@@ -158,7 +159,7 @@ def salva_modello(model, run, model_name):
 
     try:
         # Salva il modello in formato HDF5
-        h5_model_path = os.path.join(base_path, f'{base_name}')
+        h5_model_path = os.path.join(base_path, f'{base_name}.h5')
         model.save(h5_model_path, save_format='h5')
         print(f"Model saved as {h5_model_path}")
     except Exception as e:
@@ -166,19 +167,19 @@ def salva_modello(model, run, model_name):
 
     try:
         # Salva i pesi del modello
-        weights_path = os.path.join(base_path, f'pretrained_{base_name}_weights.h5')
+        weights_path = os.path.join(base_path, f'{base_name}_weights.h5')
         model.save_weights(weights_path)
-        weights_path = os.path.join(base_path,f'pretrained_{base_name}.weights.h5')
+        weights_path = os.path.join(base_path,f'{base_name}.weights.h5')
         model.save_weights(weights_path)
         print(f"Model weights saved as {weights_path}")
     except Exception as e:
         print(f"An error occurred while saving the model weights: {e}")
 
     try:
-        keras_model_path = os.path.join(base_path, f'pretrained_{base_name}')
+        keras_model_path = os.path.join(base_path, f'{base_name}.keras')
         # Salva il modello in formato Keras
         model.save(keras_model_path, save_format='keras')
-        print(f"Model saved as pretrained_{base_name}.keras")
+        print(f"Model saved as {base_name}.keras")
     except Exception as e:
         print(f"An error occurred while saving the model in Keras format: {e}")
 
@@ -191,7 +192,19 @@ def salva_modello(model, run, model_name):
 
     # Use mlflow to log the model instead
     try:
-        mlflow.tensorflow.log_model(model, artifact_path=f"{base_name}_mlflow_model")
-        print(f"Model logged to MLflow as {base_name}_mlflow_model")
+        try:
+            sample_input = np.random.random((1, IMAGES_SHAPE[0], IMAGES_SHAPE[1], IMAGES_SHAPE[2]))
+            sample_output = model.predict(sample_input)
+            signature = infer_signature(sample_input, sample_output)
+        except Exception as e:
+            print(f"An error occurred while inferring the model signature: {e}")
+            signature = None
+
+        if signature is not None:
+            mlflow.tensorflow.log_model(model, name=f"{base_name}_mlflow_model", signature=signature)
+            print(f"Model logged to MLflow with name: {base_name}_mlflow_model and signature.")
+        else:
+            mlflow.tensorflow.log_model(model, name=f"{base_name}_mlflow_model")
+            print(f"Model logged to MLflow with name: {base_name}_mlflow_model without signature.")
     except Exception as e:
         print(f"An error occurred while logging the model to MLflow: {e}")

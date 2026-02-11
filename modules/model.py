@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.initializers import Constant
 
-from modules.config import ALL_MODELS_PATHS, EMOTIONS
+from modules.config import ALL_MODELS_PATHS, EMOTIONS, IMAGES_SHAPE
 from modules.loss import categorical_focal_loss
 
 
@@ -40,25 +40,24 @@ class SqueezeLayer(Layer):
 
 def build_model_final_layers(learning_rate, dropout_rate, l2_reg, initial_bias, model_name='PattLite'):
     NUM_CLASSES = 7
-    IMG_SHAPE = (128, 128, 3)
-    input_layer = tf.keras.Input(shape=IMG_SHAPE, name='universal_input')
-    #sample_resizing = tf.keras.layers.Resizing(128, 128, name="resize")
+    input_layer = tf.keras.Input(shape=IMAGES_SHAPE, name='universal_input')
+    #sample_resizing = tf.keras.layers.Resizing(IMAGES_SHAPE[0], IMAGES_SHAPE[1], name="resize")
 
     # Seleziona il modello backbone
     if model_name == 'EfficientNetB1':
-        backbone = EfficientNetB1(input_shape=(128, 128, 3), include_top=False, weights='imagenet')
+        backbone = EfficientNetB1(input_shape=IMAGES_SHAPE, include_top=False, weights='imagenet')
         preprocess_input = tf.keras.applications.efficientnet.preprocess_input
         base_model = Model(backbone.input, backbone.get_layer('block5c_add').output, name='base_model')
     elif model_name == 'VGG19':
-        backbone = VGG19(input_shape=(128, 128, 3), include_top=False, weights='imagenet')
+        backbone = VGG19(input_shape=IMAGES_SHAPE, include_top=False, weights='imagenet')
         preprocess_input = tf.keras.applications.vgg19.preprocess_input
         base_model = Model(backbone.input, backbone.get_layer('block4_pool').output, name='base_model')
     elif model_name == 'PattLite':
-        backbone = MobileNet(input_shape=(128, 128, 3), include_top=False, weights='imagenet')
+        backbone = MobileNet(input_shape=IMAGES_SHAPE, include_top=False, weights='imagenet')
         base_model = Model(backbone.input, backbone.layers[-29].output, name='base_model')
         preprocess_input = tf.keras.applications.mobilenet.preprocess_input
     elif model_name == 'ResNet':
-        backbone = ResNet50V2(input_shape=(128, 128, 3), include_top=False, weights='imagenet')
+        backbone = ResNet50V2(input_shape=IMAGES_SHAPE, include_top=False, weights='imagenet')
         preprocess_input = tf.keras.applications.resnet_v2.preprocess_input
         base_model = Model(backbone.input, backbone.get_layer('conv4_block5_out').output, name='base_model')
     elif model_name == 'ConvNeXt':
@@ -67,12 +66,12 @@ def build_model_final_layers(learning_rate, dropout_rate, l2_reg, initial_bias, 
         include_preprocessing=True,
         weights='imagenet',
         input_tensor=None,
-        input_shape=(128,128,3),
+        input_shape=IMAGES_SHAPE,
         classifier_activation='softmax'
         )
         base_model = Model(backbone.input, backbone.get_layer('convnext_base_stage_2_block_24_identity').output, name='base_model')
     elif model_name == 'InceptionV3':
-        backbone = InceptionV3(input_shape=(128, 128, 3), include_top=False, weights='imagenet')
+        backbone = InceptionV3(input_shape=IMAGES_SHAPE, include_top=False, weights='imagenet')
         preprocess_input = tf.keras.applications.inception_v3.preprocess_input
         base_model = Model(backbone.input, backbone.get_layer('mixed5').output, name='base_model')
 
@@ -191,9 +190,8 @@ def build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, mo
 
     global_average_layer = model.get_layer('gap')
     prediction_layer = model.get_layer('classification_head')
-    IMG_SHAPE = (128, 128, 3)
-    input_layer = tf.keras.Input(shape=IMG_SHAPE, name='universal_input')
-    #sample_resizing = tf.keras.layers.Resizing(128, 128, name="resize")
+    input_layer = tf.keras.Input(shape=IMAGES_SHAPE, name='universal_input')
+    #sample_resizing = tf.keras.layers.Resizing(IMAGES_SHAPE[0], IMAGES_SHAPE[1], name="resize")
     x = input_layer
     if model_name != 'ConvNeXt':
         x = preprocess_input(x)
@@ -284,9 +282,8 @@ def load_model_efficientnet(model_name, model_path_subset, custom_objects):
         preprocess_input = tf.keras.applications.efficientnet.preprocess_input
         global_average_layer = model.get_layer('gap')
         prediction_layer = model.get_layer('classification_head')
-        IMG_SHAPE = (128, 128, 3)
-        input_layer = tf.keras.Input(shape=IMG_SHAPE, name='universal_input')
-        #sample_resizing = tf.keras.layers.Resizing(128, 128, name="resize")
+        input_layer = tf.keras.Input(shape=IMAGES_SHAPE, name='universal_input')
+        #sample_resizing = tf.keras.layers.Resizing(IMAGES_SHAPE[0], IMAGES_SHAPE[1], name="resize")
         l2_reg = 0.07099871122599184
         learning_rate = 0.0005486860365638318
         dropout_rate = 0.4603464152900125

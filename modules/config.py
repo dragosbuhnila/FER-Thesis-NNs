@@ -115,7 +115,7 @@ ALL_MODELS_PATHS = {
     "efficientnet_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
     "yolo_last": 					os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
 	# ----------------------------------- MY MODELS (occft -- i.e. occlusion finetuning)
-	"occft_convnext": 				os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_checkpoints", "20260127-175611_epoch-03-valacc-0.1535"),
+	"occft_convnext": 				os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_occfinetuning_20250211-154302", "ConvNeXt_occfinetuning"),
 }
 
 # ______________________________________________________________________
@@ -133,6 +133,9 @@ LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE = 26951 # expected number of landmark c
 
 
 # 5) Datasets
+# ______________________________________________________________________
+# > images shape
+IMAGES_SHAPE = (128, 128, 3)
 # ______________________________________________________________________
 # > Bosphorus Dupes
 #       these hashes aren't actual conflicts, the duplication warning is triggered due to there being the same image twice in the training set
