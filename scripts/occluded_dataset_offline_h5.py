@@ -7,7 +7,7 @@ from PIL import Image
 from tqdm import tqdm
 import argparse
 
-from modules.config import EMOTIONS, OCCLUDED_TRAIN_SET_IMAGES_PATH, OCCLUDED_VAL_SET_IMAGES_PATH, OCCLUDED_TRAIN_VAL_SET_H5_PATH
+from modules.config import EMOTIONS, OCCLUDED_TRAIN_SET_IMAGES_PATH, OCCLUDED_VAL_SET_IMAGES_PATH, OCCLUDED_TRAIN_VAL_SET_H5_PATH, IMAGES_SHAPE
 from modules.misc import extract_info_from_occludedtrainvalset_filename
 
 # Paths
@@ -16,9 +16,9 @@ VALSET_PATH = OCCLUDED_VAL_SET_IMAGES_PATH
 OUTPUT_H5_PATH = OCCLUDED_TRAIN_VAL_SET_H5_PATH
 
 # Image dimensions (assumed to be consistent across the dataset)
-IMG_HEIGHT = 128
-IMG_WIDTH = 128
-IMG_CHANNELS = 3
+IMG_HEIGHT = IMAGES_SHAPE[0]
+IMG_WIDTH = IMAGES_SHAPE[1]
+IMG_CHANNELS = IMAGES_SHAPE[2]
 
 parser = argparse.ArgumentParser(description="Create HDF5 dataset for occluded emotion recognition.")
 #                                                     2**15

@@ -22,6 +22,7 @@ TEST_SET_PATH = OCCLUDED_TEST_SET_H5_PATH
 LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{get_timestamp()}__{__name__}__console_output.txt")
 
 SAVE_ALL_MODELS = False
+SHORT_TRAINING_FOR_TESTING = True
 
 
 
@@ -39,10 +40,11 @@ def main():
     parser.add_argument('--l2_reg',         type=float, required=True,  help='L2 regularization. Default is 1e-3', default=1e-3)
     parser.add_argument('--debug_prints',          action='store_true', help='If set, print debug information during training')
     parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file, apart from showing it to console.')
-    parser.add_argument('--short_training_for_testing', action='store_true', help='If set, use a very short training (e.g. 1 epoch or 100 steps) just to test that the training loop works without waiting for a whole epoch to end.')
+    # parser.add_argument('--short_training_for_testing', action='store_true', help='If set, use a very short training (e.g. 1 epoch or 100 steps) just to test that the training loop works without waiting for a whole epoch to end.')
     args = parser.parse_args()
 
-    if args.short_training_for_testing:
+    # if args.short_training_for_testing:
+    if SHORT_TRAINING_FOR_TESTING:
         GLOBALS["SHORT_TRAINING_FOR_TESTING"] = True
         refresh_show_flags()
         N_ITER_SEARCH = 2
@@ -80,7 +82,7 @@ def main():
     print(f"\tl2_reg: {args.l2_reg}")
     print(f"\tdebug_prints: {args.debug_prints}")
     print(f"\tredirect_output: {args.redirect_output}")
-    print(f"\tshort_training_for_testing: {args.short_training_for_testing}")
+    # print(f"\tshort_training_for_testing: {args.short_training_for_testing}")
     print(f"TRAINING PARAMS:")
     print(f"\tTRAIN_EPOCH: {TRAIN_EPOCH}")
     print(f"\tTRAIN_ES_PATIENCE: {TRAIN_ES_PATIENCE}")

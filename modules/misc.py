@@ -6,7 +6,7 @@ import numpy as np
 import hashlib
 import time
 
-from modules.config import EMOTIONS
+from modules.config import EMOTIONS, IMAGES_SHAPE
 
 
 
@@ -128,7 +128,7 @@ def generate_h5_from_images(test_set_path, resized_path, h5_path):
         for image_file in image_files:
             image_path = os.path.join(class_folder, image_file)
             # Load PNG image as RGB NumPy array and resize to (128, 128, 3)
-            image = np.array(Image.open(image_path).convert('RGB').resize((128, 128)))
+            image = np.array(Image.open(image_path).convert('RGB').resize((IMAGES_SHAPE[0], IMAGES_SHAPE[1])))
             X_test.append(image)
             y_test.append(class_idx)  # Store class index instead of name
             paths.append(image_path)

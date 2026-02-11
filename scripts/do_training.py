@@ -69,15 +69,6 @@ def main():
     mlflow.set_experiment(experiment_name)
 
     print(f"================================ SETTINGS ==================================")
-    print(f"ARGS:")
-    print(f"\tunfreeze: {unfreeze}")
-    print(f"\tl2_reg: {l2_reg}")
-    print(f"\tlearning_rate: {FT_LR}")
-    print(f"\tdropout_rate: {FT_DROPOUT}")
-    print(f"\tFT_EPOCH: {FT_EPOCH}")
-    print(f"\tmodel_name: {model_name}")
-    print(f"\tbatch_size: {batch_size}")
-    print(f"========================================================================")
     print(f"CONSTANTS: ")
     print(f"\tORIGINAL_TRAINVAL_SET_PATH: {ORIGINAL_TRAINVAL_SET_PATH}")
     print(f"\tOCCLUDED_TRAINVAL_SET_PATH: {OCCLUDED_TRAINVAL_SET_PATH}")
@@ -135,10 +126,10 @@ def main():
         mlflow.log_param("l2_reg", l2_reg)
         mlflow.log_param("epochs", FT_EPOCH)
         mlflow.log_param("batch_size", batch_size)
+        mlflow.log_param("unfreeze", unfreeze)
 
-        mlflow.log_param("occlusion_probability", occlusion_probability)
-        mlflow.log_param("val_occlusion_probability", val_occlusion_probability)
-        mlflow.log_param("matching_amount", matching_amount)
+
+
 
         history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name)
         _, _ = valuta_modello(model, test_generator, run, model_name)
