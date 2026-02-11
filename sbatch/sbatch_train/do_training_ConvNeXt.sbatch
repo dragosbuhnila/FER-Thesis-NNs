@@ -40,8 +40,8 @@ pwd
 # =====================================================================================
 
 
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 8 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
-SCRIPT="./scripts/do_training.py --no_mlflow_server --batch_size 256 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.4 --model_name ConvNeXt --FT_EPOCH 15 --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451"
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 128 --model_name ConvNeXt --FT_EPOCH 10  --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12
+SCRIPT="./scripts/do_training.py --batch_size 64 --model_name ConvNeXt --FT_EPOCH 10  --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

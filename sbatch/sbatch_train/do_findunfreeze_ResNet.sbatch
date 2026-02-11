@@ -3,7 +3,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
-#SBATCH --time=01:15:00
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=40G
 #SBATCH --ntasks-per-node=1
@@ -39,11 +39,12 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-BATCH_SIZE="128"
 
-COMMAND_TO_RUN="./scripts/trying_things/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} -s"
-echo "Now running $COMMAND_TO_RUN"
-python $COMMAND_TO_RUN
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 8 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
+SCRIPT="./scripts/do_find_unfreeze.py --debug_prints --batch_size 128 --model_name ResNet --learning_rate 1e-4 --l2_reg 0.002"
+echo "Now running $SCRIPT"
+python $SCRIPT
+
 
 
 # =====================================================================================

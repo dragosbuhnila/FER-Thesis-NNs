@@ -34,7 +34,7 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-cd /home/dbuhnila/models/FER-Thesis-NNs/data
+cd /home/dbuhnila/models/FER-Thesis-NNs/mlruns
 
 echo "Currently in:"
 pwd

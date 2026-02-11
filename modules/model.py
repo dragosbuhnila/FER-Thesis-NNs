@@ -326,19 +326,19 @@ def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias,
     elif model_name == 'VGG19':
          # Scarica il modello dal server locale
         with tf.keras.utils.custom_object_scope(custom_objects):
-            load_model("vgg19_finetuning")
+            model = load_model("vgg19_finetuning")
     elif model_name == 'PattLite':
         with tf.keras.utils.custom_object_scope(custom_objects):
-            load_model("pattlite_finetuning")
+            model = load_model("pattlite_finetuning")
     elif model_name == 'ResNet':
         with tf.keras.utils.custom_object_scope(custom_objects):
-            load_model("resnet_finetuning")
+            model = load_model("resnet_finetuning")
     elif model_name == 'ConvNeXt':
         with tf.keras.utils.custom_object_scope(custom_objects):
-            load_model("convnext_finetuning")
+            model = load_model("convnext_finetuning")
     elif model_name == 'InceptionV3':
         with tf.keras.utils.custom_object_scope(custom_objects):
-            load_model("inception_finetuning")
+            model = load_model("inceptionv3_finetuning")
     else:
         raise ValueError(f"Modello '{model_name}' non supportato.")
     
@@ -347,6 +347,7 @@ def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias,
         layer.trainable = True
 
     fine_tune_from = len(model.layers) - unfreeze
+        
     for layer in model.layers[:fine_tune_from]:
         layer.trainable = False
     for layer in model.layers[fine_tune_from:]:

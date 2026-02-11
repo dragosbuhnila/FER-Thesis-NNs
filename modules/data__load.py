@@ -418,7 +418,7 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
                                 masking_function_name: str = "lines", use_label_smoothing: bool = True, 
                                 small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False,
                                 debug_prints=False):
-    print(f"[INFO] {get_timestamp()} Loading data from H5 files...", flush=True)
+    print(f"[INFO] {get_timestamp()} Loading data from H5 files... (expected time for full occluded dataset with 250k+ images is ~5 minutes)", flush=True)
     # 1) Load training and validation data
     # ____________________________________________________________________________________________________________________________________________
     X_train, y_train, X_val, y_val, trainval_class_names    = load_data_and_labels(original_trainval_path, 'train', small_subset=small_subset)

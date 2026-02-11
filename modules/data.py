@@ -21,12 +21,14 @@ print(f'\ttf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus
 def refresh_show_flags():
     global SHOW_IMAGES_B4AUG, SHOW_IMAGES_B4AUG_ONLYONCE, SHOW_IMAGES_FINAL, SHOW_IMAGES_FINAL_ONLYONCE, SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT
     global SHOW_IMAGES_B4AUG_REMAINING, SHOW_IMAGES_FINAL_REMAINING
+    global SHORT_TRAINING_FOR_TESTING
 
     SHOW_IMAGES_B4AUG = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG", False)
     SHOW_IMAGES_B4AUG_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE", True)
     SHOW_IMAGES_FINAL = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL", False)
     SHOW_IMAGES_FINAL_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE", True)
     SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT = GLOBALS.get("DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT", False)
+    SHORT_TRAINING_FOR_TESTING = GLOBALS.get("SHORT_TRAINING_FOR_TESTING", False)
 
     SHOW_IMAGES_B4AUG_REMAINING = {
         'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
@@ -243,6 +245,8 @@ class OnlineOcclusionGenerator(Sequence):
         #           (why? Because it will see unpopular classes a lot of times, taking slots in the batches, so the popular
         #                   batches like happy will run out of time before the epoch ends because of reacing __len__(), 
         #                   because len is defined in a way that does not take into account the rebalancing)
+        if SHORT_TRAINING_FOR_TESTING:
+            return 1000 # Just for testing purposes, to make sure the training loop works without waiting for a whole epoch to end
         return int(np.ceil(len(self.x_data) / self.batch_size))
     
     def __next__(self):

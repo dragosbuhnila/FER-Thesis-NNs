@@ -7,6 +7,7 @@
 /results_light/console_outputs
 /results_light/saved_images
 /results_light/saved_images/*
+/mlruns
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

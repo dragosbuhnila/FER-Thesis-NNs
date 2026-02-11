@@ -19,6 +19,7 @@ GLOBALS = {
 	"DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT": False, 				# if True, will save the images instead of plotting them. This is useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging
 	"MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH": 0,
 	"START_TIME": None,
+	"SHORT_TRAINING_FOR_TESTING": False, 								# If True, epoch will last 1000 samples
 }
 
 # 1) Core Configurations

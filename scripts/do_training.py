@@ -1,23 +1,27 @@
 import os; import sys;
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import argparse
 import mlflow
 import mlflow.tensorflow
 import tensorflow as tf
 from tensorflow import keras
 
-from modules.data__load import load_online_data_generators
+from modules.data__load import load_offline_data_generators
 from modules.model import build_model_occfinetuning
-from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, MLFLOW_DIR
+from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, OCCLUDED_TRAIN_VAL_SET_H5_PATH, OCCLUDED_TEST_SET_H5_PATH, MLFLOW_DIR, CONSOLE_OUTPUTS_PATH, GLOBALS
 from modules.train_eval import addestra_modello, salva_modello, valuta_modello; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from modules.misc import Tee, get_timestamp
 
 
 
 # __________________-DATASETS-_________________
 #        1161 x 1161               128 x 128                   128 x 128
 # BOSPHORUS_TEST_HQ_H5_PATH, ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
-TEST_SET_PATH = ADELE_TEST_SET_H5_PATH  
-TRAINVAL_SET_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH
+ORIGINAL_TRAINVAL_SET_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH
+OCCLUDED_TRAINVAL_SET_PATH = OCCLUDED_TRAIN_VAL_SET_H5_PATH
+TEST_SET_PATH = OCCLUDED_TEST_SET_H5_PATH
+
+LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{get_timestamp()}__{__name__}__console_output.txt")
 
 
 
@@ -28,55 +32,90 @@ def main():
 
     # Definisci gli argomenti della linea di comando
     parser = argparse.ArgumentParser(description='Training parameters for occlusion finetuning')
-    parser.add_argument('--no_mlflow_server', action='store_true', help='If set, do not use MLflow for logging')
+    parser.add_argument('--unfreeze', type=int, required=True, help='Number of layers to unfreeze for fine-tuning. If not provided.')
     parser.add_argument('--l2_reg', type=float, required=True, help='L2 regularization parameter')
     parser.add_argument('--learning_rate', type=float, required=True, help='Learning rate')
     parser.add_argument('--dropout_rate', type=float, required=True, help='Dropout rate')
     parser.add_argument('--FT_EPOCH', type=int, required=True, help='Training epochs')
     parser.add_argument('--model_name', type=str, required=True, help='Model name. Default is PattLite', default='PattLite')
-    parser.add_argument('--occ_prob', type=float, required=True, help='Occlusion probability')
-    parser.add_argument('--val_occ_prob', type=float, required=False, help='Validation occlusion probability', default=0.5)
-    parser.add_argument('--matching_amount', type=float, required=False, help='Amount of matching for occlusions (float). Exaple: 0.2 is 20%, i.e. out of 50 images 10 will be matching, the rest will be of some mismatch type (every 4)', default=0.2)
     parser.add_argument('--batch_size', type=int, required=False, help='Batch size', default=64)
+    parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file')
     args = parser.parse_args()
 
     # Recupera i parametri dalla linea di comando
+    unfreeze = args.unfreeze
     l2_reg = args.l2_reg
     FT_LR = args.learning_rate
     FT_DROPOUT = args.dropout_rate
     FT_EPOCH = args.FT_EPOCH
     model_name = args.model_name
-    occlusion_probability = args.occ_prob
-    val_occlusion_probability = args.val_occ_prob
-    matching_amount = args.matching_amount
     batch_size = args.batch_size
 
-    if args.no_mlflow_server:
-        tracking_uri = f"file://{os.path.abspath(MLFLOW_DIR)}"
-        mlflow.set_tracking_uri(tracking_uri)
-        mlflow.set_experiment(f"try_training_{model_name}")
-    else:
-        raise NotImplementedError("Only no_mlflow_server option is implemented currently as the server solution can't seem to work.")
-        # mlflow.set_tracking_uri("http://localhost:5000")
-        # mlflow.set_experiment(f"try_training_{model_name}")
+    # others
+    TRAIN_ES_PATIENCE = 3
+    TRAIN_LR_PATIENCE = 2
+    ES_LR_MIN_DELTA = 0.0001
+    TRAIN_MIN_LR = 1e-6
+
+    if args.redirect_output:
+        log_dir = os.path.dirname(LOG_FILE_PATH)
+        os.makedirs(log_dir, exist_ok=True)
+        sys.stdout = Tee(LOG_FILE_PATH)
+        sys.stderr = Tee(LOG_FILE_PATH) 
+
+    tracking_uri = f"file://{os.path.abspath(MLFLOW_DIR)}"
+    mlflow.set_tracking_uri(tracking_uri)
+    experiment_name = f"try_training_{model_name}"
+    mlflow.set_experiment(experiment_name)
+
+    print(f"================================ SETTINGS ==================================")
+    print(f"ARGS:")
+    print(f"\tunfreeze: {unfreeze}")
+    print(f"\tl2_reg: {l2_reg}")
+    print(f"\tlearning_rate: {FT_LR}")
+    print(f"\tdropout_rate: {FT_DROPOUT}")
+    print(f"\tFT_EPOCH: {FT_EPOCH}")
+    print(f"\tmodel_name: {model_name}")
+    print(f"\tbatch_size: {batch_size}")
+    print(f"========================================================================")
+    print(f"CONSTANTS: ")
+    print(f"\tORIGINAL_TRAINVAL_SET_PATH: {ORIGINAL_TRAINVAL_SET_PATH}")
+    print(f"\tOCCLUDED_TRAINVAL_SET_PATH: {OCCLUDED_TRAINVAL_SET_PATH}")
+    print(f"\tTEST_SET_PATH: {TEST_SET_PATH}")
+    print(f"ARGS: ")
+    print(f"\tunfreeze: {unfreeze}")
+    print(f"\tl2_reg: {l2_reg}")
+    print(f"\tlearning_rate: {FT_LR}")
+    print(f"\tdropout_rate: {FT_DROPOUT}")
+    print(f"\ttraining_epochs: {FT_EPOCH}")
+    print(f"\tmodel_name: {model_name}")
+    print(f"\tbatch_size: {batch_size}")
+    print(f"TRAINING PARAMS:")
+    print(f"\tTRAIN_ES_PATIENCE: {TRAIN_ES_PATIENCE}")
+    print(f"\tTRAIN_LR_PATIENCE: {TRAIN_LR_PATIENCE}")
+    print(f"\tES_LR_MIN_DELTA: {ES_LR_MIN_DELTA}")
+    print(f"\tTRAIN_MIN_LR: {TRAIN_MIN_LR}")
+    print(f"MLFLOW:")
+    print(f"\ttracking_uri: {tracking_uri}")
+    print(f"\texperiment_name: {experiment_name}")
+    print(f"GLOBALS:")
+    for key, value in GLOBALS.items():
+        print(f"\t{key}: {value}")
+    print(f"===========================================================================")
 
 
-    # Carica i dati
-    # For the time being, I want the training to use 
-    #   > 50% occlusions, in which 20% are matching positives, 40% are mismatching positive, 40% are mismatching negatives
-    #   >
-    train_generator, valid_generator, test_generator, initial_bias = load_online_data_generators(TRAINVAL_SET_PATH, TEST_SET_PATH, 
-                                                                                          training_occlusion_probability=occlusion_probability, 
-                                                                                          masking_function_name="lines", 
-                                                                                          use_label_smoothing=True, 
-                                                                                          mismatch=True,
-                                                                                          small_subset=False, 
-                                                                                          matching_amount=matching_amount, # same matching amount as the test set, where only one in 5 images is matching positive
-                                                                                          batch_size=batch_size,
-                                                                                          validation_occlusion_probability=val_occlusion_probability,
-                                                                                          ) 
+    train_generator, valid_generator, test_generator, initial_bias = load_offline_data_generators(
+                                                                                                    # Paths ---------------------------------------------------
+                                                                                                    original_trainval_path=ORIGINAL_TRAINVAL_SET_PATH,
+                                                                                                    occluded_trainval_path=OCCLUDED_TRAINVAL_SET_PATH,
+                                                                                                    occluded_test_path=TEST_SET_PATH,
+                                                                                                    # Occlusion parameters ------------------------------------
 
-    model = build_model_occfinetuning(FT_LR, FT_DROPOUT, l2_reg, initial_bias, model_name)
+                                                                                                    # Command line args for working ---------------------------
+                                                                                                    batch_size=batch_size,
+                                                                                                ) 
+
+    model = build_model_occfinetuning(FT_LR, FT_DROPOUT, l2_reg, initial_bias, model_name, unfreeze=unfreeze)
 
     # # Logga i parametri di addestramento su Neptune
     # run[f"{model_name}finetuning/parameters"] = {
@@ -84,7 +123,7 @@ def main():
     #     "dropout_rate": FT_DROPOUT,
     #     "l2_reg": l2_reg,
     #     "epochs": FT_EPOCH,
-    #     "batch_size": 64
+    #     "batch_size": batch_size
     # }
     run = None
 
@@ -95,13 +134,13 @@ def main():
         mlflow.log_param("dropout_rate", FT_DROPOUT)
         mlflow.log_param("l2_reg", l2_reg)
         mlflow.log_param("epochs", FT_EPOCH)
-        mlflow.log_param("batch_size", 64)
+        mlflow.log_param("batch_size", batch_size)
 
         mlflow.log_param("occlusion_probability", occlusion_probability)
         mlflow.log_param("val_occlusion_probability", val_occlusion_probability)
         mlflow.log_param("matching_amount", matching_amount)
 
-        history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, 50, 15, 0.003, 1e-6, run, model_name)
+        history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name)
         _, _ = valuta_modello(model, test_generator, run, model_name)
         salva_modello(model, run, model_name)
 
