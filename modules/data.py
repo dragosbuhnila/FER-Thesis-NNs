@@ -32,8 +32,9 @@ def refresh_show_flags():
     FULL_EPOCHS = GLOBALS.get("FULL_EPOCHS", False)
     LONG_EPOCHS = GLOBALS.get("LONG_EPOCHS", False)
 
-    if SHORT_TRAINING_FOR_TESTING and FULL_EPOCHS:
-        raise ValueError("SHORT_TRAINING_FOR_TESTING and FULL_EPOCHS cannot both be True, as they are contradictory settings. SHORT_TRAINING_FOR_TESTING makes epochs last 1000 samples, while FULL_EPOCHS makes epochs last len(occluded_images) samples (250k+). Please choose one of these settings based on your current needs (debugging/testing vs actual training).")
+    # check if more than one between SHORT_TRAINING_FOR_TESTING, FULL_EPOCHS, and LONG_EPOCHS is True, if so, raise an error since this is a misconfiguration
+    if sum([SHORT_TRAINING_FOR_TESTING, FULL_EPOCHS, LONG_EPOCHS]) > 1:
+        raise ValueError(f"SHORT_TRAINING_FOR_TESTING, FULL_EPOCHS, and LONG_EPOCHS are mutually exclusive flags, but more than one of them is True. Please check the GLOBALS configuration. SHORT_TRAINING_FOR_TESTING={SHORT_TRAINING_FOR_TESTING}, FULL_EPOCHS={FULL_EPOCHS}, LONG_EPOCHS={LONG_EPOCHS}")
 
     SHOW_IMAGES_B4AUG_REMAINING = {
         'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
@@ -255,6 +256,8 @@ class OnlineOcclusionGenerator(Sequence):
             images_per_epoch = min(2000, len(self.x_data))
         elif FULL_EPOCHS:
             raise ValueError(f"Please don't use full epochs (250k+ images) with the Online dataloader, as this dataloader is REALLY slow, and would lead to extremely long epochs. Use the Offline dataloader instead for full epochs (use it even for short epochs actually, this one is useful just to create the offline occluded dataset)")
+        elif LONG_EPOCHS:
+            raise ValueError(f"Please don't use long epochs (120K+ images) with the Online dataloader, as this dataloader is REALLY slow, and would lead to extremely long epochs. Use the Offline dataloader instead for long epochs (use it even for short epochs actually, this one is useful just to create the offline occluded dataset)")
         else:
             images_per_epoch = len(self.x_data) 
 

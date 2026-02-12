@@ -62,7 +62,7 @@ DEST_DIR="$DEST_ROOT/job_${SLURM_JOB_ID}_$TS"
 mkdir -p "$DEST_DIR"
 
 # Primary log (SLURM --output goes here)
-MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_${SLURM_JOB_ID}.log"
+MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/${SLURM_JOB_ID}_${SLURM_JOB_NAME}.log"
 # If your job uses timestamped names, adjust accordingly:
 if [ -f "$MAIN_LOG" ]; then
   cp "$MAIN_LOG" "$DEST_DIR/" || true

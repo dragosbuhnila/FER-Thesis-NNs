@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_training_ConvNeXt
+#SBATCH --job-name=dbuh_do_training_ConvNeXt_occ5_unf12_longep_acc
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
@@ -41,7 +41,7 @@ pwd
 
 
 
-SCRIPT="./scripts/do_training.py --gen_train_occlusion_ratio 0.5 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12"
+SCRIPT="./scripts/do_training.py --long_epochs --gen_train_occlusion_ratio 0.5 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12"
 echo "Now running $SCRIPT"
 python $SCRIPT
 
@@ -58,7 +58,7 @@ DEST_DIR="$DEST_ROOT/job_${SLURM_JOB_ID}_$TS"
 mkdir -p "$DEST_DIR"
 
 # Primary log (SLURM --output goes here)
-MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_${SLURM_JOB_ID}.log"
+MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/${SLURM_JOB_ID}_${SLURM_JOB_NAME}.log"
 # If your job uses timestamped names, adjust accordingly:
 if [ -f "$MAIN_LOG" ]; then
   cp "$MAIN_LOG" "$DEST_DIR/" || true

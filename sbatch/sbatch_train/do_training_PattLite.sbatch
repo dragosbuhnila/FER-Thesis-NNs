@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_training_PattLite
+#SBATCH --job-name=dbuh_do_training_PattLite_occ5_unf11_longep_acc
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a100
@@ -42,7 +42,7 @@ pwd
 
 # Optimal unfreeze was 13 (second one 12 by a small margin, 11 was not picked but probably would have yielded similar results, 
 #     with it being layer:base_model) but I left 11 by error so now ill keep it that way as it shouldn't be that bad
-SCRIPT="./scripts/do_training.py --gen_train_occlusion_ratio 0.5 --batch_size 64 --model_name PattLite --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 11"
+SCRIPT="./scripts/do_training.py --long_epochs --gen_train_occlusion_ratio 0.5 --batch_size 64 --model_name PattLite --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 11"
 echo "Now running $SCRIPT"
 python $SCRIPT
 
@@ -59,7 +59,7 @@ DEST_DIR="$DEST_ROOT/job_${SLURM_JOB_ID}_$TS"
 mkdir -p "$DEST_DIR"
 
 # Primary log (SLURM --output goes here)
-MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_${SLURM_JOB_ID}.log"
+MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/${SLURM_JOB_ID}_${SLURM_JOB_NAME}.log"
 # If your job uses timestamped names, adjust accordingly:
 if [ -f "$MAIN_LOG" ]; then
   cp "$MAIN_LOG" "$DEST_DIR/" || true
