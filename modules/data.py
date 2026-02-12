@@ -21,7 +21,7 @@ print(f'\ttf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus
 def refresh_show_flags():
     global SHOW_IMAGES_B4AUG, SHOW_IMAGES_B4AUG_ONLYONCE, SHOW_IMAGES_FINAL, SHOW_IMAGES_FINAL_ONLYONCE, SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT
     global SHOW_IMAGES_B4AUG_REMAINING, SHOW_IMAGES_FINAL_REMAINING
-    global SHORT_TRAINING_FOR_TESTING
+    global SHORT_TRAINING_FOR_TESTING, FULL_EPOCHS, LONG_EPOCHS
 
     SHOW_IMAGES_B4AUG = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG", False)
     SHOW_IMAGES_B4AUG_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_B4AUG_ONLYONCE", True)
@@ -29,6 +29,11 @@ def refresh_show_flags():
     SHOW_IMAGES_FINAL_ONLYONCE = GLOBALS.get("DATALOADER_SHOW_IMAGES_FINAL_ONLYONCE", True)
     SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT = GLOBALS.get("DATALOADER_SHOW_IMAGES_SAVE_INSTEAD_OF_PLOT", False)
     SHORT_TRAINING_FOR_TESTING = GLOBALS.get("SHORT_TRAINING_FOR_TESTING", False)
+    FULL_EPOCHS = GLOBALS.get("FULL_EPOCHS", False)
+    LONG_EPOCHS = GLOBALS.get("LONG_EPOCHS", False)
+
+    if SHORT_TRAINING_FOR_TESTING and FULL_EPOCHS:
+        raise ValueError("SHORT_TRAINING_FOR_TESTING and FULL_EPOCHS cannot both be True, as they are contradictory settings. SHORT_TRAINING_FOR_TESTING makes epochs last 1000 samples, while FULL_EPOCHS makes epochs last len(occluded_images) samples (250k+). Please choose one of these settings based on your current needs (debugging/testing vs actual training).")
 
     SHOW_IMAGES_B4AUG_REMAINING = {
         'train': 1 if SHOW_IMAGES_B4AUG_ONLYONCE else float('inf'),
@@ -240,14 +245,20 @@ class OnlineOcclusionGenerator(Sequence):
         print(f"Generator initialized: {data_inf} mode")
 
     def __len__(self):
+        # NOTE THAT LEN REFERS TO THE AMOUNT OF BATCHES IN AN EPOCH, NOT THE AMOUNT OF IMAGES
         # Note that, since we perform class balancing in train/valid mode, the number of batches per epoch is approximate.
         #   i.e. each epoch may not see all samples exactly once AND it may not see all the samples.
         #           (why? Because it will see unpopular classes a lot of times, taking slots in the batches, so the popular
         #                   batches like happy will run out of time before the epoch ends because of reacing __len__(), 
         #                   because len is defined in a way that does not take into account the rebalancing)
         if SHORT_TRAINING_FOR_TESTING:
-            return 1000 # Just for testing purposes, to make sure the training loop works without waiting for a whole epoch to end
-        return int(np.ceil(len(self.x_data) / self.batch_size))
+            images_per_epoch = min(2000, len(self.x_data))
+        elif FULL_EPOCHS:
+            raise ValueError(f"Please don't use full epochs (250k+ images) with the Online dataloader, as this dataloader is REALLY slow, and would lead to extremely long epochs. Use the Offline dataloader instead for full epochs (use it even for short epochs actually, this one is useful just to create the offline occluded dataset)")
+        else:
+            images_per_epoch = len(self.x_data) 
+
+        return int(np.ceil( images_per_epoch / self.batch_size ))
     
     def __next__(self):
         # Il comportamento dell'iteratore
@@ -417,12 +428,24 @@ class OfflineOcclusionGenerator(Sequence):
         print(f"Generator initialized: {split} mode")
 
     def __len__(self):
+        # NOTE THAT LEN REFERS TO THE AMOUNT OF BATCHES IN AN EPOCH, NOT THE AMOUNT OF IMAGES
         # Note that, since we perform class balancing in train/valid mode, the number of batches per epoch is approximate.
         #   i.e. each epoch may not see all samples exactly once AND it may not see all the samples.
         #           (why? Because it will see unpopular classes a lot of times, taking slots in the batches, so the popular
         #                   batches like happy will run out of time before the epoch ends because of reacing __len__(), 
         #                   because len is defined in a way that does not take into account the rebalancing)
-        return int(np.ceil(len(self.x_data) / self.batch_size))
+        if SHORT_TRAINING_FOR_TESTING:
+            images_per_epoch = min(2000, len(self.x_data))
+        elif FULL_EPOCHS:
+            nof_types_of_occlusion = len(self.types_of_occlusion)
+            images_per_epoch = len(self.x_data) * nof_types_of_occlusion 
+        elif LONG_EPOCHS:
+            nof_types_of_occlusion = len(self.types_of_occlusion)
+            images_per_epoch = len(self.x_data) * (nof_types_of_occlusion // 2)
+        else:
+            images_per_epoch = len(self.x_data) 
+
+        return int(np.ceil( images_per_epoch / self.batch_size ))
     
     def __next__(self):
         if self.index >= len(self):

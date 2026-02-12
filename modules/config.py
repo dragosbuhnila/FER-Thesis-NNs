@@ -20,6 +20,8 @@ GLOBALS = {
 	"MAX_TIME_SPENT_IN_WHILE_LOOP_UNIFORM_MISMATCH": 0,
 	"START_TIME": None,
 	"SHORT_TRAINING_FOR_TESTING": False, 								# If True, epoch will last 1000 samples
+	"FULL_EPOCHS": False, 												# If True, epoch will last circa like len(occluded_images) instead of len(original_images). The former is 250k+ images, the latter is 20k+ images. This is useful for debugging and for testing the data loading and training pipeline without having to wait for the entire dataset to load and train. Set to False to use the original images length for the epoch, which is what we want for actual training.
+	"LONG_EPOCHS": False, 												# If True, epoch will last len(occluded_images) * (nof_types_of_occlusion // 2). This is a middle ground between full epochs and normal epochs.
 }
 
 # 1) Core Configurations

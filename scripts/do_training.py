@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--batch_size', type=int, required=False, help='Batch size', default=64)
     parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file')
     parser.add_argument('--gen_train_occlusion_ratio', type=float, required=False, help='Occlusion ratio for generating occluded training samples. Default is 0.8', default=0.8)
+    parser.add_argument('--long_epochs', action='store_true', help='If set, epochs len will be like len(occluded_images) instead of len(original_images). The former is 250k+ images, the latter is 20k+ images. ')
     args = parser.parse_args()
 
     # Recupera i parametri dalla linea di comando
@@ -50,8 +51,12 @@ def main():
     FT_DROPOUT = args.dropout_rate
     FT_EPOCH = args.FT_EPOCH
     model_name = args.model_name
+    long_epochs = args.long_epochs
     batch_size = args.batch_size
     gen_train_occlusion_ratio = args.gen_train_occlusion_ratio
+
+    if long_epochs:
+        GLOBALS["LONG_EPOCHS"] = True
 
     # others
     TRAIN_ES_PATIENCE = 3
@@ -83,6 +88,7 @@ def main():
     print(f"\ttraining_epochs: {FT_EPOCH}")
     print(f"\tmodel_name: {model_name}")
     print(f"\tbatch_size: {batch_size}")
+    print(f"\tlong_epochs: {long_epochs}")
     print(f"\tgen_train_occlusion_ratio: {gen_train_occlusion_ratio}")
     print(f"TRAINING PARAMS:")
     print(f"\tTRAIN_ES_PATIENCE: {TRAIN_ES_PATIENCE}")
