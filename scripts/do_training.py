@@ -40,6 +40,7 @@ def main():
     parser.add_argument('--model_name', type=str, required=True, help='Model name. Default is PattLite', default='PattLite')
     parser.add_argument('--batch_size', type=int, required=False, help='Batch size', default=64)
     parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file')
+    parser.add_argument('--gen_train_occlusion_ratio', type=float, required=False, help='Occlusion ratio for generating occluded training samples. Default is 0.8', default=0.8)
     args = parser.parse_args()
 
     # Recupera i parametri dalla linea di comando
@@ -50,6 +51,7 @@ def main():
     FT_EPOCH = args.FT_EPOCH
     model_name = args.model_name
     batch_size = args.batch_size
+    gen_train_occlusion_ratio = args.gen_train_occlusion_ratio
 
     # others
     TRAIN_ES_PATIENCE = 3
@@ -81,6 +83,7 @@ def main():
     print(f"\ttraining_epochs: {FT_EPOCH}")
     print(f"\tmodel_name: {model_name}")
     print(f"\tbatch_size: {batch_size}")
+    print(f"\tgen_train_occlusion_ratio: {gen_train_occlusion_ratio}")
     print(f"TRAINING PARAMS:")
     print(f"\tTRAIN_ES_PATIENCE: {TRAIN_ES_PATIENCE}")
     print(f"\tTRAIN_LR_PATIENCE: {TRAIN_LR_PATIENCE}")
@@ -104,6 +107,7 @@ def main():
 
                                                                                                     # Command line args for working ---------------------------
                                                                                                     batch_size=batch_size,
+                                                                                                    training_occlusion_probability=gen_train_occlusion_ratio
                                                                                                 ) 
 
     model = build_model_occfinetuning(FT_LR, FT_DROPOUT, l2_reg, initial_bias, model_name, unfreeze=unfreeze)
@@ -127,10 +131,11 @@ def main():
         mlflow.log_param("epochs", FT_EPOCH)
         mlflow.log_param("batch_size", batch_size)
         mlflow.log_param("unfreeze", unfreeze)
+        mlflow.log_param("gen_train_occlusion_ratio", gen_train_occlusion_ratio)
 
         history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name)
-        _, _ = valuta_modello(model, test_generator, run, model_name)
-        salva_modello(model, run, model_name)
+        test_loss, test_acc = valuta_modello(model, test_generator, run, model_name)
+        salva_modello(model, run, model_name, test_acc)
 
     ## *** termina Neptune run o alternativa ***
 

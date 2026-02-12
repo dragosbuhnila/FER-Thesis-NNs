@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from sklearn.metrics import accuracy_score
 
-from modules.config import EMOTIONS, OCCFT_MODELS_FOLDER
+from modules.config import EMOTIONS, OCCFT_MODELS_FOLDER, IMAGES_SHAPE
 from modules.misc import get_timestamp
 
 
@@ -110,26 +110,56 @@ def evaluate_model(model, model_name, test_generator, yolo_test_folder_path=None
 
 
 def addestra_modello(model, train_generator, valid_generator, test_generator, TRAIN_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name):
-    early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='val_categorical_accuracy', patience=TRAIN_ES_PATIENCE, min_delta=ES_LR_MIN_DELTA, restore_best_weights=True, mode = 'max')
-    learning_rate_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_categorical_accuracy', patience=TRAIN_LR_PATIENCE, verbose=0, min_delta=ES_LR_MIN_DELTA, min_lr=TRAIN_MIN_LR)
+    early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+        monitor='val_categorical_accuracy', 
+        patience=TRAIN_ES_PATIENCE, 
+        min_delta=ES_LR_MIN_DELTA, 
+        restore_best_weights=True, 
+        mode='max'
+    )
+    learning_rate_callback = tf.keras.callbacks.ReduceLROnPlateau(
+        monitor='val_categorical_accuracy', 
+        patience=TRAIN_LR_PATIENCE, 
+        verbose=1, 
+        min_delta=ES_LR_MIN_DELTA, 
+        min_lr=TRAIN_MIN_LR
+    )
 
-    history = model.fit(train_generator, epochs=TRAIN_EPOCH, validation_data=valid_generator, verbose=1,
-                        callbacks=[early_stopping_callback, learning_rate_callback])
-    
-    #  # Loggare l'accuratezza del training e della validazione su Neptune
-    # for epoch in range(len(history.history['categorical_accuracy'])):
-    #     run[f"{model_name}/finetuning/training/accuracy"].log(history.history['categorical_accuracy'][epoch])
-    #     run[f"{model_name}/finetuning/validation/accuracy"].log(history.history['val_categorical_accuracy'][epoch])
-    #     run[f"{model_name}/finetuning/training/loss"].log(history.history['loss'][epoch])
-    #     run[f"{model_name}/finetuning/validation/loss"].log(history.history['val_loss'][epoch])
+    history = model.fit(
+        train_generator, 
+        epochs=TRAIN_EPOCH, 
+        validation_data=valid_generator, 
+        verbose=1,
+        callbacks=[early_stopping_callback, learning_rate_callback]
+    )
 
-    # Log to ml flow instead
+    # Check if early stopping occurred
+    stopped_epoch = early_stopping_callback.stopped_epoch
+    if stopped_epoch > 0:
+        print(f"Early stopping occurred at epoch {stopped_epoch}.")
+        mlflow.log_param("early_stopping_epoch", stopped_epoch)
+    else:
+        print("Early stopping did not occur.")
+        mlflow.log_param("early_stopping_epoch", "None")
+
+    # Check if learning rate changed
+    lr_changes = history.history.get('lr', None)
+    if lr_changes:
+        print("Learning rate changes during training:")
+        for epoch, lr in enumerate(lr_changes):
+            print(f"Epoch {epoch + 1}: Learning rate = {lr}")
+            mlflow.log_metric("learning_rate", lr, step=epoch)
+    else:
+        print("No learning rate changes were recorded.")
+        mlflow.log_param("learning_rate_changes", "None")
+
+    # Log training metrics to MLflow
     for epoch in range(len(history.history['categorical_accuracy'])):
         mlflow.log_metric("training_accuracy", history.history['categorical_accuracy'][epoch], step=epoch)
         mlflow.log_metric("validation_accuracy", history.history['val_categorical_accuracy'][epoch], step=epoch)
         mlflow.log_metric("training_loss", history.history['loss'][epoch], step=epoch)
         mlflow.log_metric("validation_loss", history.history['val_loss'][epoch], step=epoch)
-    
+
     return history
 
 def valuta_modello(model, test_generator, run, model_name):
@@ -145,9 +175,9 @@ def valuta_modello(model, test_generator, run, model_name):
 
     return test_loss, test_acc
 
-def salva_modello(model, run, model_name):
+def salva_modello(model, run, model_name, test_acc):
     base_name = f'{model_name}_occfinetuning'
-    base_path = os.path.join(OCCFT_MODELS_FOLDER, f"{base_name}_{get_timestamp()}")
+    base_path = os.path.join(OCCFT_MODELS_FOLDER, f"{base_name}__{get_timestamp()}__{test_acc:.4f}")
     
     try:
         # Salva il modello in formato TensorFlow

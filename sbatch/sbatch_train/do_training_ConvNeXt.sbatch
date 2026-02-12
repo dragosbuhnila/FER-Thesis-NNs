@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_do_training_ConvNeXt
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
@@ -8,8 +8,8 @@
 #SBATCH --mem=40G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
+#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
 
 
@@ -40,8 +40,8 @@ pwd
 # =====================================================================================
 
 
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 128 --model_name ConvNeXt --FT_EPOCH 10  --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12
-SCRIPT="./scripts/do_training.py --batch_size 64 --model_name ConvNeXt --FT_EPOCH 10  --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12"
+
+SCRIPT="./scripts/do_training.py --gen_train_occlusion_ratio 0.5 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

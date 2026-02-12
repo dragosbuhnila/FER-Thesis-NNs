@@ -1,15 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_try_hello_world
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
-#SBATCH --time=00:05:00
+#SBATCH --partition=cpu_skylake
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
-#SBATCH --mem=1G
+#SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
-#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
+#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
 # =====================================================================================
 # ============================= Preliminary Setups ====================================
@@ -43,9 +42,10 @@ pwd
 # lsof -i @192.168.122.131:5001
 # curl -I http://192.168.122.131:5001
 
-echo "running python ./scripts/hello_world.py"
-cd /home/dbuhnila/models/FER-Thesis-NNs/scripts
-python hello_world.py
+COMMAND="python ./scripts/trying_things/hello_world.py"
+
+echo "Running ${COMMAND}"
+${COMMAND}
 
 
 # =====================================================================================
@@ -59,7 +59,7 @@ DEST_DIR="$DEST_ROOT/job_${SLURM_JOB_ID}_$TS"
 mkdir -p "$DEST_DIR"
 
 # Primary log (SLURM --output goes here)
-MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_${SLURM_JOB_ID}.log"
+MAIN_LOG="/home/dbuhnila/models/FER-Thesis-NNs/out_err/${SLURM_JOB_ID}_${SCRIPT_NAME}.log"
 # If your job uses timestamped names, adjust accordingly:
 if [ -f "$MAIN_LOG" ]; then
   cp "$MAIN_LOG" "$DEST_DIR/" || true

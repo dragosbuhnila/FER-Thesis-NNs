@@ -2,11 +2,11 @@ import sys
 import os
 import time
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from modules.config import CONSOLE_OUTPUTS_PATH
 from modules.misc import Tee
 
-REDIRECT_OUTPUT = True
+REDIRECT_OUTPUT = False
 LOG_FILE = os.path.join(CONSOLE_OUTPUTS_PATH, f"{time.strftime('%Y%m%d-%H%M%S')}__hello_world__console_output.txt")
 
 if REDIRECT_OUTPUT:
@@ -27,5 +27,4 @@ if __name__ == "__main__":
     print("Script finished.")
     raise ValueError("This is a test exception to check stderr redirection.")
 
-    sys.stdout.close()  # Close the log file
     exit(0)

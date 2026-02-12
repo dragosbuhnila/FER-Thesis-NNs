@@ -321,7 +321,6 @@ def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias,
         with tf.keras.utils.custom_object_scope(custom_objects):
             model = load_model("efficientnet_finetuning")
     elif model_name == 'VGG19':
-         # Scarica il modello dal server locale
         with tf.keras.utils.custom_object_scope(custom_objects):
             model = load_model("vgg19_finetuning")
     elif model_name == 'PattLite':

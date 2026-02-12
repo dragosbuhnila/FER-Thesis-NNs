@@ -22,7 +22,7 @@ TEST_SET_PATH = OCCLUDED_TEST_SET_H5_PATH
 LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{get_timestamp()}__{__name__}__console_output.txt")
 
 SAVE_ALL_MODELS = False
-SHORT_TRAINING_FOR_TESTING = True
+SHORT_TRAINING_FOR_TESTING = False
 
 
 
@@ -168,6 +168,8 @@ def main():
                     val_loss_at_best = float(history.history['val_loss'][best_epoch])
                     mlflow.log_metric("val_acc_best", val_acc)
                     mlflow.log_metric("val_loss_at_best", val_loss_at_best)
+                    mlflow.log_metric("test_acc", test_acc)
+                    mlflow.log_metric("test_loss", test_loss)
 
                     if val_acc > best_accuracy:
                         best_accuracy = val_acc
@@ -178,6 +180,7 @@ def main():
                         }
 
                         mlflow.log_metric("best_accuracy_so_far", best_accuracy)
+
 
                         if SAVE_ALL_MODELS:
                             # Save the model for this trial
@@ -195,6 +198,8 @@ def main():
                             'learning_rate': params['learning_rate'],
                             'dropout_rate': params['dropout_rate']
                         }
+
+                    
 
         # Save the overall best model and its config
         mlflow.log_metric("final_best_accuracy", overall_best_accuracy)

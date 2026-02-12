@@ -509,6 +509,10 @@ class OfflineOcclusionGenerator(Sequence):
                 except KeyError:
                     # Since I removed all the unlandmarkable or duplicated samples (which turns out had different gt labels), the only possible KeyError is the negative occlusion on matching
                     #   so this error occurring is a really big issue (at least for this specific dataset, which is really complete)
+                    # For some reason after some update the duplicates are back, so I'm exluding them from the Exception, but this should be fixed at the source (removing duplicates from the dataset)
+                    if batch_x_hashes[i] in ['4f50f6cba30511ed1a5731121979986c', '6b3e14e0646a97eb1ff84f66f4896d96', '1cd575ac2bb8e82ef46ad3758d64b308', '015958af0120539c5a911df3ad77f6f8']:
+                        print(f"[WARNING] KeyError for hash {batch_x_hashes[i]} with occlusion type {occlusion_type[i]} in OfflineOcclusionGenerator. This is expected for the known duplicates that were removed from the dataset, but should be fixed at the source by removing the duplicates from the dataset instead of just excluding them here.")
+                        continue
                     print(f"[ERROR] KeyError for hash {batch_x_hashes[i]} with occlusion type {occlusion_type[i]} in OfflineOcclusionGenerator. This should not happen, check the pre-occluded dataset and the occlusion_indexer construction.")
                     print(f"\tShowing occlusion indexer fully:")
                     for key in self.occlusion_indexer:
