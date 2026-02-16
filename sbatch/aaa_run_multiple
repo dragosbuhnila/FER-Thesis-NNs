@@ -1,0 +1,12 @@
+# Run trainings
+sbatch ./sbatch/sbatch_train/do_training_ConvNeXt.sbatch
+sbatch ./sbatch/sbatch_train/do_training_EfficientNetB1.sbatch
+sbatch ./sbatch/sbatch_train/do_training_InceptionV3.sbatch
+sbatch ./sbatch/sbatch_train/do_training_PattLite.sbatch
+sbatch ./sbatch/sbatch_train/do_training_ResNet.sbatch
+sbatch ./sbatch/sbatch_train/do_training_VGG19.sbatch
+
+
+# GPU utilization
+squeue --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %G"
+sinfo --format="%P %G"

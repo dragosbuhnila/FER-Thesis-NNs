@@ -2,7 +2,7 @@
 #SBATCH --job-name=dbuh_do_training_EfficientNetB1_occ5_unf12_longep_acc
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
+#SBATCH --partition=gpu_v100
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=40G
