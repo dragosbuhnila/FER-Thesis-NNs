@@ -170,8 +170,20 @@ def valuta_modello(model, test_generator, run, model_name):
     # run[f"{model_name}/finetuning/test/accuracy"].log(test_acc)
 
     # Log on ml flow instead
-    mlflow.log_metric("test_loss", test_loss)
-    mlflow.log_metric("test_accuracy", test_acc)
+    try:
+        # Log metrics to MLflow
+        mlflow.log_metric("test_loss", test_loss)
+        mlflow.log_metric("test_accuracy", test_acc)
+    except mlflow.MlflowException as e:
+        print(f"MLflowException occurred: {e}")
+    except Exception:
+        # Re-raise any other exceptions
+        raise
+
+    return test_loss, test_acc
+
+def valuta_modello_completo(model, test_generator, run, model_name):
+    test_loss, test_acc = model.evaluate(test_generator)
 
     return test_loss, test_acc
 
