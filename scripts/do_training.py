@@ -9,7 +9,7 @@ from tensorflow import keras
 from modules.data__load import load_offline_data_generators
 from modules.model import build_model_occfinetuning
 from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, OCCLUDED_TRAIN_VAL_SET_H5_PATH, OCCLUDED_TEST_SET_H5_PATH, MLFLOW_DIR, CONSOLE_OUTPUTS_PATH, GLOBALS
-from modules.train_eval import addestra_modello, salva_modello, valuta_modello; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from modules.train_eval_save import addestra_modello, salva_modello, valuta_modello; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from modules.misc import Tee, get_timestamp
 
 

@@ -10,7 +10,7 @@ from modules.config import MLFLOW_DIR, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TRAIN
 from modules.data__load import load_offline_data_generators
 from modules.data import refresh_show_flags
 from modules.model import build_model_occfinetuning
-from modules.train_eval import addestra_modello, valuta_modello
+from modules.train_eval_save import addestra_modello, valuta_modello
 from modules.misc import Tee, get_timestamp
 
 

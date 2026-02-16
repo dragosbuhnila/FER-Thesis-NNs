@@ -33,6 +33,7 @@ AUXILIARY_DATA_DIR = 	os.path.join(DATA_BASE_DIR, "auxiliary")
 MODULES_DIR = 			os.path.join(PROJECT_ROOT, "modules")
 MODELS_DIR = 			os.path.join(DATA_BASE_DIR, "models")
 MLFLOW_DIR = 			os.path.join(PROJECT_ROOT, "mlruns")
+OUT_ERR_DIR = 			os.path.join(PROJECT_ROOT, "out_err")
 
 # 1a) Emotions
 # ______________________________________________________________________

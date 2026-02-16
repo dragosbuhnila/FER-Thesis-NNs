@@ -24,9 +24,9 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install argparse
+python -m pip install rich
 echo "=========================================================================="
-echo "Installed other dependencies! (argparse)"
+echo "Installed other dependencies! (rich)"
 echo "=========================================================================="
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
