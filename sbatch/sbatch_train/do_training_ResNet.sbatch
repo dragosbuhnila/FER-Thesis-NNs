@@ -2,7 +2,7 @@
 #SBATCH --job-name=dbuh_do_training_ResNet_occ5_unf13_longep_acc
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_h200
+#SBATCH --partition=gpu_a100
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=40G
