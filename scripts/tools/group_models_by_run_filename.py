@@ -60,34 +60,45 @@ if __name__ == "__main__":
             })
         except Exception as e:
             print(f"Error processing file {f}: {e}")
-    
-    # Group data by model
-    grouped_data = defaultdict(list)
+
+
+    # Group data by model and by (occ, unf, longep)
+    grouped_data = defaultdict(lambda: defaultdict(list))
     for info in extracted_info:
-        grouped_data[info["model"]].append(info)
-    
+        key = (info["occ"], info["unf"], info["longep"])
+        grouped_data[info["model"]][key].append(info)
+
     # Print the table for each model
     print(f"=============== Grouped result by model ================================================")
     for model, entries in grouped_data.items():
-        # Sort entries by accuracy (descending order)
-        entries.sort(key=lambda x: x["acc"], reverse=True)
-
         # Create a Rich table
         table = Table(title=f"Model: {model}")
-        table.add_column("ID", justify="right")
         table.add_column("OCC", justify="center")
         table.add_column("UNF", justify="center")
         table.add_column("LONGEP", justify="center")
-        table.add_column("ACC", justify="center")
+        table.add_column("IDs", justify="center")
+        table.add_column("ACCs", justify="center")
+
+        # Sort entries by the best accuracy value in descending order
+        sorted_entries = sorted(
+            entries.items(),
+            key=lambda item: min(float(info["acc"]) if info["acc"] else 0 for info in item[1]),
+            reverse=True
+        )
 
         # Add rows to the table
-        for entry in entries:
+        for (occ, unf, longep), infos in sorted_entries:
+            # Sort infos by accuracy (ascending order)
+            infos = sorted(infos, key=lambda info: float(info["acc"]) if info["acc"] else 0)
+
+            ids = ", ".join(info["id"] for info in infos)
+            accs = ", ".join(f"0.{info['acc']}" if info["acc"] else "N/A" for info in infos)
             table.add_row(
-                entry["id"],
-                f"0.{entry['occ']}" if entry["occ"] else "N/A",
-                entry["unf"] if entry["unf"] else "N/A",
-                str(entry["longep"]),
-                f"0.{entry['acc']}" if entry["acc"] else "N/A"
+                f"0.{occ}" if occ else "N/A",
+                unf if unf else "N/A",
+                str(longep),
+                ids,
+                accs
             )
 
         # Print the table
@@ -98,7 +109,10 @@ if __name__ == "__main__":
     best_results = []
     for model, entries in grouped_data.items():
         # Get the best entry (highest accuracy) for each model
-        best_entry = max(entries, key=lambda x: x["acc"])
+        best_entry = max(
+            (info for infos in entries.values() for info in infos),
+            key=lambda x: x["acc"]
+        )
         best_results.append({
             "model": model,
             "occ": best_entry["occ"],
