@@ -4,6 +4,7 @@ import tensorflow as tf
 import torch
 import numpy as np
 from sklearn.metrics import accuracy_score
+from mlflow.models.signature import infer_signature
 
 from modules.config import EMOTIONS, OCCFT_MODELS_FOLDER, IMAGES_SHAPE
 from modules.misc import get_timestamp
