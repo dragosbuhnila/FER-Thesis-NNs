@@ -6,7 +6,17 @@ import torch
 
 from modules.config import EMOTIONS
 
-def evaluate_keras_model(model, test_generator, model_name):
+
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+
+from modules.config import EMOTIONS, SAVED_IMAGES_PATH
+
+
+def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show=False):
     # class_names_fixed = ['ANGER', 'DISGUST', 'FEAR', 'HAPPINESS', 'NEUTRALITY', 'SADNESS', 'SURPRISE']
     class_names_fixed = EMOTIONS
 
@@ -37,6 +47,10 @@ def evaluate_keras_model(model, test_generator, model_name):
         # Prepara un'immagine "bianca" 224x224 da usare come placeholder
         placeholder_img = Image.new('RGB', (224, 224), color=(255, 255, 255))
         placeholder_array = np.array(placeholder_img)
+
+        # Ensure the save directory exists
+        save_dir = os.path.join(SAVED_IMAGES_PATH, model_name, "high_confidence_errors")
+        os.makedirs(save_dir, exist_ok=True)
 
         for fig_idx, start in enumerate(range(0, num_errors, batch_size), start=1):
             end = start + batch_size
@@ -70,8 +84,17 @@ def evaluate_keras_model(model, test_generator, model_name):
             # Se noti comportamenti indesiderati, puoi commentare tight_layout
             plt.tight_layout()
 
-            plt.savefig(f'/content/drive/MyDrive/Colab Notebooks/HPC/finale/{model_name}/finetuning/bias_{fig_idx}.png')
-            plt.show()
+            # Save the figure to the specified directory
+            save_path = os.path.join(save_dir, f"high_conf_error_{fig_idx}.png")
+            plt.savefig(save_path)
+            print(f"Saved figure to {save_path}")
+
+            # Show the figure only if save_instead_of_show is False
+            if not save_instead_of_show:
+                plt.show()
+
+            # Close the figure to free memory
+            plt.close(fig)
     else:
         print("Nessun errore con alta confidenza trovato.")
 
