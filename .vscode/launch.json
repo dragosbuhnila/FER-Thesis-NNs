@@ -5,6 +5,8 @@
     "version": "0.2.0",
     "configurations": [      
 
+
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -96,6 +98,13 @@
                     "--redirect_output"
                 ]
         },
-
+        {
+            "name": "try_evaluating_completely",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_evaluating_completely.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
     ]
 }

@@ -24,9 +24,9 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install rich
+python -m pip install rich seaborn
 echo "=========================================================================="
-echo "Installed other dependencies! (rich)"
+echo "Installed other dependencies! (rich, seaborn)"
 echo "=========================================================================="
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
