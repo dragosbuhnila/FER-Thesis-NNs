@@ -720,12 +720,12 @@ def compute_agreement_all_images(df_all):
 
 
 def agreement_statistics(df_agreement):    
-    high = df_agreement[df_agreement["Pi_Overall"] > 0.9]
-    medium = df_agreement[(df_agreement["Pi_Overall"] > 0.5) & 
+    strong = df_agreement[df_agreement["Pi_Overall"] > 0.9]
+    good = df_agreement[(df_agreement["Pi_Overall"] > 0.5) & 
                           (df_agreement["Pi_Overall"] <= 0.9)]
-    low = df_agreement[df_agreement["Pi_Overall"] <= 0.3]
+    poor = df_agreement[df_agreement["Pi_Overall"] <= 0.3]
     
-    return high, medium, low
+    return strong, good, poor
 
 
 def plot_disagreement_images(df_all, df_agreement, test_generator, save_dir, save_instead_of_show, images_per_fig=18):
@@ -824,16 +824,16 @@ def evaluate_agreement(model_and_names, test_generator, run_name=None):
     print(f"[INFO] Saved agreement values to CSV: {agreement_csv_path}")
 
     # 2) print and save agreement statistics
-    high, medium, low = agreement_statistics(df_agreement)
+    strong, good, poor = agreement_statistics(df_agreement)
     total = len(df_agreement)
     print("===== AGREEMENT STATISTICS =====")
-    print(f"High (>0.9): {len(high)} ({len(high)/total*100:.2f}%)")
-    print(f"Medium (0.5–0.9): {len(medium)} ({len(medium)/total*100:.2f}%)")
-    print(f"Low (<=0.3): {len(low)} ({len(low)/total*100:.2f}%)")
+    print(f"Strong (>0.9): {len(strong)} ({len(strong)/total*100:.2f}%)")
+    print(f"Good (0.5–0.9): {len(good)} ({len(good)/total*100:.2f}%)")
+    print(f"Poor (<=0.3): {len(poor)} ({len(poor)/total*100:.2f}%)")
     agreement_group_stats = pd.DataFrame({
-        "Agreement_Level": ["High", "Medium", "Low"],
-        "Count": [len(high), len(medium), len(low)],
-        "Percentage": [len(high)/total*100, len(medium)/total*100, len(low)/total*100]
+        "Agreement_Level": ["Strong", "Good", "Poor"],
+        "Count": [len(strong), len(good), len(poor)],
+        "Percentage": [len(strong)/total*100, len(good)/total*100, len(poor)/total*100]
     })
     agreement_stats_csv_path = os.path.join(base_dir, f"agreement_statistics.csv")
     agreement_group_stats.to_csv(agreement_stats_csv_path, index=False)
