@@ -1,15 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_rotate_dataset
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
-#SBATCH --time=00:30:00
+#SBATCH --partition=cpu_skylake
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
-#SBATCH --mem=20G
+#SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
-#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
+#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
 
 
@@ -22,16 +21,13 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
-export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
-export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
-
 echo "=========================================================================="
 echo "Activated venv!"
-python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
+echo "=========================================================================="
 
 
 
@@ -40,16 +36,14 @@ pwd
 # =====================================================================================
 
 
-echo "====================== testing keras and tensorflow versions ==========================="
-python -c "import keras, tensorflow as tf; print(f'Keras: {keras.__version__}, TF: {tf.__version__}')"
-echo "====================== finished testing keras and tf versions =========================="
+COMMAND_TO_RUN="./scripts/tools/rotate_dataset.py"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
-PARAM_MODEL_NAME="occft_convnext"
-PARAM_TEST_SET="OCCLUDED"
 
-SCRIPT="./scripts/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
-echo "Now running $SCRIPT"
-python $SCRIPT
+echo "==================================================================================="
+echo "Job ended at:"
+python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

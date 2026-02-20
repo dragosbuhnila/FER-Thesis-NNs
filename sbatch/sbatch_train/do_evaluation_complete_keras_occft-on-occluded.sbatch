@@ -1,15 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_do_evaluation_complete_keras_occft-on-occluded
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
-#SBATCH --time=00:30:00
+#SBATCH --partition=gpu_v100
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
-#SBATCH --mem=20G
+#SBATCH --mem=1G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
+#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
 
 
@@ -28,6 +28,7 @@ export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 echo "=========================================================================="
 echo "Activated venv!"
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
@@ -39,17 +40,21 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
+# >>> test run:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --quick
+# >>> occft run on occluded test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_evaluation_complete_keras.py" --models_set occft --test_set occluded
+# >>> occft run on original test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_evaluation_complete_keras.py" --models_set occft --test_set original
 
-echo "====================== testing keras and tensorflow versions ==========================="
-python -c "import keras, tensorflow as tf; print(f'Keras: {keras.__version__}, TF: {tf.__version__}')"
-echo "====================== finished testing keras and tf versions =========================="
+COMMAND_TO_RUN="./scripts/do_evaluation_complete_keras.py --models_set occft --test_set occluded" 
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
-PARAM_MODEL_NAME="occft_convnext"
-PARAM_TEST_SET="OCCLUDED"
 
-SCRIPT="./scripts/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
-echo "Now running $SCRIPT"
-python $SCRIPT
+echo "==================================================================================="
+echo "Job ended at:"
+python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================
