@@ -115,6 +115,7 @@ if __name__ == "__main__":
         )
         best_results.append({
             "model": model,
+            "id": best_entry["id"],  # Add the ID of the best entry
             "occ": best_entry["occ"],
             "unf": best_entry["unf"],
             "longep": best_entry["longep"],
@@ -127,6 +128,7 @@ if __name__ == "__main__":
     # Create a Rich table for the best results
     best_table = Table(title="Best Results by Model (Ranked by Accuracy)")
     best_table.add_column("MODEL", justify="center")
+    best_table.add_column("ID", justify="center")  # Add a column for the ID
     best_table.add_column("OCC", justify="center")
     best_table.add_column("UNF", justify="center")
     best_table.add_column("LONGEP", justify="center")
@@ -136,6 +138,7 @@ if __name__ == "__main__":
     for result in best_results:
         best_table.add_row(
             result["model"],
+            result["id"],  # Add the ID to the row
             f"0.{result['occ']}" if result["occ"] else "N/A",
             result["unf"] if result["unf"] else "N/A",
             str(result["longep"]),

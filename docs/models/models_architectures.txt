@@ -1,19 +1,11 @@
-==========================================================================
-Activated venv!
-==========================================================================
-/home/dbuhnila/models/FER-Thesis-NNs
-==========================================================================
-Now running ./scripts/tools/reading_files/read_h5_architecture.py
-2026-02-11 21:58:30.305811: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-2026-02-11 21:58:30.312144: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
-2026-02-11 21:58:30.544043: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-2026-02-11 21:58:31.358221: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
-To enable the following instructions: AVX2 AVX512F FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2026-02-11 21:58:39.463779: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+resnet:         14 layers total --- base_model at layer 11 --- optimal unfreeze at 13
+pattlite:       14 layers total --- base_model at layer 11 --- optimal unfreeze at 11
+vgg19:          14 layers total --- base_model at layer 11 --- optimal unfreeze at 13
+inceptionv3:    14 layers total --- base_model at layer 11 --- optimal unfreeze at 11
+convnext:       12 layers total --- base_model at layer 11 --- optimal unfreeze at 12
+efficientnet:   12 layers total --- base_model at layer 11 --- optimal unfreeze at 12
 
-[INFO] Processing model: resnet_finetuning
-Loading model: resnet_finetuning from /home/dbuhnila/models/FER-Thesis-NNs/data/models/federica/finetuning/pretrained_ResNet_finetuning. Custom objects: dict_keys(['loss'])
-[INFO] Successfully loaded model: resnet_finetuning
+
 [INFO] Model Summary for resnet_finetuning:
 Model: "train-head"
 __________________________________________________________________________________________________
@@ -64,9 +56,9 @@ Trainable params: 6734920 (25.69 MB)
 Non-trainable params: 1137216 (4.34 MB)
 __________________________________________________________________________________________________
 
-[INFO] Processing model: pattlite_finetuning
-Loading model: pattlite_finetuning from /home/dbuhnila/models/FER-Thesis-NNs/data/models/federica/finetuning/pretrained_PattLite_finetuning. Custom objects: dict_keys(['loss'])
-[INFO] Successfully loaded model: pattlite_finetuning
+
+
+
 [INFO] Model Summary for pattlite_finetuning:
 Model: "train-head"
 __________________________________________________________________________________________________
@@ -117,9 +109,9 @@ Trainable params: 1082536 (4.13 MB)
 Non-trainable params: 20128 (78.62 KB)
 __________________________________________________________________________________________________
 
-[INFO] Processing model: vgg19_finetuning
-Loading model: vgg19_finetuning from /home/dbuhnila/models/FER-Thesis-NNs/data/models/federica/finetuning/pretrained_VGG19_finetuning. Custom objects: dict_keys(['loss'])
-[INFO] Successfully loaded model: vgg19_finetuning
+
+
+
 [INFO] Model Summary for vgg19_finetuning:
 Model: "train-head"
 __________________________________________________________________________________________________
@@ -171,9 +163,9 @@ Trainable params: 5000264 (19.07 MB)
 Non-trainable params: 5865600 (22.38 MB)
 __________________________________________________________________________________________________
 
-[INFO] Processing model: inceptionv3_finetuning
-Loading model: inceptionv3_finetuning from /home/dbuhnila/models/FER-Thesis-NNs/data/models/federica/finetuning/pretrained_InceptionV3_finetuning. Custom objects: dict_keys(['loss'])
-[INFO] Successfully loaded model: inceptionv3_finetuning
+
+
+
 [INFO] Model Summary for inceptionv3_finetuning:
 Model: "train-head"
 __________________________________________________________________________________________________
@@ -224,9 +216,9 @@ Trainable params: 3256904 (12.42 MB)
 Non-trainable params: 539360 (2.06 MB)
 __________________________________________________________________________________________________
 
-[INFO] Processing model: convnext_finetuning
-Loading model: convnext_finetuning from /home/dbuhnila/models/FER-Thesis-NNs/data/models/federica/finetuning/pretrained_ConvNeXt_finetuning. Custom objects: dict_keys(['loss'])
-[INFO] Successfully loaded model: convnext_finetuning
+
+
+
 [INFO] Model Summary for convnext_finetuning:
 Model: "train-head"
 __________________________________________________________________________________________________
@@ -272,53 +264,7 @@ Trainable params: 56003144 (213.64 MB)
 Non-trainable params: 145088 (566.75 KB)
 __________________________________________________________________________________________________
 
-[INFO] Processing model: efficientnet_finetuning
-Loading EfficientNet model: efficientnet_finetuning from /home/dbuhnila/models/FER-Thesis-NNs/data/models/federica/finetuning/pretrained_EfficientNetB1_finetuning_weights.h5
-Model: "train-head"
-_____________________________________________________________________________________________________________
- Layer (type)                Output Shape                 Param #   Connected to                  Trainable  
-=============================================================================================================
- universal_input (InputLaye  [(None, 128, 128, 3)]        0         []                            Y          
- r)                                                                                                          
-                                                                                                             
- base_model (Functional)     (None, 8, 8, 112)            1017295   ['universal_input[0][0]']     Y          
-                                                                                                             
- patch_extraction (Sequenti  (None, 1, 1, 256)            163328    ['base_model[1][0]']          Y          
- al)                                                                                                         
-                                                                                                             
- spatial_dropout2d (Spatial  (None, 1, 1, 256)            0         ['patch_extraction[1][0]']    Y          
- Dropout2D)                                                                                                  
-                                                                                                             
- gap (GlobalAveragePooling2  (None, 256)                  0         ['spatial_dropout2d[0][0]']   Y          
- D)                                                                                                          
-                                                                                                             
- dropout_1 (Dropout)         (None, 256)                  0         ['gap[1][0]']                 Y          
-                                                                                                             
- pre_classification (Sequen  (None, 32)                   8352      ['dropout_1[0][0]']           Y          
- tial)                                                                                                       
-                                                                                                             
- expand_dims_layer_1 (Expan  (None, 32, 1)                0         ['pre_classification[0][0]'   Y          
- dDimsLayer)                                                        ]                                        
-                                                                                                             
- attention (Attention)       (None, 32, 1)                1         ['expand_dims_layer_1[0][0]   Y          
-                                                                    ',                                       
-                                                                     'expand_dims_layer_1[0][0]              
-                                                                    ']                                       
-                                                                                                             
- squeeze_layer_1 (SqueezeLa  (None, 32)                   0         ['attention[1][0]']           Y          
- yer)                                                                                                        
-                                                                                                             
- dropout_2 (Dropout)         (None, 32)                   0         ['squeeze_layer_1[0][0]']     Y          
-                                                                                                             
- classification_head (Dense  (None, 7)                    231       ['dropout_2[0][0]']           Y          
- )                                                                                                           
-                                                                                                             
-=============================================================================================================
-Total params: 1189207 (4.54 MB)
-Trainable params: 1066148 (4.07 MB)
-Non-trainable params: 123059 (480.70 KB)
-_____________________________________________________________________________________________________________
-[INFO] Successfully loaded model: efficientnet_finetuning
+
 [INFO] Model Summary for efficientnet_finetuning:
 Model: "train-head"
 __________________________________________________________________________________________________

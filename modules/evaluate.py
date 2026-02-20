@@ -1,3 +1,4 @@
+import math
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ from sklearn.manifold import TSNE
 import torch
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+import pandas as pd
 
 from modules.config import ALL_MODELS_PATHS, EMOTIONS
 
@@ -113,6 +115,58 @@ def visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y
         save_path = os.path.join(save_dir, f"uncertain_predictions_{fig_idx}.png")
         save_or_show_figure(fig, save_path, save_instead_of_show)
 
+
+def visualize_confusion_matrix(cm, class_names, model_name, save_dir, save_instead_of_show):
+    """
+    Visualize and save the confusion matrix and its normalized version.
+
+    Parameters:
+    - cm: Confusion matrix (2D array).
+    - class_names: List of class names for the axes.
+    - model_name: Name of the model (used for saving the plots).
+    - save_dir: Directory where the plots will be saved.
+    - save_instead_of_show: Whether to save the figure instead of showing it.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Compute normalized confusion matrix
+    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    # Plot and save the confusion matrix
+    fig = plt.figure(figsize=(10, 7))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    cm_path = os.path.join(save_dir, f'{model_name}_cm.png')
+    save_or_show_figure(fig, cm_path, save_instead_of_show)
+
+    # Plot and save the normalized confusion matrix
+    fig = plt.figure(figsize=(10, 7))
+    sns.heatmap(cm_normalized, annot=True, fmt='.2f', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.title('Normalized Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    cm_normalized_path = os.path.join(save_dir, f'{model_name}_cm_normalized.png')
+    save_or_show_figure(fig, cm_normalized_path, save_instead_of_show)
+
+
+def visualize_tsne_feature_space(reduced_features, labels, class_names, model_name, save_dir, save_instead_of_show, perplexity=30):
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Map numeric labels to class names
+    class_labels = [class_names[label] for label in labels]
+
+    # Plot t-SNE with distinct colors
+    fig = plt.figure(figsize=(10, 8))  # Create a Figure object
+    sns.scatterplot(x=reduced_features[:, 0], y=reduced_features[:, 1], hue=class_labels, palette='Set1', s=50, edgecolor='k')
+    plt.title(f't-SNE Visualization of Features with perplexity {perplexity}')
+    plt.legend(title='Class', loc='best')
+
+    # Save the plot
+    save_path = os.path.join(save_dir, f"tsne_{model_name}_perplexity_{perplexity}.png")
+    save_or_show_figure(fig, save_path, save_instead_of_show)  # Pass the Figure object
+
 # ================================================================================================================
 # ============================ End Of Visualization ==============================================================
 # ================================================================================================================
@@ -183,7 +237,7 @@ def compute_accuracy_keras(y_true, probabilities):
     return accuracy_metric.result().numpy()
 
 
-def compute_precision_recall_f1(y_true, y_pred, num_classes):
+def compute_precision_recall_f1(y_true, y_pred, num_classes, fixed_class_names):
     """
     Compute precision, recall, F1-score, and support for each class, along with macro and weighted averages.
 
@@ -232,7 +286,8 @@ def compute_precision_recall_f1(y_true, y_pred, num_classes):
         support = tf.reduce_sum(y_true_binary).numpy()
 
         # Store metrics for this class
-        class_metrics[class_id] = {
+        class_name = fixed_class_names[class_id] 
+        class_metrics[class_name] = {
             "precision": precision,
             "recall": recall,
             "f1_score": f1_score,
@@ -268,25 +323,43 @@ def compute_precision_recall_f1(y_true, y_pred, num_classes):
     return class_metrics
 
 
-def tsne_visualization():
-    # TODO
-    pass
+def compute_tsne_reduced_features(features, perplexity=30):
+    """
+    Visualize features reduced with t-SNE and display class names in the legend with distinct colors.
+    Although we call them features, they are actually the model's output probabilities for each class, meaning
+    we're mostly interested in visualizing how the model's confidence distribution looks in a 2D space, and whether 
+    samples from different classes cluster together based on their predicted probabilities.
+
+    Args:
+    - features: The features to be reduced with t-SNE.
+    """
+    # Dimensionality reduction with t-SNE
+    tsne = TSNE(n_components=2, random_state=0, perplexity=perplexity)
+    tsne_reduced_features = tsne.fit_transform(features)
+
+    return tsne_reduced_features
 
 # ================================================================================================================
 # ============================ End Of Evaluation Helpers =========================================================
 # ================================================================================================================
 
-def evaluate_models_agreement():
-    # TODO
-    pass
 
 
-def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show=True):
+# ================================================================================================================
+# ========================= Complete Model Evaluation Functions ==================================================
+# ================================================================================================================
+
+
+def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show=True, run_name=None):
     """Evaluate a Keras model and visualize high-confidence and uncertain predictions."""
 
     print("=======================================================================================")
-    print(f"========= Evaluating {model_name} (version {ALL_MODELS_PATHS[model_name]})... =========")
+    print(f"========= Evaluating {model_name} ========")
     print("=======================================================================================")
+    run_name = get_timestamp() if run_name is None else run_name
+
+    print(f"[INFO] time reference: {run_name}")
+    print(f"[INFO] model_version: {ALL_MODELS_PATHS[model_name]}")
 
     # 0) Prepare the predictions
     class_names_fixed = EMOTIONS
@@ -302,9 +375,10 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     confidences = np.max(probabilities, axis=1)
 
     high_confindence_threshold = 0.6
-    uncertain_threshold = 0.1  # Minimum difference between top-2 probabilities to consider uncertain
+    uncertain_threshold = 0.1               # Minimum difference between top-2 probabilities to consider uncertain
 
     # 1) Accuracy
+    print("[INFO] Evaluating accuracies...")
     accuracy = compute_accuracy_topk(y_true, y_pred.reshape(-1, 1), k=1)
     accuracy_check = compute_accuracy_keras(y_true, probabilities)
     if not np.isclose(accuracy, accuracy_check, atol=1e-4):
@@ -320,85 +394,129 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     }
 
     # 2) Precision, Recall, F1-score
-    precision_recall_f1 = compute_precision_recall_f1(y_true, y_pred, num_classes=len(EMOTIONS))
+    print("[INFO] Evaluating precision, recall, and F1-score...")
+    precision_recall_f1 = compute_precision_recall_f1(y_true, y_pred, num_classes=len(EMOTIONS), fixed_class_names=class_names_fixed)
 
     # 3) Confusion Matrix
+    print("[INFO] Computing confusion matrix...")
     conf_matrix = confusion_matrix(y_true, y_pred, labels=range(len(EMOTIONS)))
 
     # 4) High Confidence Errors
+    print("[INFO] Identifying high-confidence errors...")
     sorted_indices = find_indices_for_high_confidence_errors(y_true, y_pred, confidences, high_confindence_threshold, class_names_fixed)
 
     # 5) Uncertain Predictions
+    print("[INFO] Identifying uncertain predictions...")
     uncertain_indices = find_indices_for_uncertain_predictions(probabilities, uncertain_threshold)
 
     # 6) t-SNE for feature space visualization (do later as it's complicated to decide how to interpret it)
-    # TODO
+    perplexity_values = [5, 20, 30, 50]
+    print(f"[INFO] Computing t-SNE reduced features with perplexities {perplexity_values}...")
+    tsne_results = {}
+    for perplexity in perplexity_values:
+        tsne_reduced_features = compute_tsne_reduced_features(features=probabilities, perplexity=perplexity)
+        tsne_results[perplexity] = tsne_reduced_features
 
+
+    print()
     # !!! Show or process results !!!
     # 1) Accuracy
     # _______________________________________________________________________________
-    print("------------------------------------------------------------------------")
-    print("---------- Accuracies --------------------------------------------------")
-    print("------------------------------------------------------------------------")
+    print("-" * 50)
+    print("1) Accuracies:")
     for key, value in accuracies.items():
-        print(f"{key}: {value:.4f}")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
+        print(f"\t{key}: {value:.4f}")
+    print()
+
+    # Save accuracies to CSV
+    accuracies_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, f"{model_name}_accuracies.csv")
+    os.makedirs(os.path.dirname(accuracies_csv_path), exist_ok=True)
+    pd.DataFrame(accuracies.items(), columns=["Metric", "Value"]).to_csv(accuracies_csv_path, index=False)
+    print(f"[INFO] Saved accuracies to CSV: {accuracies_csv_path}")
     print()
 
     # 2) Precision, Recall, F1-score
-    # ______________________________________________________________________________
-    print("------------------------------------------------------------------------")
-    print("---------- Precision, Recall, F1-score (per class + macro/weighted) ----")
-    print("------------------------------------------------------------------------")
+    # _______________________________________________________________________________
+    print("-" * 50)
+    print("2) Precision, Recall, F1-score (per class + macro/weighted):")
+    precision_recall_f1_data = []
     for key, value in precision_recall_f1.items():
         if isinstance(value, dict):
-            print(f"{key}: {value}")
+            print(f"\t{key}")
+            for sub_key, sub_value in value.items():
+                print(f"\t\t{sub_key}: {sub_value:.4f}")
+                precision_recall_f1_data.append({"Class": key, "Metric": sub_key, "Value": sub_value})
         else:
-            print(f"{key}: {value:.4f}")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
+            raise ValueError(f"Expected precision_recall_f1 to be a dict of dicts, but got {type(precision_recall_f1)}")
+    print()
+
+    # Save precision-recall-f1 to CSV
+    precision_recall_f1_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, f"{model_name}_precision_recall_f1.csv")
+    pd.DataFrame(precision_recall_f1_data).to_csv(precision_recall_f1_csv_path, index=False)
+    print(f"[INFO] Saved precision-recall-f1 to CSV: {precision_recall_f1_csv_path}")
     print()
 
     # 3) Confusion Matrix
-    # ______________________________________________________________________________
-    print("------------------------------------------------------------------------")
-    print("---------- Confusion Matrix --------------------------------------------")
-    print("------------------------------------------------------------------------")
-    print(conf_matrix)
+    # _______________________________________________________________________________
+    print("-" * 50)
+    print("3) Confusion Matrix:")
+    confusion_matrix_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "confusion_matrix")
+    visualize_confusion_matrix(conf_matrix, class_names_fixed, model_name, confusion_matrix_save_dir, save_instead_of_show)
+    print(f"[INFO] Confusion matrix visualizations saved to: {confusion_matrix_save_dir}")
+    print()
 
     # 4) High Confidence Errors
-    # ______________________________________________________________________________
-    print("------------------------------------------------------------------------")
-    print("---------- High Confidence Errors --------------------------------------")
-    print("------------------------------------------------------------------------")
-    print(f"Found {len(sorted_indices)} high confidence errors with threshold >= {high_confindence_threshold}.")
+    # _______________________________________________________________________________
+    print("-" * 50)
+    print("4) High Confidence Errors:")
     if len(sorted_indices) > 0:
-        save_dir = os.path.join(SAVED_IMAGES_PATH, model_name, "high_confidence_errors", get_timestamp())
-        visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_true, confidences, class_names_fixed, save_dir, save_instead_of_show)
+        print(f"[INFO] Found {len(sorted_indices)} high confidence errors with threshold >= {high_confindence_threshold}.")
+        high_confidence_errors_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "high_confidence_errors")
+        visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_true, confidences, class_names_fixed, high_confidence_errors_save_dir, save_instead_of_show)
+        print(f"[INFO] High confidence errors visualizations saved to: {high_confidence_errors_save_dir}")
     else:
-        print("No high confidence errors found.")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
+        print("[INFO] No high confidence errors found.")
     print()
 
     # 5) Uncertain Predictions
-    # ______________________________________________________________________________
-    print("------------------------------------------------------------------------")
-    print("---------- Uncertain Predictions ---------------------------------------")
-    print("------------------------------------------------------------------------")
-    print(f"Found {len(uncertain_indices)} uncertain predictions with threshold < {uncertain_threshold}.")
+    # _______________________________________________________________________________
+    print("-" * 50)
+    print("5) Uncertain Predictions:")
     if len(uncertain_indices) > 0:
-        save_dir = os.path.join(SAVED_IMAGES_PATH, model_name, "uncertain_predictions", get_timestamp())
-        visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y_true, probabilities, class_names_fixed, save_dir, save_instead_of_show)
+        print(f"[INFO] Found {len(uncertain_indices)} uncertain predictions with difference threshold < {uncertain_threshold}.")
+        uncertain_predictions_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "uncertain_predictions")
+        visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y_true, probabilities, class_names_fixed, uncertain_predictions_save_dir, save_instead_of_show)
+        print(f"[INFO] Uncertain predictions visualizations saved to: {uncertain_predictions_save_dir}")
     else:
-        print("No uncertain predictions found.")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
-    print("------------------------------------------------------------------------")
+        print("[INFO] No uncertain predictions found.")
+    print()
+
+    # 6) t-SNE Visualization
+    # _______________________________________________________________________________
+    print("-" * 50)
+    print("6) t-SNE Visualization of feature space:")
+    tsne_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "tsne")
+    for perplexity, tsne_reduced_features in tsne_results.items():
+        visualize_tsne_feature_space(tsne_reduced_features, y_true, class_names_fixed, model_name, tsne_save_dir, save_instead_of_show, perplexity=perplexity)
+        print(f"[INFO] t-SNE visualizations saved to: {tsne_save_dir}")
+        print()
+
+    # 7) Save probabilities, y_true, y_pred for potential further analysis
+    # _______________________________________________________________________________
+    print("-" * 50)
+    print("7) Saving probabilities, y_true, and y_pred to CSV for further analysis...")
+    probs_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, f"{model_name}_probs_ytrue_ypred.csv")
+
+    # Create a DataFrame with probabilities for all classes
+    probs_data = pd.DataFrame(probabilities, columns=[f"Prob_{class_name}" for class_name in class_names_fixed])
+    probs_data["True_Label"] = [class_names_fixed[label] for label in y_true]
+    probs_data["Predicted_Label"] = [class_names_fixed[label] for label in y_pred]
+    probs_data["Prediction_Confidence"] = confidences
+
+    # Save the DataFrame to CSV
+    os.makedirs(os.path.dirname(probs_csv_path), exist_ok=True)
+    probs_data.to_csv(probs_csv_path, index=False)
+    print(f"[INFO] Saved probabilities, y_true, and y_pred to CSV: {probs_csv_path}")
     print()
 
     print("=======================================================================================")
@@ -521,3 +639,205 @@ def evaluate_yolo_model(model, test_generator):
 
     return probabilities, y_true, y_pred, image_paths
 
+# ================================================================================================================
+# ========================= End Of Complete Model Evaluation Functions ===========================================
+# ================================================================================================================
+
+
+# ================================================================================================================
+# ========================= Agreement Analysis Functions =========================================================
+# ================================================================================================================
+
+def collect_predictions_from_models(model_and_names, test_generator):    
+    class_names_fixed = EMOTIONS
+    true_classes = np.argmax(test_generator.y_data, axis=1)
+
+    all_predictions = []    
+    for model_name, model in model_and_names.items():
+        print(f"Running predictions for: {model_name}")
+        
+        probs = model.predict(test_generator, verbose=1)
+        preds = np.argmax(probs, axis=1)
+        
+        df_model = pd.DataFrame({
+            "Image_Idx": range(len(true_classes)),
+            "True_Label": [class_names_fixed[i] for i in true_classes],
+            "Predicted_Label": [class_names_fixed[i] for i in preds],
+            "Model_Name": model_name
+        })
+        
+        all_predictions.append(df_model)
+    
+    df_all = pd.concat(all_predictions, ignore_index=True)
+    
+    return df_all
+
+
+def compute_agreement_all_images(df_all):
+    """
+    Compute agreement P_i for each image.
+    
+    Returns:
+        df_agreement (one row per image)
+    """
+    results = []
+    
+    grouped = df_all.groupby("Image_Idx")
+    
+    for image_idx, group in grouped:
+        
+        true_label = group["True_Label"].iloc[0]
+        preds = group["Predicted_Label"].values
+        
+        n = len(preds)
+        
+        if n < 2:
+            overall_pi = 0.0
+            pi_dict = {emo: 0.0 for emo in EMOTIONS}
+        else:
+            counts = group["Predicted_Label"].value_counts()
+            
+            numerator = 0
+            pi_dict = {}
+            
+            for emo in EMOTIONS:
+                c = counts.get(emo, 0)
+                value = c*(c-1) / (n*(n-1))
+                pi_dict[emo] = value
+                numerator += c*(c-1)
+            
+            overall_pi = numerator / (n*(n-1))
+        
+        results.append({
+            "Image_Idx": image_idx,
+            "True_Label": true_label,
+            "Pi_Overall": overall_pi,
+            **{f"Pi_{emo}": pi_dict[emo] for emo in EMOTIONS}
+        })
+    
+    return pd.DataFrame(results)
+
+
+def agreement_statistics(df_agreement):    
+    high = df_agreement[df_agreement["Pi_Overall"] > 0.9]
+    medium = df_agreement[(df_agreement["Pi_Overall"] > 0.5) & 
+                          (df_agreement["Pi_Overall"] <= 0.9)]
+    low = df_agreement[df_agreement["Pi_Overall"] <= 0.3]
+    
+    return high, medium, low
+
+
+def plot_disagreement_images(df_all, df_agreement, test_generator, save_dir, save_instead_of_show, images_per_fig=18):
+    os.makedirs(save_dir, exist_ok=True)
+    
+    df_plot = df_agreement.sort_values("Pi_Overall", ascending=False)
+    
+    plot_data = []
+    
+    for _, row in df_plot.iterrows():
+        
+        image_idx = row["Image_Idx"]
+        true_label = row["True_Label"]
+        pi_total = row["Pi_Overall"]
+        
+        group = df_all[df_all["Image_Idx"] == image_idx]
+        wrong = group[group["Predicted_Label"] != group["True_Label"]]
+        total_wrong = len(wrong)
+        
+        if total_wrong <= 1:
+            continue
+        
+        counts_wrong = wrong["Predicted_Label"].value_counts()
+        most_frequent = counts_wrong.idxmax() if len(counts_wrong)>0 else None
+        
+        details_str = ""
+        for emo in EMOTIONS:
+            details_str += f"{emo}: {counts_wrong.get(emo,0)}\n"
+        
+        # find emotion with max Pi
+        pi_cols = [f"Pi_{emo}" for emo in EMOTIONS]
+        emotion_max = row[pi_cols].idxmax().replace("Pi_","")
+        pi_max = row[f"Pi_{emotion_max}"]
+        
+        plot_data.append({
+            "image_idx": image_idx,
+            "true_label": true_label,
+            "pi_total": pi_total,
+            "pi_max": pi_max,
+            "emotion_max": emotion_max,
+            "total_wrong": total_wrong,
+            "most_frequent": most_frequent,
+            "details_str": details_str
+        })
+    
+    num_chunks = math.ceil(len(plot_data)/images_per_fig)
+    
+    for chunk_idx in range(num_chunks):
+        chunk = plot_data[chunk_idx*images_per_fig:(chunk_idx+1)*images_per_fig]
+        
+        fig, axes = plt.subplots(6,3, figsize=(12,30))
+        axes = axes.flatten()
+        
+        for i, data_item in enumerate(chunk):
+            ax = axes[i]
+            
+            image_index = data_item["image_idx"]
+            
+            img_data = test_generator.x_data[image_index].astype('uint8')
+            pil_img = Image.fromarray(img_data).resize((224, 224), Image.BILINEAR)
+            img = np.array(pil_img)
+
+            ax.imshow(img)
+            ax.axis("off")
+            
+            ax.set_title(
+                f"Misclassified by {data_item['total_wrong']} models\n"
+                f"Overall Agreement: {data_item['pi_total']*100:.2f}%\n"
+                f"Agreement w/ {data_item['emotion_max']}: {data_item['pi_max']*100:.2f}%\n"
+                f"Most common wrong: {data_item['most_frequent']}\n"
+                f"Correct: {data_item['true_label']}\n\n"
+                f"{data_item['details_str']}",
+                fontsize=9
+            )
+        
+        for j in range(len(chunk), images_per_fig):
+            axes[j].axis("off")
+        
+        plt.tight_layout()
+
+        save_path = os.path.join(save_dir, f"disagreement_chunk_{chunk_idx + 1}.png")
+        save_or_show_figure(fig, save_path, save_instead_of_show)
+
+
+def evaluate_agreement(model_and_names, test_generator, run_name):
+    df_all = collect_predictions_from_models(model_and_names, test_generator)
+    df_agreement = compute_agreement_all_images(df_all)
+
+    # 1) save to csv the agreement values for potential further analysis
+    agreement_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, f"agreement_values.csv")
+    os.makedirs(os.path.dirname(agreement_csv_path), exist_ok=True)
+    df_agreement.to_csv(agreement_csv_path, index=False)
+    print(f"[INFO] Saved agreement values to CSV: {agreement_csv_path}")
+
+    # 2) print and save agreement statistics
+    high, medium, low = agreement_statistics(df_agreement)
+    total = len(df_agreement)
+    print("===== AGREEMENT STATISTICS =====")
+    print(f"High (>0.9): {len(high)} ({len(high)/total*100:.2f}%)")
+    print(f"Medium (0.5–0.9): {len(medium)} ({len(medium)/total*100:.2f}%)")
+    print(f"Low (<=0.3): {len(low)} ({len(low)/total*100:.2f}%)")
+    agreement_group_stats = pd.DataFrame({
+        "Agreement_Level": ["High", "Medium", "Low"],
+        "Count": [len(high), len(medium), len(low)],
+        "Percentage": [len(high)/total*100, len(medium)/total*100, len(low)/total*100]
+    })
+    agreement_stats_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, f"agreement_statistics.csv")
+    agreement_group_stats.to_csv(agreement_stats_csv_path, index=False)
+    print(f"[INFO] Saved agreement statistics to CSV: {agreement_stats_csv_path}")
+
+    # 3) plot disagreement images
+    print("\nPlotting disagreement images...")
+    disagreement_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, "disagreement_images")
+    plot_disagreement_images(df_all, df_agreement, test_generator, disagreement_save_dir, save_instead_of_show=True)
+
+    return df_all, df_agreement

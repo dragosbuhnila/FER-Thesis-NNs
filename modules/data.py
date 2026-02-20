@@ -662,6 +662,8 @@ class OldCustomBalancedDataGenerator(Sequence):
             print("Epoch ended. Shuffling data.")
             for cls in self.classes:
                 np.random.shuffle(self.class_indices[cls])  # Shuffle degli indici per ogni classe
+        else:
+            print("Epoch ended. No shuffling for test set.")
 
     def apply_label_smoothing(self, labels):
         """Applica il label smoothing alle etichette one-hot"""
