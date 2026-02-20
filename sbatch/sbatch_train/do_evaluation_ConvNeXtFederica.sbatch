@@ -43,7 +43,7 @@ pwd
 PARAM_MODEL_NAME="convnext_finetuning"
 PARAM_TEST_SET="OCCLUDED"
 
-SCRIPT="./scripts/do_evaluation.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
+SCRIPT="./scripts/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

@@ -357,6 +357,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     print(f"========= Evaluating {model_name} ========")
     print("=======================================================================================")
     run_name = get_timestamp() if run_name is None else run_name
+    base_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name)
 
     print(f"[INFO] time reference: {run_name}")
     print(f"[INFO] model_version: {ALL_MODELS_PATHS[model_name]}")
@@ -429,7 +430,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     print()
 
     # Save accuracies to CSV
-    accuracies_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, f"{model_name}_accuracies.csv")
+    accuracies_csv_path = os.path.join(base_dir, f"accuracies.csv")
     os.makedirs(os.path.dirname(accuracies_csv_path), exist_ok=True)
     pd.DataFrame(accuracies.items(), columns=["Metric", "Value"]).to_csv(accuracies_csv_path, index=False)
     print(f"[INFO] Saved accuracies to CSV: {accuracies_csv_path}")
@@ -451,7 +452,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     print()
 
     # Save precision-recall-f1 to CSV
-    precision_recall_f1_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, f"{model_name}_precision_recall_f1.csv")
+    precision_recall_f1_csv_path = os.path.join(base_dir, f"precision_recall_f1.csv")
     pd.DataFrame(precision_recall_f1_data).to_csv(precision_recall_f1_csv_path, index=False)
     print(f"[INFO] Saved precision-recall-f1 to CSV: {precision_recall_f1_csv_path}")
     print()
@@ -460,7 +461,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     # _______________________________________________________________________________
     print("-" * 50)
     print("3) Confusion Matrix:")
-    confusion_matrix_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "confusion_matrix")
+    confusion_matrix_save_dir = os.path.join(base_dir, "confusion_matrix")
     visualize_confusion_matrix(conf_matrix, class_names_fixed, model_name, confusion_matrix_save_dir, save_instead_of_show)
     print(f"[INFO] Confusion matrix visualizations saved to: {confusion_matrix_save_dir}")
     print()
@@ -471,7 +472,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     print("4) High Confidence Errors:")
     if len(sorted_indices) > 0:
         print(f"[INFO] Found {len(sorted_indices)} high confidence errors with threshold >= {high_confindence_threshold}.")
-        high_confidence_errors_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "high_confidence_errors")
+        high_confidence_errors_save_dir = os.path.join(base_dir, "high_confidence_errors")
         visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_true, confidences, class_names_fixed, high_confidence_errors_save_dir, save_instead_of_show)
         print(f"[INFO] High confidence errors visualizations saved to: {high_confidence_errors_save_dir}")
     else:
@@ -484,7 +485,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     print("5) Uncertain Predictions:")
     if len(uncertain_indices) > 0:
         print(f"[INFO] Found {len(uncertain_indices)} uncertain predictions with difference threshold < {uncertain_threshold}.")
-        uncertain_predictions_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "uncertain_predictions")
+        uncertain_predictions_save_dir = os.path.join(base_dir, "uncertain_predictions")
         visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y_true, probabilities, class_names_fixed, uncertain_predictions_save_dir, save_instead_of_show)
         print(f"[INFO] Uncertain predictions visualizations saved to: {uncertain_predictions_save_dir}")
     else:
@@ -495,7 +496,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     # _______________________________________________________________________________
     print("-" * 50)
     print("6) t-SNE Visualization of feature space:")
-    tsne_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, "tsne")
+    tsne_save_dir = os.path.join(base_dir, "tsne")
     for perplexity, tsne_reduced_features in tsne_results.items():
         visualize_tsne_feature_space(tsne_reduced_features, y_true, class_names_fixed, model_name, tsne_save_dir, save_instead_of_show, perplexity=perplexity)
         print(f"[INFO] t-SNE visualizations saved to: {tsne_save_dir}")
@@ -505,7 +506,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     # _______________________________________________________________________________
     print("-" * 50)
     print("7) Saving probabilities, y_true, and y_pred to CSV for further analysis...")
-    probs_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, model_name, f"{model_name}_probs_ytrue_ypred.csv")
+    probs_csv_path = os.path.join(base_dir, f"probs_ytrue_ypred.csv")
 
     # Create a DataFrame with probabilities for all classes
     probs_data = pd.DataFrame(probabilities, columns=[f"Prob_{class_name}" for class_name in class_names_fixed])
@@ -809,12 +810,15 @@ def plot_disagreement_images(df_all, df_agreement, test_generator, save_dir, sav
         save_or_show_figure(fig, save_path, save_instead_of_show)
 
 
-def evaluate_agreement(model_and_names, test_generator, run_name):
+def evaluate_agreement(model_and_names, test_generator, run_name=None):
+    run_name = get_timestamp() if run_name is None else run_name
+    base_dir = os.path.join(SAVED_IMAGES_PATH, run_name, "agreement_analysis")
+
     df_all = collect_predictions_from_models(model_and_names, test_generator)
     df_agreement = compute_agreement_all_images(df_all)
 
     # 1) save to csv the agreement values for potential further analysis
-    agreement_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, f"agreement_values.csv")
+    agreement_csv_path = os.path.join(base_dir, f"agreement_values.csv")
     os.makedirs(os.path.dirname(agreement_csv_path), exist_ok=True)
     df_agreement.to_csv(agreement_csv_path, index=False)
     print(f"[INFO] Saved agreement values to CSV: {agreement_csv_path}")
@@ -831,13 +835,13 @@ def evaluate_agreement(model_and_names, test_generator, run_name):
         "Count": [len(high), len(medium), len(low)],
         "Percentage": [len(high)/total*100, len(medium)/total*100, len(low)/total*100]
     })
-    agreement_stats_csv_path = os.path.join(SAVED_IMAGES_PATH, run_name, f"agreement_statistics.csv")
+    agreement_stats_csv_path = os.path.join(base_dir, f"agreement_statistics.csv")
     agreement_group_stats.to_csv(agreement_stats_csv_path, index=False)
     print(f"[INFO] Saved agreement statistics to CSV: {agreement_stats_csv_path}")
 
     # 3) plot disagreement images
     print("\nPlotting disagreement images...")
-    disagreement_save_dir = os.path.join(SAVED_IMAGES_PATH, run_name, "disagreement_images")
+    disagreement_save_dir = os.path.join(base_dir, "disagreeing_images")
     plot_disagreement_images(df_all, df_agreement, test_generator, disagreement_save_dir, save_instead_of_show=True)
 
     return df_all, df_agreement

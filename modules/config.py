@@ -61,10 +61,15 @@ DATASETS_PATH = os.path.join(DATA_BASE_DIR, "datasets")
 
 # ______________________________________________________________________
 # > ADELE_TEST_SET
-ADELE_TEST_SET_BASE_PATH = 			os.path.join(DATASETS_PATH, "adele_test_set")
-ADELE_TEST_SET_H5_PATH = 			os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set.h5")
-ADELE_TEST_SET_IMAGES_PATH = 		os.path.join(ADELE_TEST_SET_BASE_PATH, "extracted_images")
-ADELE_TEST_SET_YAML_PATH = 			os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set_yaml")
+ADELE_TEST_SET_BASE_PATH = 				os.path.join(DATASETS_PATH, "adele_test_set")
+ADELE_TEST_SET_H5_PATH = 				os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set.h5")
+ADELE_TEST_SET_IMAGES_PATH = 			os.path.join(ADELE_TEST_SET_BASE_PATH, "extracted_images")
+ADELE_TEST_SET_YAML_PATH = 				os.path.join(ADELE_TEST_SET_BASE_PATH, "adele_test_set_yaml")
+# ____________________________________________________________________
+# > ADELE_180ROTATED_TEST_SET
+ADELE_180ROTATED_TEST_SET_BASE_PATH = 	os.path.join(DATASETS_PATH, "adele_180rotated_test_set")
+ADELE_180ROTATED_TEST_SET_H5_PATH = 	os.path.join(ADELE_180ROTATED_TEST_SET_BASE_PATH, "adele_180rotated_test_set.h5")
+ADELE_180ROTATED_TEST_SET_IMAGES_PATH = os.path.join(ADELE_180ROTATED_TEST_SET_BASE_PATH, "extracted_images")
 # ______________________________________________________________________
 # > OCCLUDED_TEST_SET
 OCCLUDED_TEST_SET_BASE_PATH = 		os.path.join(DATASETS_PATH, "occluded_test_set")
