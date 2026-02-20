@@ -7,6 +7,24 @@ sbatch ./sbatch/sbatch_train/do_training_ResNet.sbatch
 sbatch ./sbatch/sbatch_train/do_training_VGG19.sbatch
 
 
+
 # GPU utilization
 squeue --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %G"
 sinfo --format="%P %G"
+
+
+
+# Create 180-original-testset
+sbatch ./sbatch/sbatch_tools/rotate_dataset.sbatch
+
+
+
+# Run evaluations
+sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_occft-on-occluded.sbatch
+sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_occft-on-original.sbatch
+sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_fede-on-180rotated-original.sbatch
+
+sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_InceptionV3.sbatch
+sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_ResNet.sbatch
+
+sbatch ./sbatch/sbatch_tools/group_models_by_run_filename.sbatch

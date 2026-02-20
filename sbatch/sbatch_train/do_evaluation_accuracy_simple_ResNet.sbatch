@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_do_evaluation_accuracy_simple_ResNet
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
-#SBATCH --time=01:15:00
+#SBATCH --time=00:30:00
 #SBATCH --nodes=1
-#SBATCH --mem=40G
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
@@ -39,11 +39,17 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-BATCH_SIZE="128"
 
-COMMAND_TO_RUN="./scripts/trying_things/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} -s"
-echo "Now running $COMMAND_TO_RUN"
-python $COMMAND_TO_RUN
+echo "====================== testing keras and tensorflow versions ==========================="
+python -c "import keras, tensorflow as tf; print(f'Keras: {keras.__version__}, TF: {tf.__version__}')"
+echo "====================== finished testing keras and tf versions =========================="
+
+PARAM_MODEL_NAME="occft_resnet"
+PARAM_TEST_SET="OCCLUDED"
+
+SCRIPT="./scripts/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
+echo "Now running $SCRIPT"
+python $SCRIPT
 
 
 # =====================================================================================

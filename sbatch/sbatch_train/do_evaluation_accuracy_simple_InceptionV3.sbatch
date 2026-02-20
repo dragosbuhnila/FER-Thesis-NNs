@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_do_evaluation_accuracy_simple_InceptionV3
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
@@ -8,8 +8,8 @@
 #SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
+#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
 
 
@@ -44,7 +44,7 @@ echo "====================== testing keras and tensorflow versions =============
 python -c "import keras, tensorflow as tf; print(f'Keras: {keras.__version__}, TF: {tf.__version__}')"
 echo "====================== finished testing keras and tf versions =========================="
 
-PARAM_MODEL_NAME="occft_convnext"
+PARAM_MODEL_NAME="occft_inceptionv3"
 PARAM_TEST_SET="OCCLUDED"
 
 SCRIPT="./scripts/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
