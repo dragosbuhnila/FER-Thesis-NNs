@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_training_ResNet_occ5_unf13_longep_acc
+#SBATCH --job-name=dbuh_do_training_ResNet_occ2_unf13_longep_acc
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a100
@@ -41,7 +41,7 @@ pwd
 
 
 
-SCRIPT="./scripts/do_training.py --long_epochs --gen_train_occlusion_ratio 0.5 --batch_size 64 --model_name ResNet --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 13"
+SCRIPT="./scripts/do_training.py --long_epochs --gen_train_occlusion_ratio 0.2 --batch_size 64 --model_name ResNet --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 13"
 echo "Now running $SCRIPT"
 python $SCRIPT
 
