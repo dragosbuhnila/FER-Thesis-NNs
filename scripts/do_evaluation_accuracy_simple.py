@@ -11,7 +11,7 @@ from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH 
 from modules.data__load import load_test_generator
 from modules.model import load_model
-from modules.train_eval_save import evaluate_model
+from modules.train_eval_save import valuta_modello, evaluate_model
 
 
 
@@ -36,12 +36,15 @@ available_models = list(ALL_MODELS_PATHS.keys())
 
 # 0) Setup macros as args
 parser = argparse.ArgumentParser(description='Evaluate model on test sets')
-parser.add_argument('--test_set', nargs='?', required=True, choices=list(PATHS.keys()), help=f'Test set to use for evaluation. Options: {list(PATHS.keys())}')
-parser.add_argument('--model_name', type=str, required=True, choices=available_models, help=f'Name of the model to evaluate. Options: {available_models}')
+parser.add_argument('--test_set', choices=list(PATHS.keys()), required=True, help=f'Test set to use for evaluation. Options: {list(PATHS.keys())}')
+parser.add_argument('--model_name', choices=available_models, required=True, help=f'Name of the model to evaluate. Options: {available_models}')
 
 args = parser.parse_args()
 TEST_SET = args.test_set
 MODEL_NAME = args.model_name
+
+if not "yolo" in MODEL_NAME.lower():
+    USA_VALUTA_INVECE_DI_EVALUATE = True
 
 
 MODEL_PATHS_SUBSET = ALL_MODELS_PATHS
@@ -113,7 +116,10 @@ if __name__ == "__main__":
     else:
         # b) Evaluate the model
         if not YOLO_FOLDERS_INSTEAD_OF_GENERATOR or "yolo" not in MODEL_NAME.lower():
-            test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=DEBUG)
+            if USA_VALUTA_INVECE_DI_EVALUATE:
+                test_loss, test_acc = valuta_modello(model, test_generator, None, MODEL_NAME)
+            else:
+                test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=DEBUG)
         else:
             # THIS EXISTS FOR YOLO. FOR NOW THE "CORRECT" VERSION IS THE ONE WITH FOLDERS
             test_loss, test_acc = evaluate_model(model, MODEL_NAME, None, PATHS[TEST_SET]["test_set_small"], debug=DEBUG)
