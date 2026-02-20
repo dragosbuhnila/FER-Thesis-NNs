@@ -51,7 +51,7 @@ def verify_filename(log_file, filename):
         assert long_epochs == file_longep, f"Long epochs mismatch: {long_epochs} != {file_longep}"
     assert final_accuracy == file_acc, f"Accuracy mismatch: {final_accuracy} != {file_acc}"
     
-    print("Filename matches the log file contents.")
+    print("Filename matches the log file contents.", flush=True)
 
 
 
