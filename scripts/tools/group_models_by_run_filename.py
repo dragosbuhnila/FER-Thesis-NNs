@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from modules.config import OUT_ERR_DIR
 
 # Constants
-DIR_PATH = OUT_ERR_DIR
+DIR_PATH = os.path.join(OUT_ERR_DIR, "training")
 JOB_NAME = "dbuh_do_training_"
 
 if __name__ == "__main__":

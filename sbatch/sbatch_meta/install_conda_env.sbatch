@@ -61,10 +61,10 @@ echo "==========================================================================
 
 
 # protobuf should be 4.25.8 tho
-python -m pip install h5py "numpy>=1.23.5,<2.0.0" Pillow scikit-learn ultralytics gdown mediapipe mlflow waitress argparse rich seaborn
+python -m pip install h5py "numpy>=1.23.5,<2.0.0" Pillow scikit-learn ultralytics gdown mediapipe mlflow waitress argparse rich seaborn reportlab
 python -m pip install --force-reinstall --no-deps "protobuf==4.25.8"
 echo "=========================================================================="
-echo "Installed other dependencies! (h5py, numpy, Pillow, scikit-learn, ultralytics, gdown, mediapipe, mlflow, waitress, argparse, rich, seaborn)"
+echo "Installed other dependencies! (h5py, numpy, Pillow, scikit-learn, ultralytics, gdown, mediapipe, mlflow, waitress, argparse, rich, seaborn, reportlab)"
 echo "=========================================================================="
 
 

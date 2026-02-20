@@ -24,14 +24,9 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install rich
+python -m pip install reportlab
 echo "=========================================================================="
-echo "Installed other dependencies! (rich)"
-echo "=========================================================================="
-
-python -m pip install seaborn --no-deps
-echo "=========================================================================="
-echo "Installed other dependencies! (seaborn)"
+echo "Installed other dependencies! (reportlab)"
 echo "=========================================================================="
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
