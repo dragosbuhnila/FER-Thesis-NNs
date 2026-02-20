@@ -15,11 +15,15 @@ from modules.misc import hash_image, get_timestamp
 
 
 
-def load_test_generator(path, batch_size=64):
+def load_test_generator(path, batch_size=64, small_subset=False):
     """
     Load only the test generator from a test H5 file (path).
     """
     X_test, y_test, class_names = load_data_and_labels(path, 'test')
+
+    if small_subset:
+        X_test = X_test[:batch_size]
+        y_test = y_test[:batch_size]
 
     # Test has no dupes, so no need to remove them
     # if remove_dupes:

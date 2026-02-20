@@ -29,5 +29,10 @@ echo "==========================================================================
 echo "Installed other dependencies! (rich)"
 echo "=========================================================================="
 
+python -m pip install seaborn --no-deps
+echo "=========================================================================="
+echo "Installed other dependencies! (seaborn)"
+echo "=========================================================================="
+
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"

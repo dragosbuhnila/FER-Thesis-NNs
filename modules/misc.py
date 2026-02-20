@@ -22,6 +22,7 @@ def get_timestamp(format="date-time"):
     else:
         raise NotImplementedError(f"Timestamp format {format} is not implemented.")
 
+
 def extract_info_from_occludedtrainvalset_filename(filename):
     # Example of filename 00cd28ba22c246af733c4e0d8c6da551_gt-angry_occ-fear_mismatching_negative.png
 
@@ -43,9 +44,11 @@ def extract_info_from_occludedtrainvalset_filename(filename):
 
     return hash, gt_emotion, occ_emotion, mismatching, pos_or_neg
 
+
 def create_occludedtrainvalset_filename_from_info(hash, gt_emotion, occ_emotion, mismatching, pos_or_neg):
     filename = f"{hash}_gt-{gt_emotion}_occ-{occ_emotion}_{mismatching}_{pos_or_neg}.png"
     return filename
+
 
 class Tee:
     def __init__(self, file_path):
@@ -65,10 +68,16 @@ class Tee:
     def close(self):
         self.file.close()
 
-
 # ====================================================================================================================================
 # ============================ End of Time and Filenames =============================================================================
 # ====================================================================================================================================
+
+
+
+
+
+
+
 
 
 # ====================================================================================================================================
@@ -89,10 +98,19 @@ def hash_image(image):
 
 # ====================================================================================================================================
 # ============================ End of Computing Functions ============================================================================
+# ====================================================================================================================================
 
 
 
-# ============================ Print and Visualization Functions =============================
+
+
+
+
+
+# ====================================================================================================================================
+# ============================ Print and Visualization Functions =====================================================================
+# ========================= print_npy, create_placeholder_image ======================================================================
+# ====================================================================================================================================
 
 def print_npy(npy_file_path, output_file_path):
     data = np.load(npy_file_path, allow_pickle=True)
@@ -111,11 +129,47 @@ def print_npy(npy_file_path, output_file_path):
             f.write(f"Contents of {npy_file_path}:\n")
             f.write(data.__str__())
 
-# ============================ End of Print and Visualization Functions =============================
+
+def create_placeholder_image(size=(224, 224), color=(255, 255, 255)):
+    """
+    Create a placeholder image of the given size and color.
+
+    Parameters
+    ----------
+    size : tuple of int, optional
+        The size of the placeholder image (width, height). Default is (224, 224).
+    color : tuple of int, optional
+        The RGB color of the placeholder image. Default is (255, 255, 255).
+
+    Returns
+    -------
+    np.ndarray
+        The placeholder image as a NumPy array.
+
+    Examples
+    --------
+    >>> placeholder = create_placeholder_image()
+    >>> placeholder.shape
+    (224, 224, 3)
+    """
+    placeholder_img = Image.new('RGB', size, color=color)
+    return np.array(placeholder_img)
+
+# ====================================================================================================================================
+# ============================ End of Print and Visualization Functions ==============================================================
+# ====================================================================================================================================
 
 
 
-# ============================ Highly Coupled Functions =============================
+
+
+
+
+
+
+# ====================================================================================================================================
+# ============================ Highly Coupled Functions ==============================================================================
+# ====================================================================================================================================
 
 def generate_h5_from_images(test_set_path, resized_path, h5_path):
     class_names = sorted(os.listdir(test_set_path))
@@ -248,6 +302,6 @@ class StatsTracker:
         self.stats['saved_images'] += 1
 
     
-
-# ============================ End of Highly Coupled Functions =============================
-
+# ====================================================================================================================================
+# ============================ End of Highly Coupled Functions =======================================================================
+# ====================================================================================================================================

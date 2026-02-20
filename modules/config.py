@@ -110,16 +110,34 @@ OCCFT_MODELS_FOLDER = 				os.path.join(MODELS_PATH, "occft")
 
 ALL_MODELS_PATHS = {
 	# ----------------------------------- FEDERICA'S FINAL MODELS
-    "resnet_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ResNet_finetuning"),
-    "pattlite_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_PattLite_finetuning"),
-    "vgg19_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_VGG19_finetuning"),
-    "inceptionv3_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_InceptionV3_finetuning"),
-    "convnext_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_ConvNeXt_finetuning"),
-    "efficientnet_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, "pretrained_EfficientNetB1_finetuning_weights.h5"),
-    "yolo_last": 					os.path.join(FEDERICA_MODELS_FOLDER, 'last.pt'),
+    "resnet_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_ResNet_finetuning"),
+    "pattlite_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_PattLite_finetuning"),
+    "vgg19_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_VGG19_finetuning"),
+    "inceptionv3_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_InceptionV3_finetuning"),
+    "convnext_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_ConvNeXt_finetuning"),
+    "efficientnet_finetuning": 		os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_EfficientNetB1_finetuning_weights.h5"),
+    "yolo_last": 					os.path.join(FEDERICA_MODELS_FOLDER,   	"last.pt"),
 	# ----------------------------------- MY MODELS (occft -- i.e. occlusion finetuning)
-	"occft_convnext": 				os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_occfinetuning__20260211-185819__0.6571", "ConvNeXt_occfinetuning"),
+	"occft_convnext": 				os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_occfinetuning__20260216-225503__0.6771", 		"ConvNeXt_occfinetuning"),
+    "occft_efficientnetb1":        	os.path.join(OCCFT_MODELS_FOLDER, "EfficientNetB1_occfinetuning__20260217-001742__0.6343", 	"EfficientNetB1_occfinetuning"),
+    "occft_inceptionv3":           	os.path.join(OCCFT_MODELS_FOLDER, "InceptionV3_occfinetuning__20260212-212538__0.6743", 	"InceptionV3_occfinetuning"),
+    "occft_pattlite":              	os.path.join(OCCFT_MODELS_FOLDER, "PattLite_occfinetuning__20260217-025925__0.6800", 		"PattLite_occfinetuning"),
+    "occft_resnet":                	os.path.join(OCCFT_MODELS_FOLDER, "ResNet_occfinetuning__20260217-070852__0.6629", 			"ResNet_occfinetuning"),
+    "occft_vgg19":                 	os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260213-003832__0.7000", 			"VGG19_occfinetuning"),
 }
+
+# 3b) Evaluations
+# ______________________________________________________________________
+EVALUATIONS_FOLDER_PATH = os.path.join(DATA_BASE_DIR, "evaluations")
+OCCFT_MODELS_RESULTS_FOLDER = os.path.join(EVALUATIONS_FOLDER_PATH, "occft_models")
+
+OCCFT_MODELS_RESULTS_PATHS = {}
+for model_name, tf_model_path in ALL_MODELS_PATHS.items():
+	if "occft" in model_name.lower():
+		model_folder_path = os.path.abspath(os.path.join(tf_model_path, "..")) # get the folder containing the model
+		model_folder_name = os.path.basename(model_folder_path)
+		model_evaluation_results_path = os.path.join(OCCFT_MODELS_RESULTS_FOLDER, model_folder_name)
+		OCCFT_MODELS_RESULTS_PATHS[model_name] = model_evaluation_results_path
 
 # ______________________________________________________________________
 # > MY MODELS (occft -- i.e. occlusion finetuning)

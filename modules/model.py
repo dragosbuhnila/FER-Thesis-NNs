@@ -208,7 +208,7 @@ def build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, mo
     outputs = prediction_layer(x)
 
     model = Model(inputs=input_layer, outputs=outputs, name='train-head')
-    model.summary(show_trainable=True)
+    # model.summary(show_trainable=True)
 
     ##### prima prova: alpa =0.25 e gamma = 2.0
     #### seconda prova: alpha = 0.75 e gamma = 3.0
@@ -305,7 +305,7 @@ def load_model_efficientnet(model_name, model_path_subset, custom_objects):
         outputs = prediction_layer(x)
 
         efficientnet = Model(inputs=input_layer, outputs=outputs, name='train-head')
-        efficientnet.summary(show_trainable=True)
+        # efficientnet.summary(show_trainable=True)
         efficientnet.load_weights(model_path_subset[model_name])
         efficientnet.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, global_clipnorm=3.0),
                 loss= categorical_focal_loss(alpha=0.25, gamma=2.0),

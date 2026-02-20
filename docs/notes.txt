@@ -1,0 +1,24 @@
+------------------------------------------------------------------------------------------------------------------------------
+EXTRA) Move the occlusion logic inside of the training so that you can control the occlusion ratio during the run just like you do with learning ratio backoff
+	- you may do that by either making the occlusion an actual augmentation object with a controllable_during_epochs parameter (i.e. the occ ratio)
+	- or by making it a layer?
+			> or could xor with a mask which is unique for each image
+			> which could either just load a different image just like an augmentation object would do
+	
+
+
+
+
+
+
+=========================================== AFTER MEETING TASKS PRIORITIES ==================================
+1> RUN your models on adele test set unoccluded to see if there's tradeoff with no occlusions
+2> RUN Federica's models on adele test set with rotated images (a testa in giu)
+3> DEVELOP xai
+4> DEVELOP Yolo
+
+optionals:
+CHECK FINAL evaluations and agreement
+RUN training with 50% occlusion on validation to find tradeoff on both sets
+RUN top2 and top3 accuracy on Federica's models too
+STUDY models in detail

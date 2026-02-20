@@ -1,0 +1,66 @@
+GT Emotion Counts  
+┏━━━━━━━━━━┳━━━━━━━┓
+┃ Category ┃ Count ┃
+┡━━━━━━━━━━╇━━━━━━━┩
+│ ANGRY    │    50 │
+│ DISGUST  │    50 │
+│ FEAR     │    50 │
+│ HAPPY    │    50 │
+│ NEUTRAL  │    50 │
+│ SAD      │    50 │
+│ SURPRISE │    50 │
+└──────────┴───────┘
+ Occluding Emotion  
+       Counts       
+┏━━━━━━━━━━┳━━━━━━━┓
+┃ Category ┃ Count ┃
+┡━━━━━━━━━━╇━━━━━━━┩
+│ ANGRY    │    59 │
+│ DISGUST  │    58 │
+│ FEAR     │    58 │
+│ HAPPY    │    59 │
+│ NEUTRAL  │     0 │
+│ SAD      │    58 │
+│ SURPRISE │    58 │
+└──────────┴───────┘
+ Positive/Negative  
+       Counts       ****
+┏━━━━━━━━━━┳━━━━━━━┓
+┃ Category ┃ Count ┃
+┡━━━━━━━━━━╇━━━━━━━┩
+│ POSITIVE │   205 │
+│ NEGATIVE │   145 │
+└──────────┴───────┘
+   Match/Mismatch   
+       Counts       
+┏━━━━━━━━━━┳━━━━━━━┓
+┃ Category ┃ Count ┃
+┡━━━━━━━━━━╇━━━━━━━┩
+│ MATCH    │    60 │
+│ MISMATCH │   290 │
+└──────────┴───────┘
+
+
+
+****
+The following lines of code are the reason why positive and negative presence differs:
+
+    for emotion in emotions:
+        for i in range(0, 50):
+            # do matching occlusion
+            if i < nof_match_occlusions:                # nof_match_occlusions is 10
+                chosen_emotion = emotion
+                AUs = EMOTION_AUS[chosen_emotion]
+                mask_type = "positive"
+            # do mismatching occlusion
+            else:                                                         
+                mism_emotion_index = (i - nof_match_occlusions) // (nof_images_per_occlusion_type * 2)
+                chosen_emotion = spin_emotion(mism_emotion_index, emotion_to_exclude=emotion)
+                AUs = EMOTION_AUS[chosen_emotion]
+                if i % 2 == 0:
+                    mask_type = "positive"
+                else:
+                    mask_type = "negative"
+
+Basically whenever the occlusion is matching, we only do positive occlusion, while for
+ mismatching occlusions we alternate between positive and negative
