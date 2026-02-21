@@ -13,7 +13,9 @@ EXTRA) Move the occlusion logic inside of the training so that you can control t
 
 =========================================== AFTER MEETING TASKS PRIORITIES ==================================
 1> RUN your models on adele test set unoccluded to see if there's tradeoff with no occlusions
+	- most of them even get better than Federica's!!!
 2> RUN Federica's models on adele test set with rotated images (a testa in giu)
+	- really bad :( --- but I think I saw interesting data about Fear/Surprise in a confusion matrix
 3> DEVELOP xai
 4> DEVELOP Yolo
 

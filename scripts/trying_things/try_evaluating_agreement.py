@@ -1,7 +1,7 @@
 import os; import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from modules.evaluate import evaluate_agreement
+from modules.evaluate_completely import evaluate_agreement
 from modules.misc import get_timestamp, Tee
 from modules.model import load_model
 from modules.data__load import load_test_generator

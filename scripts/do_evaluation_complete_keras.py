@@ -7,7 +7,7 @@ from modules.misc import get_timestamp, Tee
 from modules.model import load_model
 from modules.visualize import plot_image;
 from modules.data__load import load_test_generator
-from modules.evaluate import evaluate_keras_model, evaluate_agreement
+from modules.evaluate_completely import evaluate_keras_model, evaluate_agreement
 from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH,\
                             ALL_MODELS_PATHS, CONSOLE_OUTPUTS_PATH, EMOTIONS
 
