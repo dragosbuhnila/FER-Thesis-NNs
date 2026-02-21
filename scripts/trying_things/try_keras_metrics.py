@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 import numpy as np
 import rich
 
-from modules.evaluate import compute_accuracy_keras, compute_precision_recall_f1
+from modules.evaluate_completely import compute_accuracy_keras, compute_precision_recall_f1
 
 
 

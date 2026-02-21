@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from sklearn.metrics import precision_recall_fscore_support
 
-from modules.evaluate import compute_precision_recall_f1
+from modules.evaluate_completely import compute_precision_recall_f1
 
 # -------------------------------------------------------
 # Helper to compute sklearn reference values

@@ -1,5 +1,6 @@
 import os
 import sys
+import zipfile
 from PIL import Image
 import h5py
 import numpy as np
@@ -67,6 +68,18 @@ class Tee:
 
     def close(self):
         self.file.close()
+
+
+def zip_folder(folder_path, output_path):
+    """
+    Zippa un’intera cartella 'folder_path' in un file 'output_path'.
+    """
+    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, folder_path)
+                zipf.write(file_path, arcname=relative_path)
 
 # ====================================================================================================================================
 # ============================ End of Time and Filenames =============================================================================

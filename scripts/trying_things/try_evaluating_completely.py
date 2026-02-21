@@ -5,7 +5,7 @@ from modules.misc import get_timestamp, Tee
 from modules.model import load_model
 from modules.visualize import plot_image;
 from modules.data__load import load_test_generator
-from modules.evaluate import evaluate_keras_model
+from modules.evaluate_completely import evaluate_keras_model
 from modules.config import OCCLUDED_TEST_SET_H5_PATH, ALL_MODELS_PATHS, CONSOLE_OUTPUTS_PATH
 
 
