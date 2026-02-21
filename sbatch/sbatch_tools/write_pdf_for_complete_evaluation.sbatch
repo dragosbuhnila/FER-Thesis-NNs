@@ -36,15 +36,15 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="./scripts/tools/write_pdf_for_complete_evaluation.py --folder-name 20260220-164016_cmplt-run_occft-models_occluded-testset_do-evaluation-completely-keras"
+COMMAND_TO_RUN="./scripts/tools/write_pdf_for_complete_evaluation.py --folder_name 20260220-164016_cmplt-run_occft-models_occluded-testset_do-evaluation-completely-keras"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 
-COMMAND_TO_RUN="./scripts/tools/write_pdf_for_complete_evaluation.py --folder-name 20260220-164016_cmplt-run_occft-models_original-testset_do-evaluation-completely-keras"
+COMMAND_TO_RUN="./scripts/tools/write_pdf_for_complete_evaluation.py --folder_name 20260220-164016_cmplt-run_occft-models_original-testset_do-evaluation-completely-keras"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 
-COMMAND_TO_RUN="./scripts/tools/write_pdf_for_complete_evaluation.py --folder-name 20260220-164016_cmplt-run_federica-models_original-180-testset_do-evaluation-completely-keras"
+COMMAND_TO_RUN="./scripts/tools/write_pdf_for_complete_evaluation.py --folder_name 20260220-164016_cmplt-run_federica-models_original-180-testset_do-evaluation-completely-keras"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

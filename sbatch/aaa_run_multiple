@@ -1,4 +1,4 @@
-# Run trainings
+## Run trainings
 sbatch ./sbatch/sbatch_train/do_training_ConvNeXt.sbatch
 sbatch ./sbatch/sbatch_train/do_training_EfficientNetB1.sbatch
 sbatch ./sbatch/sbatch_train/do_training_InceptionV3.sbatch
@@ -8,23 +8,31 @@ sbatch ./sbatch/sbatch_train/do_training_VGG19.sbatch
 
 
 
-# GPU utilization
+## GPU utilization
 squeue --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %G"
 sinfo --format="%P %G"
 
 
 
-# Create 180-original-testset
+## Create 180-original-testset
 sbatch ./sbatch/sbatch_tools/rotate_dataset.sbatch
 
 
 
-# Run evaluations
+## Run evaluations
+# eval complete keras with 3 combinations
 sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_occft-on-occluded.sbatch
 sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_occft-on-original.sbatch
 sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_fede-on-180rotated-original.sbatch
-
+# eval simple on inception and resnet
 sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_InceptionV3.sbatch
 sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_ResNet.sbatch
-
+# group accuracies for all occft even bad models
 sbatch ./sbatch/sbatch_tools/group_models_by_run_filename.sbatch
+# write pdf with analyses
+sbatch ./sbatch/sbatch_tools/write_pdf_for_complete_evaluation.sbatch
+
+
+
+## Install conda libs
+sbatch ./sbatch/sbatch_meta/install_conda_env_parts.sbatch
