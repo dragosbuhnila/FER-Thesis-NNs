@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_tesi
+#SBATCH --job-name=dbuh_cpu_template
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake

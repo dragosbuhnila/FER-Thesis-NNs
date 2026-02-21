@@ -8,8 +8,8 @@
 #SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
-#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/train_%j.log
+#SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
+#SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
 
 
