@@ -292,8 +292,13 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
     probabilities = test_generator.y_data
     labels = np.argmax(probabilities, axis=1)
 
-    for batch_index, (image_array, label) in tqdm(enumerate(zip(images, labels)), total=len(labels), desc="Processing images", unit="image"):
-        image_name = f"image_{batch_index}"
+    # The structure will be:
+    # output_folder_for_the_run/    (format is timestamp_bubbles_settings...)
+    #    model_name/                (e.g. occft_convnext)
+    #      emotion_gt/              (e.g. HAPPY)
+    #        images_names_with_three_formats
+    for idx, (image_array, label) in tqdm(enumerate(zip(images, labels)), total=len(labels), desc="Processing images", unit="image"):
+        image_name = f"image_{idx}"
         output_subfolder = os.path.join(output_folder, class_names_fixed[label])
         os.makedirs(output_subfolder, exist_ok=True)
 
