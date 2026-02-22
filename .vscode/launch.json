@@ -4,10 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [      
-
-
-
-
         {
             "name": "Python: Current File",
             "type": "python",
@@ -111,7 +107,7 @@
             "name": "explainability_bubbles",
             "type": "python",
             "request": "launch",
-            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_explainability_bubbles_keras.py",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_explainability_bubbles_keras.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
@@ -122,5 +118,13 @@
                     "--quick",
                 ]
         },
+        {
+            "name": "do_csm_bubbles",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm_bubbles.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        }, 
     ]
 }

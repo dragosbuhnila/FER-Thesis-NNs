@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuh_read_h5_dataset
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
@@ -36,7 +36,7 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
+SCRIPT="./scripts/datasets/read_h5_folder.py"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

@@ -17,6 +17,11 @@ EXTRA) Move the occlusion logic inside of the training so that you can control t
 2> RUN Federica's models on adele test set with rotated images (a testa in giu)
 	- really bad :( --- but I think I saw interesting data about Fear/Surprise in a confusion matrix
 3> DEVELOP xai
+	> BUBBLES
+		- modify the adele extracted images names to include the index in the dataset (i.e. from 0 to 350)
+			 the format should be so that the following works:
+					if f"{image_name}__predictedclass" in image_emo:(where image_emo is image_9__predictedclass_ANGRY_withprob_66.74_avgbubblesnum_15.67.png)
+		- 
 4> DEVELOP Yolo
 
 optionals:

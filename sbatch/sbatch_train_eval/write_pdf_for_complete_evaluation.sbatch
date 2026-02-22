@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuh_write_pdf_for_complete_evaluation
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
@@ -36,10 +36,20 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
-echo "Now running $SCRIPT"
-python $SCRIPT
+COMMAND_TO_RUN="./scripts/train_eval/write_pdf_for_complete_evaluation.py --folder-name 20260220-164016_cmplt-run_occft-models_occluded-testset_do-evaluation-completely-keras"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
+COMMAND_TO_RUN="./scripts/train_eval/write_pdf_for_complete_evaluation.py --folder-name 20260220-164016_cmplt-run_occft-models_original-testset_do-evaluation-completely-keras"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+COMMAND_TO_RUN="./scripts/train_eval/write_pdf_for_complete_evaluation.py --folder-name 20260220-164016_cmplt-run_federica-models_original-180-testset_do-evaluation-completely-keras"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+
+echo "==================================================================================="
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
