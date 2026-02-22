@@ -7,7 +7,6 @@ import scipy
 from tqdm import tqdm
 import shutil
 import zipfile
-from tqdm import tqdm
 
 from modules.config import EMOTIONS
 from modules.misc import get_timestamp, zip_folder 
@@ -70,18 +69,16 @@ def get_masks(image_array, bubble_radius, num_bubbles, iterations):
     masked_images = np.zeros((iterations, height, width, rgb))
     masks = np.zeros((iterations, height, width))
 
-    with tqdm(total=iterations, desc="Generating masks", unit="mask") as pbar:
-        for i in range(iterations):
-            mask = create_gaussian_bubbles_mask(image_array, bubble_radius, num_bubbles)
-            masks[i] = mask
+    for i in range(iterations):
+        mask = create_gaussian_bubbles_mask(image_array, bubble_radius, num_bubbles)
+        masks[i] = mask
 
-            # Applico la maschera
-            mask_rgb = np.stack([mask] * 3, axis=-1)
-            masked_image = image_array / 255.0 * mask_rgb
+        # Applico la maschera
+        mask_rgb = np.stack([mask] * 3, axis=-1)
+        masked_image = image_array / 255.0 * mask_rgb
 
-            masked_images[i] = masked_image
-            pbar.update(1)
-
+        masked_images[i] = masked_image
+            
     return masked_images, masks
 
 
@@ -183,7 +180,7 @@ def process_image(image_array, model, class_names_fixed, bubble_radius, iteratio
     Returns the predicted class, probability, and generated planes.
     """
     predicted_index, predicted_probability = get_predicted_class(image_array, model)
-    print(f"Predicted class: {class_names_fixed[predicted_index]} with probability: {predicted_probability*100:.2f}%")
+    print(f"\tPredicted class: {class_names_fixed[predicted_index]} with probability: {predicted_probability*100:.2f}%")
 
     all_planes = [[] for _ in range(len(class_names_fixed))]
     lengths = np.zeros(len(class_names_fixed)).astype(int)
@@ -195,14 +192,14 @@ def process_image(image_array, model, class_names_fixed, bubble_radius, iteratio
     while True:
         num_bubbles = np.random.choice(bubble_range, p=probabilities)
         history_of_num_bubbles.append(num_bubbles)
-        print(f"Testing with {num_bubbles} bubbles...")
+        print(f"\tTesting with {num_bubbles} bubbles...")
 
         masked_images, masks = get_masks(image_array, bubble_radius, num_bubbles, iterations)
         batch_planes, mask_classes = get_batch_planes(masked_images, masks, model, class_names_fixed)
 
         true_plane_len = sum(1 for c in mask_classes if c == predicted_index)
         iteration_accuracy = true_plane_len / iterations
-        print(f"Iteration accuracy: {iteration_accuracy:.2f}")
+        print(f"\tIteration accuracy: {iteration_accuracy:.2f}")
 
         good = accuracy_tolerance <= iteration_accuracy <= (1 - accuracy_tolerance)
         accuracy_diff = abs(iteration_accuracy - accuracy_target)
@@ -292,6 +289,7 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
     probabilities = test_generator.y_data
     labels = np.argmax(probabilities, axis=1)
 
+    print(f"[INFO] Processing {len(labels)} images with model '{model_name}'...")
     for batch_index, (image_array, label) in tqdm(enumerate(zip(images, labels)), total=len(labels), desc="Processing images", unit="image"):
         image_name = f"image_{batch_index}"
         output_subfolder = os.path.join(output_folder, class_names_fixed[label])

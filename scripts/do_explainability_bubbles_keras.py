@@ -98,7 +98,7 @@ if __name__ == "__main__":
     run_name += f"_{args.test_set}-testset"
 
     for model_name in MODEL_NAMES:
-        print(f"Generating bubbles for model: {model_name}")
+        print(f"[INFO] Generating bubbles for model: {model_name}")
         model = load_model(model_name)
 
         generate_bubbles_planes(

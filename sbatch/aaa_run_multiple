@@ -34,5 +34,10 @@ sbatch ./sbatch/sbatch_tools/write_pdf_for_complete_evaluation.sbatch
 
 
 
+# Run XAI
+sbatch ./sbatch/sbatch_train/do_explainability_bubbles_keras.sbatch
+
+
+
 ## Install conda libs
 sbatch ./sbatch/sbatch_meta/install_conda_env_parts.sbatch
