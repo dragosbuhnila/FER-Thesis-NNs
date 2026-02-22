@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=00:10:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=40G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
@@ -21,13 +22,16 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
+
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,12 +40,11 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 8 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
+SCRIPT="./scripts/train_eval/do_find_unfreeze.py --debug_prints --batch_size 64 --model_name ConvNeXt --learning_rate 1e-4 --l2_reg 0.002"
 echo "Now running $SCRIPT"
 python $SCRIPT
 
-echo "Job ended at:"
-python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
-#SBATCH --time=00:10:00
+#SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
@@ -23,11 +23,12 @@ conda activate fer-thesis
 
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,9 +37,23 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
-echo "Now running $SCRIPT"
-python $SCRIPT
+PORT=5050
+
+# FQDN used by clients
+HOST=$(hostname -f)
+
+# Bind to all interfaces
+BIND_HOST=0.0.0.0
+
+export MLFLOW_TRACKING_URI="http://${HOST}:${PORT}"
+export MLFLOW_DISABLE_HOST_VALIDATION=true
+
+echo "MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}" | tee mlflow_server_info.env
+
+COMMAND_TO_RUN="./scripts/train_eval/run_mlflow_webapp_server.py --port ${PORT} --host ${BIND_HOST}"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
 
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"

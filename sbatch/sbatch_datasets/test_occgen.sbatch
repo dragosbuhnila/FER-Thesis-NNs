@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=00:10:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=01:15:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
@@ -21,13 +22,17 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
+
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,12 +41,9 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
-echo "Now running $SCRIPT"
-python $SCRIPT
-
-echo "Job ended at:"
-python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
+COMMAND_TO_RUN="./scripts/datasets/test_occgens_all.py -o 1.0 -f lines -l true -r false -m true -a 0.2 -s false"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
 
 # =====================================================================================

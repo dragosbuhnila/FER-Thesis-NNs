@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuhnila/tesi
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=00:10:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=00:30:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
@@ -21,13 +22,16 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
+
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,12 +40,12 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
+PARAM_MODEL_NAME="convnext_finetuning"
+PARAM_TEST_SET="OCCLUDED"
+
+SCRIPT="./scripts/train_eval/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
 echo "Now running $SCRIPT"
 python $SCRIPT
-
-echo "Job ended at:"
-python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_read_h5_architecture
+#SBATCH --job-name=dbuh_run_check_file_name_and_content_agreement
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
@@ -36,10 +36,12 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/unsorted_tools/read_h5_architecture.py"
-echo "Now running $SCRIPT"
-python $SCRIPT
+COMMAND_TO_RUN="./scripts/train_eval/check_trainlog_fname_metrics_agreement.py"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
+
+echo "==================================================================================="
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 

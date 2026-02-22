@@ -36,7 +36,7 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SCRIPT="./scripts/tools/count_files_in_folder.py"
+SCRIPT="./scripts/unsorted_tools/count_files_in_folder.py"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

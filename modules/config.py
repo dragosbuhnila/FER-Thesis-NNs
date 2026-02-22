@@ -79,10 +79,11 @@ OCCLUDED_TEST_SET_RESIZED_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "out
 OCCLUDED_TEST_SET_YAML_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_yaml")
 # ______________________________________________________________________
 # > ORIGINAL_TRAIN_VAL_SET
-ORIGINAL_TRAIN_VAL_SET_BASE_PATH = 	os.path.join(DATASETS_PATH, "original_train_val_set")
-ORIGINAL_TRAIN_VAL_SET_H5_PATH = 	os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset.h5")
-ORIGINAL_TRAIN_SET_IMAGES_PATH = 	os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted", "train")
-ORIGINAL_VAL_SET_IMAGES_PATH = 		os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted", "val")
+ORIGINAL_TRAIN_VAL_SET_BASE_PATH = 			os.path.join(DATASETS_PATH, "original_train_val_set")
+ORIGINAL_TRAIN_VAL_SET_H5_PATH = 			os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset.h5")
+ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH = 	os.path.join(ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "dataset_extracted")
+ORIGINAL_TRAIN_SET_IMAGES_PATH = 			os.path.join(ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH, "train")
+ORIGINAL_VAL_SET_IMAGES_PATH = 				os.path.join(ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH, "val")
 # ______________________________________________________________________
 # > OCCLUDED_TRAIN_VAL_SET
 OCCLUDED_TRAIN_VAL_SET_BASE_PATH = 	os.path.join(DATASETS_PATH, "occluded_train_val_set")
@@ -156,6 +157,7 @@ MEDIAPIPE_PATH = 					os.path.join(MODELS_PATH, "mediapipe")
 LANDMARKER_MODEL_PATH = 			os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
 LANDMARK_COORDINATES_FOLDER_PATH = 	os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
 LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE = 26951 # expected number of landmark coordinate files. If the size of the db changes this should change accordingly
+CANONICAL_FACES_CUT = 				os.path.join(AUXILIARY_DATA_DIR, "canonical_faces_cut")
 
 
 # 5) Datasets
