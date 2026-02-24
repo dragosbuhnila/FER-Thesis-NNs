@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_explainability_bubbles_keras
+#SBATCH --job-name=dbuh_do_explainability_bubbles_keras_fede_180
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a100
+#SBATCH --partition=gpu_a40
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=1G
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
@@ -41,13 +41,15 @@ pwd
 # =====================================================================================
 
 # >>> test run:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --quick
-# >>> occft run on occluded test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_evaluation_complete_keras.py" --models_set occft --test_set occluded
-# >>> occft run on original test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/do_evaluation_complete_keras.py" --models_set occft --test_set original
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded --redirect_output --quick
+# >>> occft models on occluded set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded
+# >>> occft models on original set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set original
+# >>> fede models on 180-rotated set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set federica --test_set original-180
 
-COMMAND_TO_RUN="./scripts/do_explainability_bubbles_keras.py --models_set occft --test_set original" 
+COMMAND_TO_RUN="./scripts/xai/do_explainability_bubbles_keras.py --models_set federica --test_set original-180"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

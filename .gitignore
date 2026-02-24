@@ -8,6 +8,7 @@
 /results_light/saved_images
 /results_light/saved_images/*
 /mlruns
+mlruns.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

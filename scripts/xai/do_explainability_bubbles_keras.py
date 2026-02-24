@@ -18,12 +18,13 @@ parser = argparse.ArgumentParser(description="Generate bubble-based explanations
 parser.add_argument('--quick',              action='store_true',                    help="Run on a small subset of the test data (1 batch).")
 parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
 parser.add_argument('--models_set',         type=str,   choices=['occft', 'federica'],        help="Specify which set of models to use: 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
-parser.add_argument('--test_set',           type=str,   choices=['occluded', 'original', 'original-180'],   help="Specify which test set to use: 'occluded' for the occluded test set, 'original' for the original test set.")
+parser.add_argument('--test_set',           type=str,   choices=['occluded', 'original', 'original-180'],   help="Specify which test set to use.")
 parser.add_argument('--iterations',         type=int,   default=200,                help="Number of iterations for bubble generation.")
 parser.add_argument('--bubble_radius',      type=int,   default=26,                 help="Radius of bubbles in pixels.")
 parser.add_argument('--accuracy_target',    type=float, default=0.5,                help="Target accuracy threshold for bubble placement.")
 parser.add_argument('--accuracy_tolerance', type=float, default=0.3,                help="Tolerance range for accuracy threshold.")
 parser.add_argument('--output_folder',      type=str,                               help="Base folder path for saving generated bubbles planes.")
+parser.add_argument('--n_jobs',             type=int,   default=4,                  help="Number of parallel jobs to run.")
 args = parser.parse_args()
 
 # MODELS
@@ -76,6 +77,7 @@ print(f"\t--iterations: {args.iterations}")
 print(f"\t--bubble_radius: {args.bubble_radius}")
 print(f"\t--accuracy_target: {args.accuracy_target}")
 print(f"\t--accuracy_tolerance: {args.accuracy_tolerance}")
+print(f"\t--n_jobs: {args.n_jobs}")
 print(f"MACROS:")
 print(f"\tMODEL_NAMES: {MODEL_NAMES}")
 print(f"\tTEST_SET: {TEST_SET}")
@@ -86,7 +88,15 @@ print(f"==============================")
 # =================================================================================================================
 
 
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded --redirect_output --quick
+# Example usage:
+# >>> test run:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded --redirect_output --quick
+# >>> occft models on occluded set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded
+# >>> occft models on original set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set original
+# >>> fede models on 180-rotated set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set federica --test_set original-180
 if __name__ == "__main__":
     print("Loading test generator...")
     test_generator = load_test_generator(TEST_SET, small_subset=args.quick)  # Set to True for quick testing, False for full evaluation
@@ -110,7 +120,8 @@ if __name__ == "__main__":
             iterations=args.iterations,
             bubble_radius=args.bubble_radius,
             accuracy_target=args.accuracy_target,
-            accuracy_tolerance=args.accuracy_tolerance
+            accuracy_tolerance=args.accuracy_tolerance,
+            n_jobs=args.n_jobs,
         )
 
     print("Bubble generation completed.")

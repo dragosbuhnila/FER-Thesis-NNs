@@ -9,16 +9,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import pandas as pd
 
-from modules.config import ALL_MODELS_PATHS, EMOTIONS
-
-
-
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
-
-from modules.config import EMOTIONS, SAVED_IMAGES_PATH
+from modules.config import EMOTIONS, SAVED_IMAGES_PATH, ALL_MODELS_PATHS
 from modules.misc import get_timestamp, create_placeholder_image
 
 
