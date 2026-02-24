@@ -4,13 +4,18 @@ Model: pattlite_finetuning - Test Loss: 0.1164, Test Accuracy: 0.7600
 Model: vgg19_finetuning - Test Loss: 0.1184, Test Accuracy: 0.7629
 Model: inceptionv3_finetuning - Test Loss: 0.1237, Test Accuracy: 0.7543
 Model: convnext_finetuning - Test Loss: 0.1226, Test Accuracy: 0.7829
+Model: efficientnet_finetuning - Test Loss: 0.3933, Test Accuracy: 0.7571
+Model: yolo_last - Test Loss: -1.0000, Test Accuracy: 0.6943 (used testgen) ****
+Model: yolo_last - Test Loss: -1.0000, Test Accuracy: 0.7629 (used folders instead of testgen)
 
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
 ┃     MODEL      ┃    TEST LOSS       ┃ TEST ACCURACY┃
 ┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
 │ ConvNeXt       │ 0.1226             │ 0.7829       │
 │ VGG19          │ 0.1184             │ 0.7629       │
+│ YOLO           │ ------             │ 0.7629  (0.6943)│
 │ PattLite       │ 0.1164             │ 0.7600       │
+│ EfficientNetB1 │ 0.3933             │ 0.7571       │
 │ InceptionV3    │ 0.1237             │ 0.7543       │
 │ ResNet         │ 0.1281             │ 0.7400       │
 └────────────────┴────────────────────┴──────────────┘
@@ -22,13 +27,43 @@ Model: pattlite_finetuning - Test Loss: 0.3897, Test Accuracy: 0.3543
 Model: vgg19_finetuning - Test Loss: 0.3715, Test Accuracy: 0.4314  
 Model: inceptionv3_finetuning - Test Loss: 0.3303, Test Accuracy: 0.4314  
 Model: convnext_finetuning - Test Loss: 0.3351, Test Accuracy: 0.4114 
+Model: efficientnet_finetuning - Test Loss: 0.6507, Test Accuracy: 0.3829
+Model: yolo_last - Test Loss: -1.0000, Test Accuracy: 0.4600 (used testgen) ****
+Model: yolo_last - Test Loss: -1.0000, Test Accuracy: 0.4657 (used folders instead of testgen)
 
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
 ┃     MODEL      ┃    TEST LOSS       ┃ TEST ACCURACY┃
 ┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ YOLO           │ ------             │ 0.4657  (0.4600)│
 │ ResNet         │ 0.2720             │ 0.4543       │
 │ VGG19          │ 0.3715             │ 0.4314       │
 │ InceptionV3    │ 0.3303             │ 0.4314       │
 │ ConvNeXt       │ 0.3351             │ 0.4114       │
+│ EfficientNetB1 │ 0.6507             │ 0.3829       │
 │ PattLite       │ 0.3897             │ 0.3543       │
 └────────────────┴────────────────────┴──────────────┘
+
+
+
+
+Final evaluation results on 180adele test set:
+The other models were evalauted completely so they have a different output format. Still I'll make a table
+Model: yolo_last - Test Loss: -1.0000, Test Accuracy: 0.2486 (used testgen) ****
+Model: yolo_last - Test Loss: -1.0000, Test Accuracy: 0.2286 (used folders instead of testgen)
+
+┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃     MODEL      ┃    TEST LOSS       ┃ TEST ACCURACY┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ EfficientNetB1 │ ------             │ 0.3229       │
+│ InceptionV3    │ ------             │ 0.3086       │
+│ ConvNeXt       │ ------             │ 0.2743       │
+│ ResNet         │ ------             │ 0.2457       │
+│ MobileNet      │ ------             │ 0.2314       │
+│ YOLO           │ ------             │ 0.2286       │
+│ VGG            │ ------             │ 0.2143       │
+└────────────────┴────────────────────┴──────────────┘
+
+
+
+****
+folders implementation is the one that copies best Federica's code and it actually yields the same exact results, but I don't know why, they're different from just inferring on the test set.

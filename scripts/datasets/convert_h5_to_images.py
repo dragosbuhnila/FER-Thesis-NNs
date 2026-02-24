@@ -3,7 +3,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 import argparse
 import h5py
-from modules.config import ADELE_TEST_SET_H5_PATH, ADELE_TEST_SET_IMAGES_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH
+from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_IMAGES_PATH, ADELE_TEST_SET_H5_PATH, ADELE_TEST_SET_IMAGES_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH
 from PIL import Image
 
 from modules.misc import hash_image;
@@ -17,7 +17,7 @@ def _to_str(s):
     return str(s)
 
 
-def extract_images_from_h5(h5_path, output_base, group_keys=None, overwrite=False, verbose=True):
+def extract_images_from_h5(h5_path, output_base, dont_hash, group_keys=None, overwrite=False, verbose=True):
     """Extract image arrays from H5 into folders named after class names.
 
     - h5_path: path to h5 file
@@ -35,6 +35,7 @@ def extract_images_from_h5(h5_path, output_base, group_keys=None, overwrite=Fals
 
         # autodetect X/y pairs if not provided
         if group_keys is None:
+            hashes_key = None
             groups = []
             # find X_* and corresponding y_*
             for key in f.keys():
@@ -43,6 +44,8 @@ def extract_images_from_h5(h5_path, output_base, group_keys=None, overwrite=Fals
                     y_key = f'y_{suffix}'
                     if y_key in f:
                         groups.append(suffix)
+                if "hash" in key:
+                    hashes_key = key
             if not groups:
                 raise RuntimeError('No X_/y_ pairs found in H5 file')
             if len(groups) > 1 and verbose:
@@ -51,6 +54,16 @@ def extract_images_from_h5(h5_path, output_base, group_keys=None, overwrite=Fals
             groups = group_keys
 
         summary = {}
+
+        if hashes_key:
+            hashes = f[hashes_key]
+
+        if hashes_key and dont_hash:
+            print(f"[INFO] hash key found as {hashes_key}.")
+        elif not hashes_key and dont_hash:
+            print(f"[WARNING] dont_hash specified, but found no hashing key in the dataset. Hashes will not be put in the image file names")
+        elif hashes_key and not dont_hash:
+            print(f"[WARNING] dont_hash is False, but found a hash key in the dataset as {hashes_key}. Are you sure you want to rehash the image? It could be an augmented image!")
 
         nof_groups = len(groups)
         for suffix in groups:
@@ -83,7 +96,13 @@ def extract_images_from_h5(h5_path, output_base, group_keys=None, overwrite=Fals
                 os.makedirs(class_folder, exist_ok=True)
 
                 # filename: image_{global_idx}_{gt}_{hash}.png so ordering mirrors previous folder structure except for the addition of the hashing
-                img_hash = hash_image(img)
+                if dont_hash:
+                    if hashes:
+                        img_hash = hashes[i]
+                    else:
+                        img_hash = ""
+                else:
+                    img_hash = hash_image(img)
                 gt = class_name
                 fname = f'image_{global_idx}_{gt}_{img_hash}.png'
                 out_path = os.path.join(class_folder, fname)
@@ -111,15 +130,21 @@ def extract_images_from_h5(h5_path, output_base, group_keys=None, overwrite=Fals
 
 
 parser = argparse.ArgumentParser(description='Extract images from H5 file into class-named folders.')
-parser.add_argument('--dataset', type=str, choices=["ORIGINAL_TRAINVAL", "ADELE_TEST_SET"], default="ADELE_TEST_SET", help='Which dataset to extract (determines which H5 path and output base to use)')
+parser.add_argument('--dataset', type=str, choices=["ORIGINAL_TRAINVAL", "ADELE_TEST_SET", "180ADELE"], default="ADELE_TEST_SET", help='Which dataset to extract (determines which H5 path and output base to use)')
 args = parser.parse_args()
 
 if args.dataset == "ORIGINAL_TRAINVAL":
-    H5_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH
-    OUTPUT_BASE_PATH = ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH
+    H5_PATH =           ORIGINAL_TRAIN_VAL_SET_H5_PATH
+    OUTPUT_BASE_PATH =  ORIGINAL_TRAIN_VAL_SET_IMAGES_BASE_PATH
+    DONT_HASH_EXTRACT_IT_FROM_DATASET = False
 elif args.dataset == "ADELE_TEST_SET":
-    H5_PATH = ADELE_TEST_SET_H5_PATH
-    OUTPUT_BASE_PATH = ADELE_TEST_SET_IMAGES_PATH
+    H5_PATH =           ADELE_TEST_SET_H5_PATH
+    OUTPUT_BASE_PATH =  ADELE_TEST_SET_IMAGES_PATH
+    DONT_HASH_EXTRACT_IT_FROM_DATASET = False
+elif args.dataset == "180ADELE":
+    H5_PATH =           ADELE_180ROTATED_TEST_SET_H5_PATH
+    OUTPUT_BASE_PATH =  ADELE_180ROTATED_TEST_SET_IMAGES_PATH
+    DONT_HASH_EXTRACT_IT_FROM_DATASET = True
 else:
     raise ValueError(f"Unexpected dataset: {args.dataset}")
 
@@ -130,6 +155,7 @@ print(f"\tDataset: {args.dataset}")
 print(f"MACROS:")
 print(f"\tH5_PATH: {H5_PATH}")
 print(f"\tOUTPUT_BASE_PATH: {OUTPUT_BASE_PATH}")
+print(f"\DONT_HASH_EXTRACT_IT_FROM_DATASET: {DONT_HASH_EXTRACT_IT_FROM_DATASET}")
 print("CURRENT FORMAT FOR OUTPUT IMAGES: .../{gt}/image_{global_idx}_{gt}_{img_hash}.png")
 print("========================================================")
 
@@ -139,6 +165,8 @@ print("========================================================")
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset ORIGINAL_TRAINVAL
 # >>> original trainval set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset ADELE_TEST_SET
+# >>> 180 rotated adele test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset 180ADELE
 if __name__ == "__main__":
     # 1) Check if H5 file exists
     if not os.path.exists(H5_PATH):
@@ -175,5 +203,5 @@ if __name__ == "__main__":
 
     # Example: extract X_test / y_test into data/datasets/<h5basename>_extracted
     print('Default extraction output base:', OUTPUT_BASE_PATH)
-    summary = extract_images_from_h5(H5_PATH, OUTPUT_BASE_PATH)
+    summary = extract_images_from_h5(H5_PATH, OUTPUT_BASE_PATH, dont_hash=DONT_HASH_EXTRACT_IT_FROM_DATASET)
     print('Extraction summary:', summary)

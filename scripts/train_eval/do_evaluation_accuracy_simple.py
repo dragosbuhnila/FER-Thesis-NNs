@@ -8,7 +8,8 @@ import tensorflow as tf
 
 from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             ADELE_TEST_SET_H5_PATH, ADELE_TEST_SET_YAML_PATH, ADELE_TEST_SET_IMAGES_PATH, \
-                            OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH 
+                            OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_YAML_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, \
+                            ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_IMAGES_PATH
 from modules.data__load import load_test_generator
 from modules.model import load_model
 from modules.train_eval_save import valuta_modello, evaluate_model
@@ -29,6 +30,10 @@ PATHS = {
         "test_set_small": OCCLUDED_TEST_SET_RESIZED_PATH,
         "test_set_h5": OCCLUDED_TEST_SET_H5_PATH,
         "test_set_yaml": OCCLUDED_TEST_SET_YAML_PATH,
+    },
+    "180ADELE": {
+        "test_set_small": ADELE_180ROTATED_TEST_SET_IMAGES_PATH,
+        "test_set_h5": ADELE_180ROTATED_TEST_SET_H5_PATH,
     }
 }
 
@@ -36,26 +41,26 @@ available_models = list(ALL_MODELS_PATHS.keys())
 
 # 0) Setup macros as args
 parser = argparse.ArgumentParser(description='Evaluate model on test sets')
-parser.add_argument('--test_set', choices=list(PATHS.keys()), required=True, help=f'Test set to use for evaluation. Options: {list(PATHS.keys())}')
-parser.add_argument('--model_name', choices=available_models, required=True, help=f'Name of the model to evaluate. Options: {available_models}')
+parser.add_argument('--test_set', choices=list(PATHS.keys()), required=True,    help=f'Test set to use for evaluation. Options: {list(PATHS.keys())}')
+parser.add_argument('--model_name', choices=available_models, required=True,    help=f'Name of the model to evaluate. Options: {available_models}')
+parser.add_argument('--yolo_use_folders_instead_of_gen', action="store_true",   help=f"If set, it will use an alternative function from Federica's code, which unfortunately yields a different result")
+parser.add_argument('--redirect_output', action="store_true",                   help="Redirect the output to a log file. Console will still view output in real time.")
+parser.add_argument('--debug', action="store_true",                             help="Print lots of info during run.")
 
 args = parser.parse_args()
 TEST_SET = args.test_set
 MODEL_NAME = args.model_name
 
-if not "yolo" in MODEL_NAME.lower():
-    USA_VALUTA_INVECE_DI_EVALUATE = True
+USA_VALUTA_INVECE_DI_EVALUATE = False
+# you may choose to enable this option, but if model is detected to be yolo it will automatically be falsified
+if "yolo" in MODEL_NAME.lower():
+    USA_VALUTA_INVECE_DI_EVALUATE = False
 
+if args.yolo_use_folders_instead_of_gen and "yolo" not in MODEL_NAME.lower():
+    raise ValueError("YOLO_FOLDERS_INSTEAD_OF_GENERATOR can only be True for YOLO models, to test accuracy issues using different evaluation methods.")
 
 MODEL_PATHS_SUBSET = ALL_MODELS_PATHS
 LOG_FILE = os.path.join(ACCURACY_RESULTS_PATH, f"{time.strftime('%Y%m%d-%H%M%S')}_accuracies_{TEST_SET.lower()}.log")
-
-REDIRECT_OUTPUT = False
-DEBUG = False
-YOLO_FOLDERS_INSTEAD_OF_GENERATOR = False  # only for YOLO models, to test accuracy issues
-
-if YOLO_FOLDERS_INSTEAD_OF_GENERATOR and "yolo" not in MODEL_NAME.lower():
-    raise ValueError("YOLO_FOLDERS_INSTEAD_OF_GENERATOR can only be True for YOLO models, to test accuracy issues using different evaluation methods.")
 
 # =========== END OF MACROS ===========
 
@@ -63,7 +68,7 @@ if YOLO_FOLDERS_INSTEAD_OF_GENERATOR and "yolo" not in MODEL_NAME.lower():
 
 # ================= Global ==================
 
-if REDIRECT_OUTPUT:
+if args.redirect_output:
     sys.stdout = open(LOG_FILE, "w")
     sys.stderr = sys.stdout
 
@@ -88,8 +93,23 @@ else:
 
 
 # ================= Main ==================
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe c:/Users/Dragos/Roba/Lectures/YM2.2/models_repo_fixing/FER-Thesis-NNs/scripts/evaluate_model.py --test_set OCCLUDED --model_name convnext_finetuning
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe c:/Users/Dragos/Roba/Lectures/YM2.2/models_repo_fixing/FER-Thesis-NNs/scripts/evaluate_model.py --test_set OCCLUDED --model_name occft_convnext
+# >>> Running **fede-yolo** on **original-set**
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_accuracy_simple.py" --test_set ADELE --model_name yolo_last
+
+# >>> Running **fede-yolo** on **original-set** with **folders** instead of gen
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_accuracy_simple.py" --test_set ADELE --model_name yolo_last --yolo_use_folders_instead_of_gen
+
+# >>> Running **fede-yolo** on **occluded-set**
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_accuracy_simple.py" --test_set OCCLUDED --model_name yolo_last
+
+# >>> Running **fede-yolo** on **occluded-set** with **folders** instead of gen
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_accuracy_simple.py" --test_set OCCLUDED --model_name yolo_last --yolo_use_folders_instead_of_gen
+
+# >>> Running **fede-yolo** on **180original-set**
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_accuracy_simple.py" --test_set 180ADELE --model_name yolo_last
+
+# >>> Running **fede-yolo** on **180original-set** with **folders** instead of gen
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_accuracy_simple.py" --test_set 180ADELE --model_name yolo_last --yolo_use_folders_instead_of_gen
 if __name__ == "__main__":
     # 1) Load the test set
     # # if you can't find the h5 file, generate it from the images
@@ -109,20 +129,20 @@ if __name__ == "__main__":
     print(f"Evaluating model: {MODEL_NAME}")
 
     # a) Load the model
-    model = load_model(MODEL_NAME, MODEL_PATHS_SUBSET, debug=DEBUG)
+    model = load_model(MODEL_NAME, MODEL_PATHS_SUBSET, debug=args.debug)
 
     if model is None:
         raise ValueError(f"load_model returned None. Model loading not implemented for this model type. Model name: {MODEL_NAME}")
     else:
         # b) Evaluate the model
-        if not YOLO_FOLDERS_INSTEAD_OF_GENERATOR or "yolo" not in MODEL_NAME.lower():
+        if not args.yolo_use_folders_instead_of_gen or "yolo" not in MODEL_NAME.lower():
             if USA_VALUTA_INVECE_DI_EVALUATE:
                 test_loss, test_acc = valuta_modello(model, test_generator, None, MODEL_NAME)
             else:
-                test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=DEBUG)
+                test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=args.debug)
         else:
             # THIS EXISTS FOR YOLO. FOR NOW THE "CORRECT" VERSION IS THE ONE WITH FOLDERS
-            test_loss, test_acc = evaluate_model(model, MODEL_NAME, None, PATHS[TEST_SET]["test_set_small"], debug=DEBUG)
+            test_loss, test_acc = evaluate_model(model, MODEL_NAME, None, PATHS[TEST_SET]["test_set_small"], debug=args.debug)
         
         models_results[MODEL_NAME]["test_loss"] = test_loss
         models_results[MODEL_NAME]["test_acc"] = test_acc
@@ -131,5 +151,11 @@ if __name__ == "__main__":
     # 3) Print the final results
     print(f"\n\nFinal evaluation results on {TEST_SET.lower()} test set:")
     for model_name, results in models_results.items():
-        print(f"Model: {model_name} - Test Loss: {results['test_loss']:.4f}, Test Accuracy: {results['test_acc']:.4f}")
+        msg_to_print = f"Model: {model_name} - Test Loss: {results['test_loss']:.4f}, Test Accuracy: {results['test_acc']:.4f}"
+        if "yolo" in model_name:
+            if args.yolo_use_folders_instead_of_gen:
+                msg_to_print += " (used folders instead of testgen)"
+            else:
+                msg_to_print += " (used testgen)"
+        print(msg_to_print)
     

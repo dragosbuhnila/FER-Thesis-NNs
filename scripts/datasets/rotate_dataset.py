@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 from PIL import Image
 
-from modules.config import ADELE_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_IMAGES_PATH
+from modules.config import ADELE_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_IMAGES_PATH, EMOTIONS
 from modules.misc import hash_image;
 
 # Paths
@@ -48,8 +48,10 @@ if __name__ == "__main__":
             rotated_h5.create_dataset("X_hashes", data=X_hashes)
 
         # Save the rotated images to the specified directory
-        for image, hash in zip(X_test_rotated, X_hashes):
-            image_path = os.path.join(rotated_images_path, f"{hash}_180rotated.png")
+        for image, hash, gt in zip(X_test_rotated, X_hashes, y_test):
+            label = EMOTIONS[gt]
+            # TODO: convert b'' hash to str
+            image_path = os.path.join(rotated_images_path, "label", f"{hash}_180rotated.png")
             Image.fromarray(image).save(image_path)
 
     print(f"[INFO] Rotated test set created.")
