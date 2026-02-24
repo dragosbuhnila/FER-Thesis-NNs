@@ -7,9 +7,11 @@ import scipy
 from tqdm import tqdm
 import shutil
 import zipfile
+from joblib import Parallel, delayed
 
 from modules.config import EMOTIONS
 from modules.misc import get_timestamp, zip_folder 
+from modules.model import load_model
 
 
 
@@ -82,17 +84,6 @@ def get_masks(image_array, bubble_radius, num_bubbles, iterations):
     return masked_images, masks
 
 
-def get_predicted_class(image_array, model):
-    """
-    Get the predicted class index and probability for a given image using the model.
-    """
-    image_batch = np.expand_dims(image_array, axis=0)
-    predictions = model.predict(image_batch)
-    predicted_index = np.argmax(predictions[0])
-    predicted_probability = predictions[0][predicted_index]
-    return predicted_index, predicted_probability
-
-
 def get_batch_planes(masked_images, masks, model, labels):
     """
     Esegue la predizione su tutte le immagini mascherate e,
@@ -104,7 +95,7 @@ def get_batch_planes(masked_images, masks, model, labels):
     """
     # Prepara le immagini per il modello
     masked_steps = masked_images * 255.0
-    mask_preds = model.predict(masked_steps) # shape: (iterations, num_classes)
+    mask_preds = model.predict(masked_steps, verbose=0) # shape: (iterations, num_classes)
 
     # Argmax per valutare "quante volte" la classe originale si conserva
     mask_classes = np.argmax(mask_preds, axis=-1) # takes the argmax along the class dimension, resulting in shape (iterations,)
@@ -174,13 +165,17 @@ def normalize_image(image):
         return image
 
 
-def process_image(image_array, model, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance):
+def process_image(image_array, model, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance, predicted_index, predicted_probability):
     """
     Process a single image to generate bubble masks and planes.
     Returns the predicted class, probability, and generated planes.
     """
-    predicted_index, predicted_probability = get_predicted_class(image_array, model)
-    print(f"\tPredicted class: {class_names_fixed[predicted_index]} with probability: {predicted_probability*100:.2f}%")
+    # check that image_array is a single image and not a batch
+    if len(image_array.shape) != 3:
+        raise ValueError(f"Expected a single image array with shape (H, W, C), but got a batch with shape {image_array.shape}.")
+
+    # Use the precomputed predicted_index and predicted_probability from the test generator predictions instead of recomputing them here. This ensures consistency and avoids redundant model predictions.
+    # print(f"\tPredicted class: {class_names_fixed[predicted_index]} with probability: {predicted_probability*100:.2f}%")
 
     all_planes = [[] for _ in range(len(class_names_fixed))]
     lengths = np.zeros(len(class_names_fixed)).astype(int)
@@ -192,14 +187,14 @@ def process_image(image_array, model, class_names_fixed, bubble_radius, iteratio
     while True:
         num_bubbles = np.random.choice(bubble_range, p=probabilities)
         history_of_num_bubbles.append(num_bubbles)
-        print(f"\tTesting with {num_bubbles} bubbles...")
+        # print(f"\tTesting with {num_bubbles} bubbles...")
 
         masked_images, masks = get_masks(image_array, bubble_radius, num_bubbles, iterations)
         batch_planes, mask_classes = get_batch_planes(masked_images, masks, model, class_names_fixed)
 
         true_plane_len = sum(1 for c in mask_classes if c == predicted_index)
         iteration_accuracy = true_plane_len / iterations
-        print(f"\tIteration accuracy: {iteration_accuracy:.2f}")
+        # print(f"\tIteration accuracy: {iteration_accuracy:.2f}")
 
         good = accuracy_tolerance <= iteration_accuracy <= (1 - accuracy_tolerance)
         accuracy_diff = abs(iteration_accuracy - accuracy_target)
@@ -212,7 +207,7 @@ def process_image(image_array, model, class_names_fixed, bubble_radius, iteratio
         if np.sum(lengths) > 4000:
             break
 
-    return predicted_index, predicted_probability, all_planes, history_of_num_bubbles
+    return all_planes, history_of_num_bubbles
 
 
 def save_planes_and_images(image_name, image_array, predicted_index, predicted_probability, all_planes, labels, output_subfolder, history_of_num_bubbles):
@@ -250,9 +245,29 @@ def save_planes_and_images(image_name, image_array, predicted_index, predicted_p
     ))
 
 
+def process_single_image(idx, image_array, label, predicted_index, predicted_probability, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance, output_folder):
+    """
+    Process a single image and save the results.
+    This function is designed to be used in parallel processing.
+    """
+    model = load_model(model_name)
+
+    image_name = f"image_{idx}"
+    output_subfolder = os.path.join(output_folder, class_names_fixed[label])
+    os.makedirs(output_subfolder, exist_ok=True)
+
+    all_planes, history_of_num_bubbles = process_image(
+        image_array, model, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance, predicted_index, predicted_probability
+    )
+    save_planes_and_images(
+        image_name, image_array, predicted_index, predicted_probability, all_planes, class_names_fixed, output_subfolder, history_of_num_bubbles
+    )
+
+
 def generate_bubbles_planes(model: object, model_name: str, test_generator: object, 
                             output_base_folder_path: str, run_name: str = None,
-                            iterations: int = 200, bubble_radius: int = 26, accuracy_target: float = 0.5, accuracy_tolerance: float = 0.3):
+                            iterations: int = 200, bubble_radius: int = 26, accuracy_target: float = 0.5, accuracy_tolerance: float = 0.3,
+                            n_jobs=4):
     """
         Generate bubble-based explanations and plane visualizations for model predictions on test images.
         This function processes a test dataset through a model, generating bubble-based visual explanations
@@ -286,8 +301,13 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
     os.makedirs(output_folder, exist_ok=True)
 
     images = test_generator.x_data
-    probabilities = test_generator.y_data
-    labels = np.argmax(probabilities, axis=1)
+
+    gt_probabilities = test_generator.y_data
+    labels = np.argmax(gt_probabilities, axis=1)
+
+    predicted_probabilities = model.predict(test_generator)
+    predicted_indices = np.argmax(predicted_probabilities, axis=1)
+    predicted_probabilities = np.max(predicted_probabilities, axis=1)
 
     print(f"[INFO] Processing {len(labels)} images with model '{model_name}'...")
     # The structure will be:
@@ -295,15 +315,16 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
     #    model_name/                (e.g. occft_convnext)
     #      emotion_gt/              (e.g. HAPPY)
     #        images_names_with_three_formats
-    for idx, (image_array, label) in tqdm(enumerate(zip(images, labels)), total=len(labels), desc="Processing images", unit="image"):
-        image_name = f"image_{idx}"
-        output_subfolder = os.path.join(output_folder, class_names_fixed[label])
-        os.makedirs(output_subfolder, exist_ok=True)
-
-        predicted_index, predicted_probability, all_planes, history_of_num_bubbles = process_image(
-            image_array, model, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance
+    # Parallelize the processing of images
+    Parallel(n_jobs=n_jobs)(
+        delayed(process_single_image)(
+            idx, image_array, label, predicted_index, predicted_probability, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance, output_folder
         )
-
-        save_planes_and_images(image_name, image_array, predicted_index, predicted_probability, all_planes, class_names_fixed, output_subfolder, history_of_num_bubbles)
-
+        for idx, (image_array, label, predicted_index, predicted_probability) in tqdm(
+            enumerate(zip(images, labels, predicted_indices, predicted_probabilities)),
+            total=len(labels),
+            desc="Processing images",
+            unit="image"
+        )
+    )
     zip_folder(output_folder, os.path.join(run_folder, f"{model_name}_bubbles.zip"))
