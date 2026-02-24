@@ -12,6 +12,8 @@ sbatch ./sbatch/sbatch_train/do_training_VGG19.sbatch
 squeue --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %G"
 sinfo --format="%P %G"
 
+squeue -A dbuhnila
+
 
 
 ## Create 180-original-testset
@@ -35,7 +37,9 @@ sbatch ./sbatch/sbatch_tools/write_pdf_for_complete_evaluation.sbatch
 
 
 # Run XAI
-sbatch ./sbatch/sbatch_train/do_explainability_bubbles_keras.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_bubbles_keras_fede_180.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_bubbles_keras_occft_original.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_bubbles_keras_occft_occluded.sbatch
 
 
 
