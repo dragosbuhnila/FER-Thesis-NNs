@@ -145,10 +145,6 @@ for model_name, tf_model_path in ALL_MODELS_PATHS.items():
 		model_evaluation_results_path = os.path.join(OCCFT_MODELS_RESULTS_FOLDER, model_folder_name)
 		OCCFT_MODELS_RESULTS_PATHS[model_name] = model_evaluation_results_path
 
-# ______________________________________________________________________
-# > MY MODELS (occft -- i.e. occlusion finetuning)
-OCCFT_MODELS_FOLDER = 				os.path.join(MODELS_PATH, "occft")
-
 
 # 4) Landmarks
 # ______________________________________________________________________
