@@ -78,6 +78,8 @@ def extract_images_from_h5(h5_path, output_base, dont_hash, group_keys=None, ove
             y = f[y_key]
 
             n = X.shape[0]
+            if n > 999:
+                raise RuntimeError(f"Too many images ({n}) to rename with 3 digits. Please adjust the code to use more digits if needed.")
             out_dir = os.path.join(output_base, suffix) if nof_groups > 1 else output_base
             os.makedirs(out_dir, exist_ok=True)
 
@@ -85,7 +87,6 @@ def extract_images_from_h5(h5_path, output_base, dont_hash, group_keys=None, ove
                 print(f'Extracting {n} images for group "{suffix}" into {out_dir}')
 
             # We'll create per-class subfolders and name files with a global index matching typical convention
-            global_idx = 0
             counts = {name: 0 for name in class_names}
 
             for i in range(n):
@@ -104,7 +105,7 @@ def extract_images_from_h5(h5_path, output_base, dont_hash, group_keys=None, ove
                 else:
                     img_hash = hash_image(img)
                 gt = class_name
-                fname = f'image_{global_idx}_{gt}_{img_hash}.png'
+                fname = f'image_{i:03d}_{gt}_{img_hash}.png'
                 out_path = os.path.join(class_folder, fname)
 
                 if not overwrite and os.path.exists(out_path):
@@ -120,7 +121,6 @@ def extract_images_from_h5(h5_path, output_base, dont_hash, group_keys=None, ove
                         Image.fromarray(arr).save(out_path)
 
                 counts[class_name] += 1
-                global_idx += 1
 
             summary[suffix] = counts
             if verbose:
@@ -162,9 +162,9 @@ print("========================================================")
 
 # Example usage:
 # >>> adele test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset ORIGINAL_TRAINVAL
+# `& C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset ADELE_TEST_SET`
 # >>> original trainval set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset ADELE_TEST_SET
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset ORIGINAL_TRAINVAL
 # >>> 180 rotated adele test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/datasets/convert_h5_to_images.py" --dataset 180ADELE
 if __name__ == "__main__":

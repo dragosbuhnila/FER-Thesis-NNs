@@ -76,6 +76,7 @@ OCCLUDED_TEST_SET_BASE_PATH = 		os.path.join(DATASETS_PATH, "occluded_test_set")
 OCCLUDED_TEST_SET_H5_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
 OCCLUDED_TEST_SET_IMAGES_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ")
 OCCLUDED_TEST_SET_RESIZED_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "output_images_testset_resized")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_IMAGES_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "unoccluded_back_images")
 OCCLUDED_TEST_SET_YAML_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_yaml")
 # ______________________________________________________________________
 # > ORIGINAL_TRAIN_VAL_SET

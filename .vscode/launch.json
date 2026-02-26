@@ -6,6 +6,8 @@
     "configurations": [      
 
 
+
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -146,6 +148,21 @@
                     "--test_set", "ADELE",
                     "--model_name", "yolo_last",
                     "--yolo_use_folders_instead_of_gen",
+                ]
+        },
+        {
+            "name": "do_explainability_gradcam_keras",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                    // --quick --redirect_output --models_set occft --test_set occluded
+                    "--models_set", "occft",
+                    "--test_set", "occluded",
+                    "--quick",
+                    "--redirect_output",
                 ]
         },
     ]

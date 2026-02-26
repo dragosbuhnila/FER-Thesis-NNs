@@ -33,3 +33,7 @@ STUDY models in detail
 ISSUES:
 check why my agreement on federica models on original test set is different from her paper's 
 > maybe it's just because i don't have yolo yet
+
+
+Create correspondence between images in occluded test set and those in original test set to have base images for landmarker
+	> there may be an issue with the index thing in do_csm, because I'm not sure that image n1 from the dataloader is actually the exact first image in my images folder. Do a check using hashes and maybe just rename them to also include image_idx at the beginning, and just add a __ again do split the filename in 3 total parts

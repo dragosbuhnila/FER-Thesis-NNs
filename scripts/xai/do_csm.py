@@ -40,7 +40,7 @@ def _normalized_to_pixel_coordinates(
 def generate_csm(input_saliencies_path, results_csv_path, test_set_images_path, results_path,
                  extract_image_index_function,
                  limite, minimo, ext, solo_pos, colore, al,
-                 save_heatmap, save_img, visualize, quick_run):
+                 save_heatmap, save_img, visualize):
 
     base_options = python.BaseOptions(model_asset_path=LANDMARKER_MODEL_PATH)
     options = vision.FaceLandmarkerOptions(base_options=base_options,
@@ -133,13 +133,7 @@ def generate_csm(input_saliencies_path, results_csv_path, test_set_images_path, 
         for image_filename in images_filenames:
             image_index = extract_image_index_function(image_filename)
 
-            try:
-                heatmap = np.load(os.path.join(input_saliencies_path, emotion, f'image_{image_index}.npy'))
-            except FileNotFoundError:
-                if quick_run:
-                    continue
-                else:
-                    raise
+            heatmap = np.load(os.path.join(input_saliencies_path, emotion, f'image_{image_index}.npy'))
 
             # control the true class abd the predicted class
             predicted_class = df[df['Image'] == f"image_{image_index}"]['Predicted_Class'].values[0]
@@ -400,7 +394,7 @@ def generate_csm(input_saliencies_path, results_csv_path, test_set_images_path, 
 # print("Extremal perturbations completed")
 
 def process_model(model_name, input_saliencies_path, test_set_images_path, extract_image_index_function, 
-                  quick_run=False, results_csv_name="predictions_csmable.csv", models_evaluations_folders_dictionary=OCCFT_MODELS_RESULTS_PATHS):
+                 results_csv_name="predictions_csmable.csv", models_evaluations_folders_dictionary=OCCFT_MODELS_RESULTS_PATHS):
     """
     Process a single model folder to generate Canonical Saliency Maps (CSM).
     """    
@@ -435,7 +429,6 @@ def process_model(model_name, input_saliencies_path, test_set_images_path, extra
         save_heatmap=SAVE_HEATMAP,
         save_img=SAVE_IMG,
         visualize=VISUALIZE,
-        quick_run=quick_run
     )
     print(f"Completed processing for model: {model_name}")
 
@@ -470,7 +463,8 @@ def extract_image_index_original_or_180rotated(filename):
     if not filename.startswith("image"):
         raise ValueError(f"Unexpected filename format: {filename}")
     
-    index_part = filename.split('_')[1]
+    no_ext_part = filename.split('.')[0]  # remove extension
+    index_part = no_ext_part.split('_')[1]
     index = int(index_part)
     return index
 
@@ -480,7 +474,6 @@ parser = argparse.ArgumentParser(description="Generate bubble-based explanations
 parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
 parser.add_argument('--run_name',           type=str,  required=True,               help="Name for the run.")
 parser.add_argument('--input_base_folder',  type=str,  default=SAVED_IMAGES_PATH,   help="Base folder where saliency maps are stored.")
-parser.add_argument('--quick_run',          action='store_true',                    help="Use quick settings for a fast test run.")
 args = parser.parse_args()
 
 # RUN
@@ -514,7 +507,6 @@ print(f"ARGS:")
 print(f"\t--redirect_output: {args.redirect_output}")
 print(f"\t--input_base_folder: {args.input_base_folder}")   
 print(f"\t--run_name: {args.run_name}")
-print(f"\t--quick_run: {args.quick_run}")
 print(f"MACROS:")
 print(f"\tSAL_MAPS_FOLDER: {SAL_MAPS_FOLDER}")
 if args.redirect_output:
@@ -528,7 +520,7 @@ print(f"==============================")
 
 # Example usage:
 # >>> test run
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py"  --redirect_output --quick_run --run_name 20260224-182606_quick-run_occft-models_occluded-testset_do_explainability_extpert_keras
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260224-182606_quick-run_occft-models_occluded-testset_do_explainability_extpert_keras
 def main():
     """
     Main function to process all models and generate Canonical Saliency Maps (CSM).
@@ -540,6 +532,7 @@ def main():
         return
 
     model_names = [model for model in os.listdir(models_path) if os.path.isdir(os.path.join(models_path, model))]
+    model_names = [model_name for model_name in model_names if "heatmaps" not in model_name.lower()]  # Exclude any folder named "heatmaps"
     if not model_names:
         print(f"[ERROR] No models found in {models_path}")
         return
@@ -550,7 +543,7 @@ def main():
     for model_name in model_names:
         print(f"Processing model: {model_name}")
         input_saliencies_path = os.path.join(SAL_MAPS_FOLDER, model_name)
-        process_model(model_name, input_saliencies_path, TEST_SET_IMAGES_PATH, EXTRACT_IMAGE_INDEX_FUNCTION, quick_run=args.quick_run)
+        process_model(model_name, input_saliencies_path, TEST_SET_IMAGES_PATH, EXTRACT_IMAGE_INDEX_FUNCTION)
 
     print("All models processed successfully.")
 
