@@ -6,7 +6,7 @@ import argparse
 from modules.misc import get_timestamp, Tee
 from modules.model import load_model
 from modules.data__load import load_test_generator
-from modules.explainability import generate_bubbles_planes
+from modules.xai_bubbles import generate_bubbles_planes
 from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, \
                             ALL_MODELS_PATHS, CONSOLE_OUTPUTS_PATH, SAVED_IMAGES_PATH
 
@@ -24,7 +24,6 @@ parser.add_argument('--bubble_radius',      type=int,   default=26,             
 parser.add_argument('--accuracy_target',    type=float, default=0.5,                help="Target accuracy threshold for bubble placement.")
 parser.add_argument('--accuracy_tolerance', type=float, default=0.3,                help="Tolerance range for accuracy threshold.")
 parser.add_argument('--output_folder',      type=str,                               help="Base folder path for saving generated bubbles planes.")
-parser.add_argument('--n_jobs',             type=int,   default=4,                  help="Number of parallel jobs to run.")
 args = parser.parse_args()
 
 # MODELS
@@ -77,7 +76,6 @@ print(f"\t--iterations: {args.iterations}")
 print(f"\t--bubble_radius: {args.bubble_radius}")
 print(f"\t--accuracy_target: {args.accuracy_target}")
 print(f"\t--accuracy_tolerance: {args.accuracy_tolerance}")
-print(f"\t--n_jobs: {args.n_jobs}")
 print(f"MACROS:")
 print(f"\tMODEL_NAMES: {MODEL_NAMES}")
 print(f"\tTEST_SET: {TEST_SET}")
@@ -121,7 +119,6 @@ if __name__ == "__main__":
             bubble_radius=args.bubble_radius,
             accuracy_target=args.accuracy_target,
             accuracy_tolerance=args.accuracy_tolerance,
-            n_jobs=args.n_jobs,
         )
 
     print("Bubble generation completed.")

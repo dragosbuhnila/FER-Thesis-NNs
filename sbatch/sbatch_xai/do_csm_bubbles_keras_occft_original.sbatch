@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_explainability_bubbles_keras_occft_original
+#SBATCH --job-name=dbuh_do_csm_bubbles_keras_occft_original
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
@@ -40,16 +40,8 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-# >>> test run:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded --redirect_output --quick
-# >>> occft models on occluded set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set occluded
-# >>> occft models on original set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set original
-# >>> fede models on 180-rotated set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set federica --test_set original-180
 
-COMMAND_TO_RUN="./scripts/xai/do_explainability_bubbles_keras.py --models_set occft --test_set original"
+COMMAND_TO_RUN="./scripts/xai/do_csm_bubbles.py --run_name 20260224-202815_bubbles_cmplt-run_occft-models_original-testset"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

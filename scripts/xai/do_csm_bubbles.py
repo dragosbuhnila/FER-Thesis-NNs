@@ -14,6 +14,7 @@ from typing import Tuple, Union
 from scipy.interpolate import griddata
 from PIL import Image
 from tqdm import tqdm
+import argparse
 
 from modules.config import ADELE_TEST_SET_IMAGES_PATH, ALL_MODELS_PATHS, CANONICAL_FACES_CUT, EMOTIONS, LANDMARKER_MODEL_PATH, SAVED_IMAGES_PATH
 
@@ -369,6 +370,13 @@ def compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, positivi,
     compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_m, mappa_colore, save_image, save_heatmap, visualize)
     print(f"completed")
 
+# ================================= SETTINGS =================================
+
+argparser = argparse.ArgumentParser(description='Compute CSM bubbles for all models.')
+argparser.add_argument('--run_name', type=str, default='20260221-184815_bubbles_cmplt-run_occft-models_original-testset', help='Name of the run to process. It should match the folder name in SAVED_IMAGES_PATH where the bubble images are stored.')
+args = argparser.parse_args()
+
+
 
 MODELS_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if 'occft' in model_name]
 # TODO: check if this flag results in the wrong results, as I'm not sure what it does. I want to do the subtraction, why should i want to see just positives?
@@ -385,8 +393,7 @@ print(f"\tRESULTS_NAME_SIGNATURE: {RESULTS_NAME_SIGNATURE}")
 print(f"========================================================")
 
 if __name__ == "__main__":
-    bubbles_folder_name = '20260221-184815_bubbles_cmplt-run_occft-models_original-testset'
-    bubbles_path = os.path.join(SAVED_IMAGES_PATH, bubbles_folder_name)
+    bubbles_path = os.path.join(SAVED_IMAGES_PATH, args.run_name)
     folders = [f for f in os.listdir(bubbles_path) if os.path.isdir(os.path.join(bubbles_path, f))]
     folders = [folder for folder in folders if RESULTS_NAME_SIGNATURE not in folder]
     for folder in folders:
