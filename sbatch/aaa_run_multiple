@@ -5,6 +5,7 @@ sbatch ./sbatch/sbatch_train/do_training_InceptionV3.sbatch
 sbatch ./sbatch/sbatch_train/do_training_PattLite.sbatch
 sbatch ./sbatch/sbatch_train/do_training_ResNet.sbatch
 sbatch ./sbatch/sbatch_train/do_training_VGG19.sbatch
+# _____________________________________________________________
 
 
 
@@ -13,11 +14,13 @@ squeue --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %G"
 sinfo --format="%P %G"
 
 squeue -A dbuhnila
+# _____________________________________________________________
 
 
 
 ## Create 180-original-testset
 sbatch ./sbatch/sbatch_tools/rotate_dataset.sbatch
+# _____________________________________________________________
 
 
 
@@ -33,6 +36,7 @@ sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_ResNet.sbatch
 sbatch ./sbatch/sbatch_tools/group_models_by_run_filename.sbatch
 # write pdf with analyses
 sbatch ./sbatch/sbatch_tools/write_pdf_for_complete_evaluation.sbatch
+# _____________________________________________________________
 
 
 
@@ -44,6 +48,7 @@ sbatch ./sbatch/sbatch_xai/do_explainability_bubbles_keras_occft_occluded.sbatch
 # extpert
 sbatch ./sbatch/sbatch_xai/do_explainability_extpert_keras_occft_occluded.sbatch
 sbatch ./sbatch/sbatch_xai/do_explainability_extpert_keras_occft_original.sbatch
+# _____________________________________________________________
 
 # Run CSMs
 # bubbles
@@ -53,7 +58,21 @@ sbatch ./sbatch/sbatch_xai/do_csm_bubbles_keras_occft_original.sbatch
 sbatch ./sbatch/sbatch_xai/do_csm_extpert_keras_occft_occluded.sbatch
 sbatch ./sbatch/sbatch_xai/do_csm_extpert_keras_occft_original.sbatch
 
+# gradcam
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded.sbatch
+
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded_noLayerScale.sbatch
+
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__convnext.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__efficientnet.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__inception.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__pattlite.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__resnet.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__vgg.sbatch
+# _____________________________________________________________
+
 
 
 ## Install conda libs
 sbatch ./sbatch/sbatch_meta/install_conda_env_parts.sbatch
+# _____________________________________________________________

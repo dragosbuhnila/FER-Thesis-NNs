@@ -182,8 +182,10 @@ parser = argparse.ArgumentParser(description="Generate Grad-CAM saliency maps.")
 parser.add_argument('--quick', action='store_true', help="Run on a small subset of the test data (1 batch).")
 parser.add_argument('--redirect_output', action='store_true', help="Redirect console output to a log file.")
 parser.add_argument('--models_set', type=str, choices=['occft', 'federica'], help="Specify which set of models to use.")
+parser.add_argument('--model_name', type=str, help="Specify a single model name to process.")
 parser.add_argument('--test_set', type=str, choices=['occluded', 'original', 'original-180'], help="Specify which test set to use.")
 parser.add_argument('--output_folder', type=str, help="Base folder path for saving Grad-CAM maps.")
+parser.add_argument('--no_layer_scale', action='store_true', help="Do not use LayerScale in the model.")
 args = parser.parse_args()
 
 # MODELS
@@ -193,6 +195,12 @@ elif args.models_set == 'federica':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "finetuning" in model_name.lower()]
 else:
     raise ValueError("Invalid --models_set argument. Use 'occft' or 'federica'.")
+
+if args.model_name:
+    if args.model_name in MODEL_NAMES:
+        MODEL_NAMES = [args.model_name]
+    else:
+        raise ValueError(f"Model name '{args.model_name}' not found in the selected models set '{args.models_set}'. Available models: {MODEL_NAMES}")
 
 # TEST SETS
 if args.test_set == 'occluded':
@@ -213,15 +221,15 @@ if args.quick:
 else:
     BATCH_SIZE = 64
 
-run_name = get_timestamp()
-run_name += "_quick-run" if args.quick else "_cmplt-run"
-run_name += f"_{args.models_set}-models"
-run_name += f"_{args.test_set}-testset"
-run_name += f"_do_explainability_gradcam_keras"
+RUN_NAME = get_timestamp()
+RUN_NAME += "_quick-run" if args.quick else "_cmplt-run"
+RUN_NAME += f"_{args.models_set}-models"
+RUN_NAME += f"_{args.test_set}-testset"
+RUN_NAME += f"_do_explainability_gradcam_keras"
 
 # Redirect output if specified
 if args.redirect_output:
-    LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{run_name}_do_explainability_gradcam_keras.log")
+    LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{RUN_NAME}_do_explainability_gradcam_keras.log")
     log_dir = os.path.dirname(LOG_FILE_PATH)
     os.makedirs(log_dir, exist_ok=True)
     sys.stdout = Tee(LOG_FILE_PATH)
@@ -229,14 +237,15 @@ if args.redirect_output:
 
 print(f"========== SETTINGS ==========")
 print(f"ARGS:")
-print(f"\t--quick: {args.quick}")
-print(f"\t--redirect_output: {args.redirect_output}")
-print(f"\t--models_set: {args.models_set}")
-print(f"\t--test_set: {args.test_set}")
+for arg_name, arg_value in vars(args).items():
+    print(f"\t{arg_name}: {arg_value}")
 print(f"CONSTANTS:")
 print(f"\tMODEL_NAMES: {MODEL_NAMES}")
 print(f"\tTEST_SET_PATH: {TEST_SET_PATH}")
 print(f"\tBATCH_SIZE: {BATCH_SIZE}")
+print(f"\tOUTPUT_BASE_FOLDER_PATH: {OUTPUT_BASE_FOLDER_PATH}")
+print(f"\tRUN_NAME: {RUN_NAME}")
+print(f"\tLOG_FILE_PATH: {LOG_FILE_PATH if args.redirect_output else 'No log file, output not redirected'}")
 print(f"==============================")
 
 
@@ -246,19 +255,26 @@ print(f"==============================")
 # >>> test run
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --redirect_output --models_set occft --test_set occluded
 if __name__ == "__main__":
-    output_run_path = os.path.join(OUTPUT_BASE_FOLDER_PATH, run_name)
+    output_run_path = os.path.join(OUTPUT_BASE_FOLDER_PATH, RUN_NAME)
     os.makedirs(output_run_path, exist_ok=True)
 
     for model_name in MODEL_NAMES:
-        print(f"[INFO] Processing model: {model_name}")
-        model = load_model(model_name, additional_custom_objects={'LayerScale': LayerScale})
-        target_layer_names = get_layer_names(model.get_layer('base_model'), model_name)
+        # 0) Load the model
+        if args.no_layer_scale:
+            print(f"[INFO] Loading model {model_name} without LayerScale")
+            model = load_model(model_name)
+        else:            
+            print(f"[INFO] Loading model {model_name} with LayerScale")
+            model = load_model(model_name, additional_custom_objects={'LayerScale': LayerScale})
+        # _______________________________________________________________________________________
 
+        # 1) Get target layer names for Grad-CAM, convert to sequential model if needed, and setup the gradcam task
         if "pattlite" in model_name or "vgg" in model_name:
             target_layer_names = get_layer_names(model, model_name)
 
-            gradcam_model = build_new_model(model, model_name)
-            model = gradcam_model
+            sequential_model = build_new_model(model, model_name)
+            model = sequential_model
+            gradcam_model = sequential_model
             clone = True
         else: 
             target_layer_names = get_layer_names(model.get_layer('base_model'), model_name)
@@ -266,19 +282,20 @@ if __name__ == "__main__":
             gradcam_model = model.get_layer('base_model')
             clone = False
 
-        test_generator = load_test_generator(TEST_SET_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
-        test_loss, test_acc = evaluate_model(model, model_name, test_generator)
-        print(f"[INFO] Test accuracy for model {model_name} on test set {args.test_set}: {test_acc:.4f}")
-        
         print(f"[DEBUG] Successfully loaded model {model_name}. Target layers ({len(target_layer_names)} layers):")
         for target_layer_name in target_layer_names:
             print(f"\t- {target_layer_name}")
+        
+        print(f"[INFO] Setting up Grad-CAM for model {model_name} with clone={clone}")
+        gradcam = Gradcam(gradcam_model, model_modifier=ReplaceToLinear(), clone=clone)
+        # _______________________________________________________________________________________
 
-        try:
-            gradcam = Gradcam(gradcam_model, model_modifier=ReplaceToLinear(), clone=clone)
-        except Exception as e:
-            print(f"[ERROR] Failed to initialize GradCAM for model {model_name}: {e}")
-            continue
+        # 2) Evaluate the model on the test set to check everything is working fine before generating Grad-CAM maps (for now check manually)
+        test_generator = load_test_generator(TEST_SET_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
+        test_loss, test_acc = evaluate_model(model, model_name, test_generator)
+        print(f"[INFO] Test accuracy for model {model_name} on test set {args.test_set}: {test_acc:.4f}")
+        # _______________________________________________________________________________________
+
 
 
         print(f"[INFO] Found {len(target_layer_names)} target layers for Grad-CAM")

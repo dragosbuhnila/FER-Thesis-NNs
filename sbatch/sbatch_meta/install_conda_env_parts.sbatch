@@ -24,10 +24,11 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install reportlab
+python -m pip install tf_keras_vis imageio deprecated --no-deps
 echo "=========================================================================="
-echo "Installed other dependencies! (reportlab)"
+echo "Installed other dependencies! (tf_keras_vis imageio deprecated --no-deps)"
 echo "=========================================================================="
+
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
