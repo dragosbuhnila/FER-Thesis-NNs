@@ -2,8 +2,8 @@ import numpy as np
 from tensorflow import keras
 import tensorflow as tf
 from tensorflow.keras.applications import MobileNet, ResNet50V2, VGG19, EfficientNetB1, InceptionV3, ConvNeXtBase
-from tensorflow.keras.layers import Layer, GlobalAveragePooling2D, Dropout, Dense, SeparableConv2D, BatchNormalization
-from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Layer, GlobalAveragePooling2D, Dropout, Dense, SeparableConv2D, BatchNormalization, Lambda
+from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.initializers import Constant
 
@@ -221,7 +221,10 @@ def build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, mo
 
 
 
-def load_model(model_name, model_path_subset=ALL_MODELS_PATHS, debug=False):
+def load_model(model_name, model_path_subset=ALL_MODELS_PATHS, debug=False, additional_custom_objects=None):
+    if additional_custom_objects is not None:
+        custom_objects.update(additional_custom_objects)
+
     if not model_name in model_path_subset.keys():
         raise ValueError(f"Model name '{model_name}' not found in the provided model path subset.")
 
@@ -246,6 +249,7 @@ def load_model(model_name, model_path_subset=ALL_MODELS_PATHS, debug=False):
         return YOLO(model_path_subset[model_name]).to(device)
     
     # For other models. Probably: resnet, vgg, inception, convnext, pattlite
+    print(f"Loading model: {model_name} from {model_path_subset[model_name]}. Custom objects: {custom_objects.keys()}")
     with keras.utils.custom_object_scope(custom_objects):
         # One of these three should work:
         # model = keras.layers.TFSMLayer(model_path_subset[model_name], call_endpoint='serve')
@@ -260,8 +264,9 @@ def load_model(model_name, model_path_subset=ALL_MODELS_PATHS, debug=False):
 
         return model
     
-def load_model_efficientnet(model_name, model_path_subset, custom_objects):
-    with tf.keras.utils.custom_object_scope(custom_objects):
+def load_model_efficientnet(model_name, model_path_subset, efficientnet_custom_objects):
+    print(f"Loading EfficientNet model: {model_name} from {model_path_subset[model_name]}. Custom objects: {efficientnet_custom_objects.keys()}")
+    with tf.keras.utils.custom_object_scope(efficientnet_custom_objects):
         # Genera un bias iniziale casuale per ciascuna classe
         class_names = EMOTIONS
         num_classes = len(class_names)
@@ -358,3 +363,168 @@ def build_model_occfinetuning(learning_rate, dropout_rate, l2_reg, initial_bias,
                   metrics=['categorical_accuracy'])
     
     return model
+
+
+# ============= SEQUENTIAL MODEL FOR GRADCAM ===============
+
+class SelfAttentionWrapper(Layer):
+    def __init__(self, attention_layer, **kwargs):
+        super(SelfAttentionWrapper, self).__init__(**kwargs)
+        self.attention_layer = attention_layer
+
+    def call(self, inputs):
+        # Passa lo stesso tensor come query e value
+        return self.attention_layer([inputs, inputs])
+
+    def get_config(self):
+        config = super(SelfAttentionWrapper, self).get_config()
+        config.update({
+            'attention_layer': self.attention_layer
+        })
+        return config
+
+
+def build_new_model(model, model_name):
+    # Seleziona il modello backbone e la funzione di preprocessamento
+    if "efficient" in model_name.lower():
+        backbone = model.get_layer('base_model')
+        preprocess_fn = tf.keras.applications.efficientnet.preprocess_input
+
+    elif "vgg" in model_name.lower():
+        backbone = model.get_layer('base_model')
+        preprocess_fn = tf.keras.applications.vgg19.preprocess_input
+
+    elif "pattlite" in model_name.lower():
+        backbone = model.get_layer('base_model')
+        preprocess_fn = tf.keras.applications.mobilenet.preprocess_input
+
+    elif "resnet" in model_name.lower():
+        backbone = model.get_layer('base_model')
+        preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
+
+    elif "convnext" in model_name.lower():
+        backbone = model.get_layer('base_model')
+        preprocess_fn = None  # Assumiamo nessun preprocessamento specifico
+
+    elif "inception" in model_name.lower():
+        backbone = model.get_layer('base_model')
+        preprocess_fn = tf.keras.applications.inception_v3.preprocess_input
+
+    else:
+        raise ValueError(f"Modello '{model_name}' non supportato.")
+
+    sequential_model = Sequential()
+
+    # Aggiungi il layer di input
+    try:
+        sequential_model.add(model.get_layer('universal_input'))
+    except KeyError:
+        print("Layer 'universal_input' non trovato nel modello originale.")
+        return None
+
+    # Aggiungi il layer di preprocessamento se necessario
+    if model_name != 'ConvNeXt' and preprocess_fn is not None:
+        sequential_model.add(Lambda(preprocess_fn, input_shape=(128, 128, 3), name='preprocessing'))
+
+    # Aggiungi i layer del backbone
+    for layer in backbone.layers:
+        if isinstance(layer, tf.keras.layers.InputLayer):
+            continue  # Ignora il layer di input
+        try:
+            sequential_model.add(layer)
+        except Exception as e:
+            print(f"Errore nell'aggiungere il layer {layer.name}: {e}")
+
+    # Aggiungi i layer di patch_extraction
+    try:
+        patch_extraction = model.get_layer('patch_extraction')
+    except KeyError:
+        print("Layer 'patch_extraction' non trovato nel modello originale.")
+        return None
+
+    for layer in patch_extraction.layers:
+        if isinstance(layer, tf.keras.layers.InputLayer):
+            continue  # Ignora il layer di input
+        try:
+            sequential_model.add(layer)
+        except Exception as e:
+            print(f"Errore nell'aggiungere il layer {layer.name}: {e}")
+
+    # Aggiungi altri layer specifici
+    try:
+        sequential_model.add(model.layers[5])
+    except IndexError:
+        print("Indice 5 fuori range per i layer del modello originale.")
+
+    try:
+        global_average_layer = model.get_layer('gap')
+        sequential_model.add(global_average_layer)
+    except KeyError:
+        print("Layer 'gap' non trovato nel modello originale.")
+
+    try:
+        dropout = model.get_layer('dropout')
+        sequential_model.add(dropout)
+    except KeyError:
+        print("Layer 'dropout' non trovato nel modello originale.")
+
+    # Aggiungi i layer di pre_classification
+    try:
+        pre_classification = model.get_layer('pre_classification')
+    except KeyError:
+        print("Layer 'pre_classification' non trovato nel modello originale.")
+        return None
+
+    for layer in pre_classification.layers:
+        if isinstance(layer, tf.keras.layers.InputLayer):
+            continue  # Ignora il layer di input
+        try:
+            sequential_model.add(layer)
+        except Exception as e:
+            print(f"Errore nell'aggiungere il layer {layer.name}: {e}")
+
+    # Sostituisci ExpandDimsLayer con un Lambda layer
+    sequential_model.add(Lambda(lambda x: tf.expand_dims(x, axis=-1), name='expand_dims'))
+
+    # Aggiungi il layer di Attention personalizzato utilizzando il wrapper
+    try:
+        original_attention_layer = model.get_layer('attention')
+        self_attention_layer = SelfAttentionWrapper(original_attention_layer, name='attention_wrapper')
+        sequential_model.add(self_attention_layer)
+    except KeyError:
+        print("Layer 'attention' non trovato nel modello originale.")
+    except Exception as e:
+        print(f"Errore nell'aggiungere il layer 'attention': {e}")
+
+    # Sostituisci SqueezeLayer con un Lambda layer
+    sequential_model.add(Lambda(lambda x: tf.squeeze(x, axis=-1), name='squeeze'))
+
+    # Aggiungi l'altro layer specifico
+    try:
+        print(model.layers[12].name)
+        sequential_model.add(model.layers[12])
+    except IndexError:
+        print("Indice 12 fuori range per i layer del modello originale.")
+
+    # Aggiungi i layer di classification_head
+    try:
+        prediction_layer = model.get_layer('classification_head')
+    except KeyError:
+        print("Layer 'classification_head' non trovato nel modello originale.")
+        return None
+
+    sequential_model.add(prediction_layer)
+
+    # Visualizza l'architettura del modello
+    sequential_model.summary(show_trainable=True)
+
+
+    # Compilazione del modello
+    try:
+        sequential_model.compile(optimizer=model.optimizer,
+                                 loss=model.loss,
+                                 metrics=['categorical_accuracy'])
+    except Exception as e:
+        print(f"Errore nella compilazione del modello: {e}")
+
+    return sequential_model

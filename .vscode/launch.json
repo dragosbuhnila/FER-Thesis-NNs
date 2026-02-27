@@ -6,8 +6,6 @@
     "configurations": [      
 
 
-
-
         {
             "name": "Python: Current File",
             "type": "python",
@@ -151,7 +149,7 @@
                 ]
         },
         {
-            "name": "do_explainability_gradcam_keras",
+            "name": "quick do_explainability_gradcam_keras",
             "type": "python",
             "request": "launch",
             "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py",
@@ -161,7 +159,34 @@
                     // --quick --redirect_output --models_set occft --test_set occluded
                     "--models_set", "occft",
                     "--test_set", "occluded",
+                    "--redirect_output",
                     "--quick",
+                ]
+        },
+        {
+            "name": "do_explainability_gradcam_keras",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                    // --redirect_output --models_set occft --test_set occluded
+                    "--models_set", "occft",
+                    "--test_set", "occluded",
+                    "--redirect_output",
+                ]
+        },
+        {
+            "name": "do_csm",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                    // --redirect_output --run_name 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras
+                    "--run_name", "20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras",
                     "--redirect_output",
                 ]
         },

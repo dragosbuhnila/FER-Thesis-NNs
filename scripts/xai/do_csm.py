@@ -15,7 +15,7 @@ from scipy.interpolate import griddata
 import pandas as pd
 
 from modules.misc import Tee, get_timestamp
-from modules.config import ADELE_180ROTATED_TEST_SET_IMAGES_PATH, ADELE_TEST_SET_IMAGES_PATH, CANONICAL_FACES_CUT, CONSOLE_OUTPUTS_PATH, EMOTIONS, LANDMARKER_MODEL_PATH, OCCFT_MODELS_RESULTS_PATHS, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, RESULTS_LIGHT_PATH, SAVED_IMAGES_PATH
+from modules.config import ADELE_180ROTATED_TEST_SET_IMAGES_PATH, ADELE_TEST_SET_IMAGES_PATH, CANONICAL_FACES_CUT, CONSOLE_OUTPUTS_PATH, EMOTIONS, LANDMARKER_MODEL_PATH, OCCFT_MODELS_RESULTS_PATHS, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, SAVED_IMAGES_PATH
 
 
 def _normalized_to_pixel_coordinates(
@@ -152,7 +152,7 @@ def generate_csm(input_saliencies_path, results_csv_path, test_set_images_path, 
             
             image_landmarks_list = Idetection_result.face_landmarks
             # se il volto non è stato rilevato, segnala l'errore
-            if image_landmarks_list == None:
+            if len(image_landmarks_list) == 0:
                 print(f"Face not detected in {image_filename}")
                 continue
             
@@ -481,8 +481,8 @@ SAL_MAPS_FOLDER = os.path.join(args.input_base_folder, args.run_name)
 
 test_set_name = get_test_set_name_from_run_name(args.run_name)
 if test_set_name == "occluded":
-    TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_RESIZED_PATH
-    EXTRACT_IMAGE_INDEX_FUNCTION = extract_image_index_occluded
+    TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH
+    EXTRACT_IMAGE_INDEX_FUNCTION = extract_image_index_original_or_180rotated
 elif test_set_name == "original":
     TEST_SET_IMAGES_PATH = ADELE_TEST_SET_IMAGES_PATH
     EXTRACT_IMAGE_INDEX_FUNCTION = extract_image_index_original_or_180rotated
@@ -520,7 +520,7 @@ print(f"==============================")
 
 # Example usage:
 # >>> test run
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260224-182606_quick-run_occft-models_occluded-testset_do_explainability_extpert_keras
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras
 def main():
     """
     Main function to process all models and generate Canonical Saliency Maps (CSM).
