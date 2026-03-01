@@ -6,6 +6,9 @@
     "configurations": [      
 
 
+
+
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -115,12 +118,12 @@
             "name": "explainability_bubbles",
             "type": "python",
             "request": "launch",
-            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_explainability_bubbles_keras.py",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                    // --models_set occft --test_set occluded --redirect_output --quick
-                    "--models_set", "occft",
+                    // --models_set federica --test_set occluded --model yolo_last --redirect_output --quick
+                    "--models_set", "yolo_fede",
                     "--test_set", "occluded",
                     "--redirect_output",
                     "--quick",

@@ -82,18 +82,26 @@ def get_masks(image_array, bubble_radius, num_bubbles, iterations):
     return masked_images, masks
 
 
-def get_predicted_class(image_array, model):
+def get_predicted_class(image_array, model, model_name):
     """
     Get the predicted class index and probability for a given image using the model.
     """
-    image_batch = np.expand_dims(image_array, axis=0)
-    predictions = model.predict(image_batch)
-    predicted_index = np.argmax(predictions[0])
-    predicted_probability = predictions[0][predicted_index]
+    if "yolo" in model_name.lower():
+        import torch
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        results = model.predict([image_array], device=device, verbose=False) # classification model yields: 
+        probs = results[0].probs
+        predicted_index = probs.top1
+        predicted_probability = probs.top1conf.cpu().numpy()
+    else:   
+        image_batch = np.expand_dims(image_array, axis=0)
+        predictions = model.predict(image_batch)
+        predicted_index = np.argmax(predictions[0])
+        predicted_probability = predictions[0][predicted_index]
     return predicted_index, predicted_probability
 
 
-def get_batch_planes(masked_images, masks, model, labels):
+def get_batch_planes(masked_images, masks, model, model_name, labels):
     """
     Esegue la predizione su tutte le immagini mascherate e,
     per ogni immagine e per ogni classe c, salva (mask * p_c) in batch_planes[c].
@@ -104,10 +112,20 @@ def get_batch_planes(masked_images, masks, model, labels):
     """
     # Prepara le immagini per il modello
     masked_steps = masked_images * 255.0
-    mask_preds = model.predict(masked_steps) # shape: (iterations, num_classes)
+    if len(masked_steps.shape) == 3:  # If single image, add batch dimension
+        masked_steps = np.expand_dims(masked_steps, axis=0)
 
-    # Argmax per valutare "quante volte" la classe originale si conserva
-    mask_classes = np.argmax(mask_preds, axis=-1) # takes the argmax along the class dimension, resulting in shape (iterations,)
+    if "yolo" in model_name.lower():
+        import torch
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        masked_steps = np.rint(masked_steps).astype(np.uint8)
+        results = model.predict(list(masked_steps), device=device, verbose=False)
+        probs = [result.probs for result in results]
+        mask_preds = np.array([prob.data.numpy() for prob in probs]) 
+        mask_classes = np.array([prob.top1 for prob in probs]) # shape: (iterations, num_classes)
+    else:
+        mask_preds = model.predict(masked_steps) # shape: (iterations, num_classes)
+        mask_classes = np.argmax(mask_preds, axis=-1) # takes the argmax along the class dimension, resulting in shape (iterations,)
 
     # Inizializzo i piani per ciascuna classe
     batch_planes = [[] for _ in range(len(labels))]
@@ -174,12 +192,12 @@ def normalize_image(image):
         return image
 
 
-def process_image(image_array, model, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance):
+def process_image(image_array, model, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance):
     """
     Process a single image to generate bubble masks and planes.
     Returns the predicted class, probability, and generated planes.
     """
-    predicted_index, predicted_probability = get_predicted_class(image_array, model)
+    predicted_index, predicted_probability = get_predicted_class(image_array, model, model_name)
     print(f"\tPredicted class: {class_names_fixed[predicted_index]} with probability: {predicted_probability*100:.2f}%")
 
     all_planes = [[] for _ in range(len(class_names_fixed))]
@@ -195,7 +213,7 @@ def process_image(image_array, model, class_names_fixed, bubble_radius, iteratio
         print(f"\tTesting with {num_bubbles} bubbles...")
 
         masked_images, masks = get_masks(image_array, bubble_radius, num_bubbles, iterations)
-        batch_planes, mask_classes = get_batch_planes(masked_images, masks, model, class_names_fixed)
+        batch_planes, mask_classes = get_batch_planes(masked_images, masks, model, model_name, class_names_fixed)
 
         true_plane_len = sum(1 for c in mask_classes if c == predicted_index)
         iteration_accuracy = true_plane_len / iterations
@@ -286,8 +304,8 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
     os.makedirs(output_folder, exist_ok=True)
 
     images = test_generator.x_data
-    probabilities = test_generator.y_data
-    labels = np.argmax(probabilities, axis=1)
+    onehot_y = test_generator.y_data
+    labels = np.argmax(onehot_y, axis=1)
 
     print(f"[INFO] Processing {len(labels)} images with model '{model_name}'...")
     # The structure will be:
@@ -301,7 +319,7 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
         os.makedirs(output_subfolder, exist_ok=True)
 
         predicted_index, predicted_probability, all_planes, history_of_num_bubbles = process_image(
-            image_array, model, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance
+            image_array, model, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance
         )
 
         save_planes_and_images(image_name, image_array, predicted_index, predicted_probability, all_planes, class_names_fixed, output_subfolder, history_of_num_bubbles)
