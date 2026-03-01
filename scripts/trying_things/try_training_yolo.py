@@ -28,8 +28,6 @@ TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_IMAGES_PATH
 #                       dropout=0.2, lr0=0.001, project='/content/drive/MyDrive/Colab Notebooks/HPC/finale/yolov8n',
 #                       name='yolov8n')#Ricorda di inserire il name corretto per la sottocartella
 
-# --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --l2_reg 0.00200041712955451
-
 parser = argparse.ArgumentParser(description='Training parameters for occlusion finetuning')
 parser.add_argument('--model_name', type=str, required=True, help='Model name. Default is PattLite', default='PattLite')
 parser.add_argument('--batch_size', type=int, required=False, help='Batch size', default=64)
@@ -39,6 +37,7 @@ parser.add_argument('--dropout_rate', type=float, required=True, help='Dropout r
 parser.add_argument('--freezing_module', type=int, required=True, choices=FREEZING_MODULES_LAYERS.keys(), help=f"Freezing module. Choose from: {list(FREEZING_MODULES_LAYERS.keys())}")
 parser.add_argument('--patience', type=int, required=False, default=3, help='Early stopping patience (default: 3)')
 parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file')
+parser.add_argument('--quick', action='store_true', help='If set, use a smaller subset of the data for a quick test run')
 args = parser.parse_args()
 
 if args.redirect_output:
@@ -81,10 +80,10 @@ print(f"========================================================================
 
 
 # example usage: 
-# >>> YOLO hpc
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 
-# >>> YOLO local
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 8  --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --freezing_module 2 --redirect_output
+# >>> YOLO hpc test
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --freezing_module 2 --quick
+# >>> YOLO local test
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 8  --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --freezing_module 2 --quick --redirect_output
 
 if __name__ == "__main__":
     training_folder_path = TRAIN_SET_IMAGES_PATH
@@ -99,7 +98,8 @@ if __name__ == "__main__":
 
         train_model_yolo_training_run(model, training_folder_path, val_folder_path,
                                       epochs=args.epochs, batch_size=args.batch_size, learning_rate=args.learning_rate,
-                                      freezing_module=args.freezing_module, dropout_rate=args.dropout_rate, patience=args.patience)
+                                      freezing_module=args.freezing_module, dropout_rate=args.dropout_rate, patience=args.patience,
+                                      quick_run=args.quick)
 
         test_acc = evaluate_model_yolo_training_run(model, test_folder_path, debug=False)
 
