@@ -8,7 +8,7 @@ from modules.config import OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH, OCCLUDED
                             OCCLUDED_TEST_SET_IMAGES_PATH,\
                             MLFLOW_DIR, CONSOLE_OUTPUTS_PATH, GLOBALS
 from modules.misc import Tee, get_timestamp
-from modules.yolo import evaluate_model_yolo_training_run, load_yolo_model, save_model_yolo_training_run, train_model_yolo_training_run
+from modules.yolo import evaluate_model_yolo_training_run, load_yolo_model, save_model_yolo_training_run, train_model_yolo_training_run, FREEZING_MODULES_LAYERS
 
 
 
@@ -19,26 +19,27 @@ TRAIN_SET_IMAGES_PATH = OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH
 VAL_SET_IMAGES_PATH = OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH
 TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_IMAGES_PATH
 
+# Training code from notebook:
+# results = model.train(data='/content/drive/MyDrive/Colab Notebooks/HPC/finale/dataset', epochs=300, batch=64, imgsz=128, save_period=3,
+#                       resume = True,
+#                       patience = 30, auto_augment ='autoaugment',
+#                       val=True,save_json=True, plots=True,cache=True,
+#                       mosaic = 0.0, freeze = 5,
+#                       dropout=0.2, lr0=0.001, project='/content/drive/MyDrive/Colab Notebooks/HPC/finale/yolov8n',
+#                       name='yolov8n')#Ricorda di inserire il name corretto per la sottocartella
 
+# --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --l2_reg 0.00200041712955451
 
 parser = argparse.ArgumentParser(description='Training parameters for occlusion finetuning')
-parser.add_argument('--unfreeze', type=int, required=True, help='Number of layers to unfreeze for fine-tuning. If not provided.')
-parser.add_argument('--l2_reg', type=float, required=True, help='L2 regularization parameter')
-parser.add_argument('--learning_rate', type=float, required=True, help='Learning rate')
-parser.add_argument('--dropout_rate', type=float, required=True, help='Dropout rate')
-parser.add_argument('--epochs', type=int, required=True, help='Training epochs')
 parser.add_argument('--model_name', type=str, required=True, help='Model name. Default is PattLite', default='PattLite')
 parser.add_argument('--batch_size', type=int, required=False, help='Batch size', default=64)
+parser.add_argument('--epochs', type=int, required=True, help='Training epochs')
+parser.add_argument('--learning_rate', type=float, required=True, help='Learning rate')
+parser.add_argument('--dropout_rate', type=float, required=True, help='Dropout rate')
+parser.add_argument('--freezing_module', type=int, required=True, choices=FREEZING_MODULES_LAYERS.keys(), help=f"Freezing module. Choose from: {list(FREEZING_MODULES_LAYERS.keys())}")
+parser.add_argument('--patience', type=int, required=False, default=3, help='Early stopping patience (default: 3)')
 parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file')
 args = parser.parse_args()
-
-# others
-OTHER_TRAINING_PARAMS = {
-    "TRAIN_ES_PATIENCE": 3,
-    "TRAIN_LR_PATIENCE": 2,
-    "ES_LR_MIN_DELTA": 0.0001,
-    "TRAIN_MIN_LR": 1e-6
-}
 
 if args.redirect_output:
     LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{get_timestamp()}__{__name__}__console_output.txt")
@@ -50,10 +51,16 @@ if args.redirect_output:
 else: 
     LOG_FILE_PATH = None
 
-tracking_uri = f"file://{os.path.abspath(MLFLOW_DIR)}"
-mlflow.set_tracking_uri(tracking_uri)
-experiment_name = f"try_training_{args.model_name}"
-mlflow.set_experiment(experiment_name)
+if os.name == 'nt':  # Windows
+    tracking_uri = os.path.abspath(MLFLOW_DIR)
+    mlflow.set_tracking_uri(tracking_uri)
+    experiment_name = f"try_training_{args.model_name}"
+    mlflow.set_experiment(experiment_name)
+else:
+    tracking_uri = f"file://{os.path.abspath(MLFLOW_DIR)}"
+    mlflow.set_tracking_uri(tracking_uri)
+    experiment_name = f"try_training_{args.model_name}"
+    mlflow.set_experiment(experiment_name)
 
 print(f"================================ SETTINGS ==================================")
 print(f"CONSTANTS: ")
@@ -63,9 +70,6 @@ print(f"\tTEST_SET_IMAGES_PATH: {TEST_SET_IMAGES_PATH}")
 print(f"ARGS: ")
 for arg_name, arg_value in vars(args).items():
     print(f"\t{arg_name}: {arg_value}")
-print(f"OTHER TRAINING PARAMS:")
-for key, value in OTHER_TRAINING_PARAMS.items():
-    print(f"\t{key}: {value}")
 print(f"MLFLOW:")
 print(f"\ttracking_uri: {tracking_uri}")
 print(f"\texperiment_name: {experiment_name}")
@@ -77,7 +81,10 @@ print(f"========================================================================
 
 
 # example usage: 
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training.py" --batch_size 8 --matching_amount 0.2 --val_occ_prob 0.5 --occ_prob 0.2 --model_name ConvNeXt --FT_EPOCH 300  --dropout_rate 0.5 --learning_rate  0.0001 --l2_reg 0.00200041712955451
+# >>> YOLO hpc
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 
+# >>> YOLO local
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 8  --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --freezing_module 2 --redirect_output
 
 if __name__ == "__main__":
     training_folder_path = TRAIN_SET_IMAGES_PATH
@@ -91,7 +98,8 @@ if __name__ == "__main__":
             mlflow.log_param(key, value)
 
         train_model_yolo_training_run(model, training_folder_path, val_folder_path,
-                                      epochs=args.epochs, batch_size=args.batch_size, learning_rate=args.learning_rate)
+                                      epochs=args.epochs, batch_size=args.batch_size, learning_rate=args.learning_rate,
+                                      freezing_module=args.freezing_module, dropout_rate=args.dropout_rate, patience=args.patience)
 
         test_acc = evaluate_model_yolo_training_run(model, test_folder_path, debug=False)
 

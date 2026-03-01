@@ -1,11 +1,130 @@
 import mlflow
-from sklearn.base import accuracy_score
+from sklearn.metrics import accuracy_score
 from ultralytics import YOLO
 import torch
 import os
 
 from modules.config import ALL_MODELS_PATHS, EMOTIONS, IMAGES_SHAPE, OCCFT_MODELS_FOLDER
 from modules.misc import get_timestamp
+
+
+
+# INFO on YOLO
+# Total modules: 99
+# Layers with parameters: 96
+#   0 |  | ClassificationModel
+#   1 | model | Sequential
+#   2 | model.0 | Conv
+#   3 | model.0.conv | Conv2d
+#   4 | model.0.bn | BatchNorm2d
+#   5 | model.0.act | SiLU
+#   6 | model.1 | Conv
+#   7 | model.1.conv | Conv2d
+#   8 | model.1.bn | BatchNorm2d
+#   9 | model.2 | C2f
+#  10 | model.2.cv1 | Conv
+#  11 | model.2.cv1.conv | Conv2d
+#  12 | model.2.cv1.bn | BatchNorm2d
+#  13 | model.2.cv2 | Conv
+#  14 | model.2.cv2.conv | Conv2d
+#  15 | model.2.cv2.bn | BatchNorm2d
+#  16 | model.2.m | ModuleList
+#  17 | model.2.m.0 | Bottleneck
+#  18 | model.2.m.0.cv1 | Conv
+#  19 | model.2.m.0.cv1.conv | Conv2d
+#  20 | model.2.m.0.cv1.bn | BatchNorm2d
+#  21 | model.2.m.0.cv2 | Conv
+#  22 | model.2.m.0.cv2.conv | Conv2d
+#  23 | model.2.m.0.cv2.bn | BatchNorm2d
+#  24 | model.3 | Conv
+#  25 | model.3.conv | Conv2d
+#  26 | model.3.bn | BatchNorm2d
+#  27 | model.4 | C2f
+#  28 | model.4.cv1 | Conv
+#  29 | model.4.cv1.conv | Conv2d
+#  30 | model.4.cv1.bn | BatchNorm2d
+#  31 | model.4.cv2 | Conv
+#  32 | model.4.cv2.conv | Conv2d
+#  33 | model.4.cv2.bn | BatchNorm2d
+#  34 | model.4.m | ModuleList
+#  35 | model.4.m.0 | Bottleneck
+#  36 | model.4.m.0.cv1 | Conv
+#  37 | model.4.m.0.cv1.conv | Conv2d
+#  38 | model.4.m.0.cv1.bn | BatchNorm2d
+#  39 | model.4.m.0.cv2 | Conv
+#  40 | model.4.m.0.cv2.conv | Conv2d
+#  41 | model.4.m.0.cv2.bn | BatchNorm2d
+#  42 | model.4.m.1 | Bottleneck
+#  43 | model.4.m.1.cv1 | Conv
+#  44 | model.4.m.1.cv1.conv | Conv2d
+#  45 | model.4.m.1.cv1.bn | BatchNorm2d
+#  46 | model.4.m.1.cv2 | Conv
+#  47 | model.4.m.1.cv2.conv | Conv2d
+#  48 | model.4.m.1.cv2.bn | BatchNorm2d
+#  49 | model.5 | Conv
+#  50 | model.5.conv | Conv2d
+#  51 | model.5.bn | BatchNorm2d
+#  52 | model.6 | C2f
+#  53 | model.6.cv1 | Conv
+#  54 | model.6.cv1.conv | Conv2d
+#  55 | model.6.cv1.bn | BatchNorm2d
+#  56 | model.6.cv2 | Conv
+#  57 | model.6.cv2.conv | Conv2d
+#  58 | model.6.cv2.bn | BatchNorm2d
+#  59 | model.6.m | ModuleList
+#  60 | model.6.m.0 | Bottleneck
+#  61 | model.6.m.0.cv1 | Conv
+#  62 | model.6.m.0.cv1.conv | Conv2d
+#  63 | model.6.m.0.cv1.bn | BatchNorm2d
+#  64 | model.6.m.0.cv2 | Conv
+#  65 | model.6.m.0.cv2.conv | Conv2d
+#  66 | model.6.m.0.cv2.bn | BatchNorm2d
+#  67 | model.6.m.1 | Bottleneck
+#  68 | model.6.m.1.cv1 | Conv
+#  69 | model.6.m.1.cv1.conv | Conv2d
+#  70 | model.6.m.1.cv1.bn | BatchNorm2d
+#  71 | model.6.m.1.cv2 | Conv
+#  72 | model.6.m.1.cv2.conv | Conv2d
+#  73 | model.6.m.1.cv2.bn | BatchNorm2d
+#  74 | model.7 | Conv
+#  75 | model.7.conv | Conv2d
+#  76 | model.7.bn | BatchNorm2d
+#  77 | model.8 | C2f
+#  78 | model.8.cv1 | Conv
+#  79 | model.8.cv1.conv | Conv2d
+#  80 | model.8.cv1.bn | BatchNorm2d
+#  81 | model.8.cv2 | Conv
+#  82 | model.8.cv2.conv | Conv2d
+#  83 | model.8.cv2.bn | BatchNorm2d
+#  84 | model.8.m | ModuleList
+#  85 | model.8.m.0 | Bottleneck
+#  86 | model.8.m.0.cv1 | Conv
+#  87 | model.8.m.0.cv1.conv | Conv2d
+#  88 | model.8.m.0.cv1.bn | BatchNorm2d
+#  89 | model.8.m.0.cv2 | Conv
+#  90 | model.8.m.0.cv2.conv | Conv2d
+#  91 | model.8.m.0.cv2.bn | BatchNorm2d
+#  92 | model.9 | Classify
+#  93 | model.9.conv | Conv
+#  94 | model.9.conv.conv | Conv2d
+#  95 | model.9.conv.bn | BatchNorm2d
+#  96 | model.9.pool | AdaptiveAvgPool2d
+#  97 | model.9.drop | Dropout
+#  98 | model.9.linear | Linear
+
+FREEZING_MODULES_LAYERS = {
+    # train head only unfrozen
+    9: 92,
+    # last stages
+    7: 74,
+    # last two stages
+    5: 49,
+    # central layers
+    3: 24,
+    # most of the model unfrozen
+    2: 6,
+}
+
 
 
 
@@ -60,7 +179,15 @@ def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
 
 
 def train_model_yolo_training_run(model, train_folder, val_folder,
-                                  epochs, batch_size, learning_rate):
+                                  epochs, batch_size, learning_rate, freezing_module, dropout_rate, patience):
+    # Training code from notebook:
+    # results = model.train(data='/content/drive/MyDrive/Colab Notebooks/HPC/finale/dataset', epochs=300, batch=64, imgsz=128, save_period=3,
+    #                       resume = True,
+    #                       patience = 30, auto_augment ='autoaugment',
+    #                       val=True,save_json=True, plots=True,cache=True,
+    #                       mosaic = 0.0, freeze = 5,
+    #                       dropout=0.2, lr0=0.001, project='/content/drive/MyDrive/Colab Notebooks/HPC/finale/yolov8n',
+    #                       name='yolov8n')#Ricorda di inserire il name corretto per la sottocartella
 
     # Ensure folders exist
     if not os.path.isdir(train_folder) or not os.path.isdir(val_folder):
@@ -74,14 +201,15 @@ def train_model_yolo_training_run(model, train_folder, val_folder,
     }
 
     imgsz = IMAGES_SHAPE[0]
+    freezing_layer = FREEZING_MODULES_LAYERS[freezing_module]
 
     print(f"Starting YOLO training: train={train_folder}, val={val_folder}, epochs={epochs}, batch={batch_size}, lr0={learning_rate}")
     result = None
     try:
-        train_kwargs = dict(data=data_spec, epochs=int(epochs), batch=int(batch_size))
-        train_kwargs['imgsz'] = imgsz
-        train_kwargs['lr0'] = learning_rate
-
+        train_kwargs = dict(data=data_spec, imgsz=int(imgsz), batch=int(batch_size), auto_augment='autoaugment',
+                            epochs=int(epochs), save=True, save_period=3, patience=patience,
+                            val=True, plots=True, cache=True, 
+                            mosaic=0.0, freeze=freezing_layer, dropout=dropout_rate, lr0=learning_rate)
         result = model.train(**train_kwargs)
         print("YOLO training finished.")
     except Exception as e:

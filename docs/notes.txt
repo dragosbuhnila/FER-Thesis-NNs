@@ -57,3 +57,6 @@ layers: accuracies all ok
 	- vgg			12 expected 12 found	OK 	(removed SEQUENTIAL 2 out of 2)
 	
 	
+	
+> RUN bubbles YOLO and then CSM bubbles for YOLO and check if results make sense, since as of now they looked a little bit all over the place, having white shit even outside the face area
+> RUN training
