@@ -186,6 +186,8 @@ parser.add_argument('--model_name', type=str, help="Specify a single model name 
 parser.add_argument('--test_set', type=str, choices=['occluded', 'original', 'original-180'], help="Specify which test set to use.")
 parser.add_argument('--output_folder', type=str, help="Base folder path for saving Grad-CAM maps.")
 parser.add_argument('--no_layer_scale', action='store_true', help="Do not use LayerScale in the model.")
+parser.add_argument('--sequential', action='store_true', help="Force the use of the sequential model wrapper for Grad-CAM, if models are pattlite or vgg.")
+parser.add_argument('--only_show_layer_names', action='store_true', help="Only print the target layer names for Grad-CAM and exit, without generating saliency maps.")
 args = parser.parse_args()
 
 # MODELS
@@ -196,6 +198,7 @@ elif args.models_set == 'federica':
 else:
     raise ValueError("Invalid --models_set argument. Use 'occft' or 'federica'.")
 
+# SINGLE MODEL
 if args.model_name:
     if args.model_name in MODEL_NAMES:
         MODEL_NAMES = [args.model_name]
@@ -211,6 +214,11 @@ elif args.test_set == 'original-180':
     TEST_SET_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
 else:
     raise ValueError("Invalid --test_set argument. Use 'occluded', 'original', or 'original-180'.")
+
+# SEQUENTIAL
+if args.sequential:
+    if not "pattlite" in MODEL_NAMES[0].lower() and not "vgg" in MODEL_NAMES[0].lower():
+        print(f"[WARNING] --sequential flag is set but the selected model(s) do not seem to be pattlite or vgg models. This flag will be ignored.")
 
 # OUTPUT FOLDER
 OUTPUT_BASE_FOLDER_PATH = args.output_folder if args.output_folder else SAVED_IMAGES_PATH
@@ -253,7 +261,14 @@ print(f"==============================")
 
 # Example usage:
 # >>> test run
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --redirect_output --models_set occft --test_set occluded
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --redirect_output --models_set occft --test_set occluded --sequential
+# >>> pattlite only
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occluded --model_name occft_pattlite
+# >>> vgg only
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occluded --model_name occft_vgg19
+# >>> show layer names federica
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set federica --test_set original --only_show_layer_names
+
 if __name__ == "__main__":
     output_run_path = os.path.join(OUTPUT_BASE_FOLDER_PATH, RUN_NAME)
     os.makedirs(output_run_path, exist_ok=True)
@@ -269,14 +284,16 @@ if __name__ == "__main__":
         # _______________________________________________________________________________________
 
         # 1) Get target layer names for Grad-CAM, convert to sequential model if needed, and setup the gradcam task
-        if "pattlite" in model_name or "vgg" in model_name:
+        if ("pattlite" in model_name or "vgg" in model_name) and args.sequential:
+            print(f"[INFO] Model {model_name} is a pattlite or vgg model and --sequential flag is set, using sequential model wrapper for Grad-CAM")
             target_layer_names = get_layer_names(model, model_name)
 
             sequential_model = build_new_model(model, model_name)
             model = sequential_model
             gradcam_model = sequential_model
             clone = True
-        else: 
+        else:
+            print(f"[INFO] Model {model_name} is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM")
             target_layer_names = get_layer_names(model.get_layer('base_model'), model_name)
 
             gradcam_model = model.get_layer('base_model')
@@ -285,6 +302,10 @@ if __name__ == "__main__":
         print(f"[DEBUG] Successfully loaded model {model_name}. Target layers ({len(target_layer_names)} layers):")
         for target_layer_name in target_layer_names:
             print(f"\t- {target_layer_name}")
+
+        if args.only_show_layer_names:
+            print(f"[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.")
+            continue
         
         print(f"[INFO] Setting up Grad-CAM for model {model_name} with clone={clone}")
         gradcam = Gradcam(gradcam_model, model_modifier=ReplaceToLinear(), clone=clone)
