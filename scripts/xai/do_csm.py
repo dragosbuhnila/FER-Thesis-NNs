@@ -474,6 +474,7 @@ parser = argparse.ArgumentParser(description="Generate bubble-based explanations
 parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
 parser.add_argument('--run_name',           type=str,  required=True,               help="Name for the run.")
 parser.add_argument('--input_base_folder',  type=str,  default=SAVED_IMAGES_PATH,   help="Base folder where saliency maps are stored.")
+parser.add_argument('--xai_method',         type=str,  required=True,   choices=["extpert", "gradcam"], help="XAI method to use for generating explanations: either extpert or gradcam.")
 args = parser.parse_args()
 
 # RUN
@@ -519,8 +520,10 @@ print(f"==============================")
 # =================================================================================================================
 
 # Example usage:
-# >>> test run
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras
+# >>> test run extpert
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras --xai_method extpert
+# >>> test run gradcam
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260227-174619_quick-run_occft-models_occluded-testset_do_explainability_gradcam_keras --xai_method gradcam
 def main():
     """
     Main function to process all models and generate Canonical Saliency Maps (CSM).
@@ -542,8 +545,18 @@ def main():
     # Process each model
     for model_name in model_names:
         print(f"Processing model: {model_name}")
-        input_saliencies_path = os.path.join(SAL_MAPS_FOLDER, model_name)
-        process_model(model_name, input_saliencies_path, TEST_SET_IMAGES_PATH, EXTRACT_IMAGE_INDEX_FUNCTION)
+        # if we are doing gradcam then we need to loop through all the layer folders too
+        if args.xai_method == "gradcam":
+            model_saliencies_path = os.path.join(SAL_MAPS_FOLDER, model_name)
+            layer_folders = [folder for folder in os.listdir(model_saliencies_path) if os.path.isdir(os.path.join(model_saliencies_path, folder))]
+            for layer_folder in layer_folders:
+                input_saliencies_path = os.path.join(SAL_MAPS_FOLDER, model_name, layer_folder)
+                process_model(model_name, input_saliencies_path, TEST_SET_IMAGES_PATH, EXTRACT_IMAGE_INDEX_FUNCTION)
+        elif args.xai_method == "extpert":
+            input_saliencies_path = os.path.join(SAL_MAPS_FOLDER, model_name)
+            process_model(model_name, input_saliencies_path, TEST_SET_IMAGES_PATH, EXTRACT_IMAGE_INDEX_FUNCTION)
+        else:
+            raise ValueError(f"Unsupported XAI method: {args.xai_method}")
 
     print("All models processed successfully.")
 
