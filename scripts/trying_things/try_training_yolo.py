@@ -52,8 +52,7 @@ else:
     LOG_FILE_PATH = None
 
 if os.name == 'nt':  # Windows
-    tracking_uri = os.path.abspath(MLFLOW_DIR)
-    mlflow.set_tracking_uri(tracking_uri)
+    tracking_uri = None
     experiment_name = f"try_training_{args.model_name}"
     mlflow.set_experiment(experiment_name)
 else:
@@ -71,7 +70,8 @@ print(f"ARGS: ")
 for arg_name, arg_value in vars(args).items():
     print(f"\t{arg_name}: {arg_value}")
 print(f"MLFLOW:")
-print(f"\ttracking_uri: {tracking_uri}")
+if tracking_uri is not None:
+    print(f"\ttracking_uri: {tracking_uri}")
 print(f"\texperiment_name: {experiment_name}")
 print(f"GLOBALS:")
 for key, value in GLOBALS.items():
