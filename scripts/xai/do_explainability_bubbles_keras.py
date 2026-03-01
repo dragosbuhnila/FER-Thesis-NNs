@@ -17,7 +17,7 @@ from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_
 parser = argparse.ArgumentParser(description="Generate bubble-based explanations for model predictions on a test set.")
 parser.add_argument('--quick',              action='store_true',                    help="Run on a small subset of the test data (1 batch).")
 parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
-parser.add_argument('--models_set',         type=str,   choices=['occft', 'federica'],        help="Specify which set of models to use: 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
+parser.add_argument('--models_set',         type=str,   choices=['occft', 'federica', 'yolo_fede', 'yolo_occft'],        help="Specify which set of models to use: 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
 parser.add_argument('--test_set',           type=str,   choices=['occluded', 'original', 'original-180'],   help="Specify which test set to use.")
 parser.add_argument('--iterations',         type=int,   default=200,                help="Number of iterations for bubble generation.")
 parser.add_argument('--bubble_radius',      type=int,   default=26,                 help="Radius of bubbles in pixels.")
@@ -31,8 +31,13 @@ if args.models_set == 'occft':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "occft" in model_name.lower()]
 elif args.models_set == 'federica':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "finetuning" in model_name.lower()]
+elif args.models_set == 'yolo_fede':
+    MODEL_NAMES = ["yolo_last"]
+elif args.models_set == 'yolo_occft':
+    MODEL_NAMES = ["yolo_occft"]
 else:
     raise ValueError("Invalid --models_set argument. Use 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
+
 # Check if all model paths exist
 for model_name in MODEL_NAMES:
     model_path = ALL_MODELS_PATHS[model_name]
@@ -95,6 +100,8 @@ print(f"==============================")
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set occft --test_set original
 # >>> fede models on 180-rotated set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set federica --test_set original-180
+# >>> YOLO on occluded set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_bubbles_keras.py" --models_set federica --model yolo_last --test_set occluded
 if __name__ == "__main__":
     print("Loading test generator...")
     test_generator = load_test_generator(TEST_SET, small_subset=args.quick)  # Set to True for quick testing, False for full evaluation

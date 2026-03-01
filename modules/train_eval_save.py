@@ -109,8 +109,11 @@ def evaluate_model(model, model_name, test_generator, yolo_test_folder_path=None
     return test_loss, test_acc
 
 
+# ==========================================================================================
+# ==================================== KERAS TRAINING ======================================    
+# ==========================================================================================
 
-def addestra_modello(model, train_generator, valid_generator, test_generator, TRAIN_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name):
+def train_model_keras_training_run(model, train_generator, valid_generator, test_generator, TRAIN_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name):
     early_stopping_callback = tf.keras.callbacks.EarlyStopping(
         monitor='val_categorical_accuracy', 
         patience=TRAIN_ES_PATIENCE, 
@@ -163,7 +166,7 @@ def addestra_modello(model, train_generator, valid_generator, test_generator, TR
 
     return history
 
-def valuta_modello(model, test_generator, run, model_name):
+def evaluate_model_keras_training_run(model, test_generator, run, model_name):
     test_loss, test_acc = model.evaluate(test_generator)
 
     # # Loggare l'accuratezza del test su Neptune
@@ -183,12 +186,7 @@ def valuta_modello(model, test_generator, run, model_name):
 
     return test_loss, test_acc
 
-def valuta_modello_completo(model, test_generator, run, model_name):
-    test_loss, test_acc = model.evaluate(test_generator)
-
-    return test_loss, test_acc
-
-def salva_modello(model, run, model_name, test_acc):
+def save_model_keras_training_run(model, run, model_name, test_acc):
     base_name = f'{model_name}_occfinetuning'
     base_path = os.path.join(OCCFT_MODELS_FOLDER, f"{base_name}__{get_timestamp()}__{test_acc:.4f}")
     
@@ -251,3 +249,7 @@ def salva_modello(model, run, model_name, test_acc):
             print(f"Model logged to MLflow with name: {base_name}_mlflow_model without signature.")
     except Exception as e:
         print(f"An error occurred while logging the model to MLflow: {e}")
+
+# ==========================================================================================
+# ============================== END OF KERAS TRAINING =====================================
+# ==========================================================================================

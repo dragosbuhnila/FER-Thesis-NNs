@@ -93,6 +93,11 @@ OCCLUDED_TRAIN_VAL_SET_H5_PATH = 	os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH,
 OCCLUDED_TRAIN_SET_IMAGES_PATH = 	os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, "images", "train")
 OCCLUDED_VAL_SET_IMAGES_PATH = 		os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, "images", "val")
 # ______________________________________________________________________
+# > OCCLUDED + ORIGINAL TRAIN VAL SET (for YOLO)
+OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_and_original_trainval_set")
+OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images", "train")
+OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images", "val")
+# ______________________________________________________________________
 # > BOSPHORUS_TEST_HQ                   # this h5 will be full size not resized to small images
 BOSPHORUS_TEST_HQ_BASE_PATH = 		os.path.join(DATASETS_PATH, "bosphorus_test_HQ")
 BOSPHORUS_TEST_HQ_IMAGES_PATH = 	os.path.join(BOSPHORUS_TEST_HQ_BASE_PATH, "bosphorus_test_HQ")

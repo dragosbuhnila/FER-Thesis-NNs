@@ -10,7 +10,7 @@ from modules.config import MLFLOW_DIR, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TRAIN
 from modules.data__load import load_offline_data_generators
 from modules.data import refresh_show_flags
 from modules.model import build_model_occfinetuning
-from modules.train_eval_save import addestra_modello, valuta_modello
+from modules.train_eval_save import train_model_keras_training_run, evaluate_model_keras_training_run
 from modules.misc import Tee, get_timestamp
 
 
@@ -158,9 +158,9 @@ def main():
                         print(f"\tdropout_rate: {params['dropout_rate']}")
 
                     model = build_model_occfinetuning(params['learning_rate'], params['dropout_rate'], args.l2_reg, initial_bias, model_name, unfreeze=unfreeze)
-                    history = addestra_modello(model, train_generator, valid_generator, test_generator, TRAIN_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, None, model_name)
+                    history = train_model_keras_training_run(model, train_generator, valid_generator, test_generator, TRAIN_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, None, model_name)
 
-                    test_loss, test_acc = valuta_modello(model, test_generator, None, model_name)
+                    test_loss, test_acc = evaluate_model_keras_training_run(model, test_generator, None, model_name)
 
                     # compute and log final trial metrics (val best / loss at best)
                     val_acc = float(np.max(history.history['val_categorical_accuracy']))

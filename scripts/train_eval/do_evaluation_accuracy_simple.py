@@ -12,7 +12,7 @@ from modules.config import  ACCURACY_RESULTS_PATH, ALL_MODELS_PATHS, \
                             ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_IMAGES_PATH
 from modules.data__load import load_test_generator
 from modules.model import load_model
-from modules.train_eval_save import valuta_modello, evaluate_model
+from modules.train_eval_save import evaluate_model_keras_training_run, evaluate_model
 
 
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         # b) Evaluate the model
         if not args.yolo_use_folders_instead_of_gen or "yolo" not in MODEL_NAME.lower():
             if USA_VALUTA_INVECE_DI_EVALUATE:
-                test_loss, test_acc = valuta_modello(model, test_generator, None, MODEL_NAME)
+                test_loss, test_acc = evaluate_model_keras_training_run(model, test_generator, None, MODEL_NAME)
             else:
                 test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=args.debug)
         else:
