@@ -114,15 +114,15 @@ from modules.misc import get_timestamp
 
 FREEZING_MODULES_LAYERS = {
     # train head only unfrozen
-    9: 92,
+    "train_head": 9,
     # last stages
-    7: 74,
+    "last_stages": 7,
     # last two stages
-    5: 49,
+    "last_two_stages": 5,
     # central layers
-    3: 24,
+    "central_layers": 3,
     # most of the model unfrozen
-    2: 6,
+    "most_unfrozen": 2,
 }
 
 
@@ -178,9 +178,13 @@ def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
     return None, accuracy
 
 
-def train_model_yolo_training_run(model, train_folder, val_folder,
-                                  epochs, batch_size, learning_rate, freezing_module, dropout_rate, patience,
+def train_model_yolo_training_run(model, trainval_folder,
+                                  epochs, batch_size, freezing_module, dropout_rate, patience,
                                   quick_run=False):
+    # To use your own dataset with Ultralytics YOLO, ensure it follows the specified directory format required for the classification task, 
+    # with separate train, test, and optionally val directories, and subdirectories for each class containing the respective images. 
+    # Once your dataset is structured correctly, point # the data argument to your dataset's root directory when initializing the training script. 
+
     # Training code from notebook:
     # results = model.train(data='/content/drive/MyDrive/Colab Notebooks/HPC/finale/dataset', epochs=300, batch=64, imgsz=128, save_period=3,
     #                       resume = True,
@@ -191,26 +195,19 @@ def train_model_yolo_training_run(model, train_folder, val_folder,
     #                       name='yolov8n')#Ricorda di inserire il name corretto per la sottocartella
 
     # Ensure folders exist
-    if not os.path.isdir(train_folder) or not os.path.isdir(val_folder):
-        raise ValueError(f"Train/val folders not found: {train_folder}, {val_folder}")
-
-    data_spec = {
-        "train": train_folder,
-        "val": val_folder,
-        "nc": len(EMOTIONS),
-        "names": {i: name for i, name in enumerate(EMOTIONS)}
-    }
+    if not os.path.isdir(trainval_folder):
+        raise ValueError(f"Train/val folders not found: {trainval_folder}")
 
     imgsz = IMAGES_SHAPE[0]
-    freezing_layer = FREEZING_MODULES_LAYERS[freezing_module]
+    freezing_layer = FREEZING_MODULES_LAYERS[freezing_module] # apparently freeze parameter = X freezes module X instead of layer number X
 
-    print(f"Starting YOLO training: train={train_folder}, val={val_folder}, epochs={epochs}, batch={batch_size}, lr0={learning_rate}")
+    print(f"Starting YOLO training: trainval={trainval_folder}, epochs={epochs}, batch={batch_size}")
     result = None
     try:
-        train_kwargs = dict(data=data_spec, imgsz=int(imgsz), batch=int(batch_size), auto_augment='autoaugment',
+        train_kwargs = dict(data=trainval_folder, imgsz=int(imgsz), batch=int(batch_size), auto_augment='autoaugment',
                             epochs=int(epochs), save=True, save_period=3, patience=patience,
                             val=True, plots=True, cache=True, 
-                            mosaic=0.0, freeze=freezing_layer, dropout=dropout_rate, lr0=learning_rate)
+                            mosaic=0.0, freeze=freezing_layer, dropout=dropout_rate) 
         if quick_run:
             # For quick run, we can also use a smaller subset of the data by leveraging the `batch` parameter and early stopping
             train_kwargs['fraction'] = 0.01  

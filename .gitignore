@@ -9,6 +9,8 @@
 /results_light/saved_images/*
 /mlruns
 mlruns.zip
+/runs
+/mlflow_windows.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

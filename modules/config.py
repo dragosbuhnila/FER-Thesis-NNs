@@ -33,6 +33,7 @@ AUXILIARY_DATA_DIR = 	os.path.join(DATA_BASE_DIR, "auxiliary")
 MODULES_DIR = 			os.path.join(PROJECT_ROOT, "modules")
 MODELS_DIR = 			os.path.join(DATA_BASE_DIR, "models")
 MLFLOW_DIR = 			os.path.join(PROJECT_ROOT, "mlruns")
+MLFLOW_DB_WINDOWS = 	os.path.join(PROJECT_ROOT, "mlflow_windows.db")
 OUT_ERR_DIR = 			os.path.join(PROJECT_ROOT, "out_err")
 
 # 1a) Emotions
@@ -95,6 +96,7 @@ OCCLUDED_VAL_SET_IMAGES_PATH = 		os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, 
 # ______________________________________________________________________
 # > OCCLUDED + ORIGINAL TRAIN VAL SET (for YOLO)
 OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_and_original_trainval_set")
+OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_YOLO_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images")
 OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images", "train")
 OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images", "val")
 # ______________________________________________________________________
