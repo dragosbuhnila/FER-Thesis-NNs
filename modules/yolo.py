@@ -179,7 +179,8 @@ def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
 
 
 def train_model_yolo_training_run(model, train_folder, val_folder,
-                                  epochs, batch_size, learning_rate, freezing_module, dropout_rate, patience):
+                                  epochs, batch_size, learning_rate, freezing_module, dropout_rate, patience,
+                                  quick_run=False):
     # Training code from notebook:
     # results = model.train(data='/content/drive/MyDrive/Colab Notebooks/HPC/finale/dataset', epochs=300, batch=64, imgsz=128, save_period=3,
     #                       resume = True,
@@ -210,6 +211,10 @@ def train_model_yolo_training_run(model, train_folder, val_folder,
                             epochs=int(epochs), save=True, save_period=3, patience=patience,
                             val=True, plots=True, cache=True, 
                             mosaic=0.0, freeze=freezing_layer, dropout=dropout_rate, lr0=learning_rate)
+        if quick_run:
+            # For quick run, we can also use a smaller subset of the data by leveraging the `batch` parameter and early stopping
+            train_kwargs['fraction'] = 0.01  
+        
         result = model.train(**train_kwargs)
         print("YOLO training finished.")
     except Exception as e:

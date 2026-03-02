@@ -54,6 +54,7 @@ sbatch ./sbatch/sbatch_xai/do_explainability_extpert_keras_occft_original.sbatch
 # bubbles
 sbatch ./sbatch/sbatch_xai/do_csm_bubbles_keras_occft_occluded.sbatch
 sbatch ./sbatch/sbatch_xai/do_csm_bubbles_keras_occft_original.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_bubbles_yolo_occft_occluded.sbatch
 # extpert
 sbatch ./sbatch/sbatch_xai/do_csm_extpert_keras_occft_occluded.sbatch
 sbatch ./sbatch/sbatch_xai/do_csm_extpert_keras_occft_original.sbatch

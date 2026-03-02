@@ -121,7 +121,7 @@ def get_batch_planes(masked_images, masks, model, model_name, labels):
         masked_steps = np.rint(masked_steps).astype(np.uint8)
         results = model.predict(list(masked_steps), device=device, verbose=False)
         probs = [result.probs for result in results]
-        mask_preds = np.array([prob.data.numpy() for prob in probs]) 
+        mask_preds = np.array([prob.data.cpu().numpy() for prob in probs]) 
         mask_classes = np.array([prob.top1 for prob in probs]) # shape: (iterations, num_classes)
     else:
         mask_preds = model.predict(masked_steps) # shape: (iterations, num_classes)
