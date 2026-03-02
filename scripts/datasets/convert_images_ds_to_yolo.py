@@ -3,7 +3,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from tqdm import tqdm
 
-from modules.config import OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH, OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH
+from modules.config import OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH, OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH,\
+                            EMOTIONS
 
 
 
@@ -35,19 +36,28 @@ if __name__ == "__main__":
 
     # Go through all images, extract gt, make it caps, and that will be the class, so save the path of each image in a dictionary and thus move them to the new folder structure
     # for split_path in [OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH, OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH]:
-    # for split_path in [OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH]:
-    for split_path in [OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH]:
+    for split_path in [OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH]:
+    # for split_path in [OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH]:
         new_split_path = os.path.join(os.path.dirname(split_path), os.path.basename(split_path) + "_new")
         # Find the files and compute the corresponding new paths
         old_paths_to_new_paths = {}
         images_count = 0
         all_files = []
+        all_dirs = set()
 
         # Collect all files first
         for root, dirs, files in os.walk(split_path):
+            for directory in dirs:
+                all_dirs.add(directory)
             for file in files:
                 if file.endswith(".png"):
                     all_files.append((root, file))
+
+        # Check if process has not already been done
+        for emotion in EMOTIONS:
+            if emotion in all_dirs:
+                print(f"[WARNING] Found directory named '{emotion}' in {split_path}. This might indicate that the conversion process has already been done. Please check the directory structure before proceeding.")
+                exit(1)
 
         # Use tqdm to iterate over the collected files
         for root, file in tqdm(all_files, desc=f"Processing {split_path}"):

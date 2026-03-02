@@ -42,7 +42,7 @@ pwd
 
 
 
-COMMAND_TO_RUN="./scripts/xai/do_explainability_bubbles_keras.py --models_set occft --test_set occluded --model yolo_fede"
+COMMAND_TO_RUN="./scripts/xai/do_explainability_bubbles_keras.py --models_set occft --test_set occluded --model occft_yolo"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

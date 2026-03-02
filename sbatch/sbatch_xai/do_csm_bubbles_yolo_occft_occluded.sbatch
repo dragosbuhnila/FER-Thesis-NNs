@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_unzip_result
+#SBATCH --job-name=dbuh_do_csm_bubbles_yolo_occft_occluded
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=01:00:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
@@ -21,13 +22,17 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
+
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,9 +41,9 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="unzip data/datasets/occluded_trainval_set_yolo_ver.zip -d data/datasets/occluded_trainval_set_yolo_ver"
+COMMAND_TO_RUN="./scripts/xai/do_csm_bubbles.py --run_name 20260301-170747_bubbles_cmplt-run_yolo_fede-models_occluded-testset"
 echo "Now running $COMMAND_TO_RUN"
-$COMMAND_TO_RUN
+python $COMMAND_TO_RUN
 
 
 echo "==================================================================================="

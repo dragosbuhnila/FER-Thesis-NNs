@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_zip_mlruns
+#SBATCH --job-name=dbuh_zip_occluded_trainval_set_yolo_ver
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
@@ -36,7 +36,7 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="zip -r mlruns.zip mlruns"
+COMMAND_TO_RUN="zip -r data/datasets/occluded_and_original_trainval_occ8_set.zip data/datasets/occluded_and_original_trainval_occ8_set"
 echo "Now running $COMMAND_TO_RUN"
 $COMMAND_TO_RUN
 

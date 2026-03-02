@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_unzip_result
+#SBATCH --job-name=dbuh_watch
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
-#SBATCH --time=01:00:00
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
 #SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
@@ -36,12 +36,12 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="unzip data/datasets/occluded_trainval_set_yolo_ver.zip -d data/datasets/occluded_trainval_set_yolo_ver"
-echo "Now running $COMMAND_TO_RUN"
-$COMMAND_TO_RUN
 
 
-echo "==================================================================================="
+echo "running watch -n 2 'du -sh data/datasets'"
+watch -n 2 'du -sh data/datasets'
+
+
 echo "Job ended at:"
 python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 

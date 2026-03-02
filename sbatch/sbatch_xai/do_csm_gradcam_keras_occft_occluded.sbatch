@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_try_training_YOLO
+#SBATCH --job-name=dbuh_do_csm_gradcam_keras_occft_occluded
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a100
+#SBATCH --partition=gpu_a40
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=40G
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
@@ -28,6 +28,7 @@ export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 echo "=========================================================================="
 echo "Activated venv!"
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
@@ -40,11 +41,15 @@ pwd
 # =====================================================================================
 
 
-# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --freezing_module 2 --quick
-SCRIPT="./scripts/trying_things/try_training_yolo.py --model_name yolo_last --batch_size 64 --epochs 10 --learning_rate 0.0001 --dropout_rate 0.3 --freezing_module 2 --quick"
-echo "Now running $SCRIPT"
-python $SCRIPT
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260227-174619_quick-run_occft-models_occluded-testset_do_explainability_gradcam_keras --xai_method gradcam
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --run_name 20260227-232502_cmplt-run_occft-models_occluded-testset_do_explainability_gradcam_keras_merged --xai_method gradcam"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
+
+echo "==================================================================================="
+echo "Job ended at:"
+python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

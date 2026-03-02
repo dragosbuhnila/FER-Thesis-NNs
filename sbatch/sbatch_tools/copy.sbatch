@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_copy
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
-#SBATCH --time=00:10:00
+#SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
@@ -36,8 +36,8 @@ echo "==========================================================================
 # =====================================================================================
 
 
-SOURCE="/home/dbuhnila/data_backup_260129-155400/*"
-DEST="/home/dbuhnila/models/FER-Thesis-NNs/data"
+SOURCE="/home/dbuhnila/models/FER-Thesis-NNs/data/datasets/occluded_train_val_set/images"
+DEST="/home/dbuhnila/models/FER-Thesis-NNs/data/datasets/occluded_and_original_train_val_set/"
 
 COMMAND="RUNNING: cp -r $SOURCE $DEST"
 

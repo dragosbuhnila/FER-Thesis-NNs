@@ -1,0 +1,13 @@
+With yolo I will handle the occlusion ratio merely with duplciating images from the original set:
+
+occ_ratio of 0.8 means unocc ratio of 0.2:  (236 is the 236k images in the occluded training set)
+x/(236+x)=0.2 => 
+x = 236*0.2 + 0.2x => 
+0.8x = 47.257 => 
+x = 59
+
+
+x/(58.5+x)=0.2 =>
+x = 11.7 + 0.2x =>
+0.8x = 11.7 =>
+x = 14.625

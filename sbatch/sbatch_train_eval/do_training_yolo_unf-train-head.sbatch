@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_unzip_result
+#SBATCH --job-name=dbuh_do_training_yolo_unf-train-head
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=01:00:00
+#SBATCH --partition=gpu_a100
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=40G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
@@ -21,13 +22,16 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
+
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,14 +40,11 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="unzip data/datasets/occluded_trainval_set_yolo_ver.zip -d data/datasets/occluded_trainval_set_yolo_ver"
-echo "Now running $COMMAND_TO_RUN"
-$COMMAND_TO_RUN
+# & "C:/Users/Dragos/.conda/envs/fer-thesis/python.exe" "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/trying_things/try_training_yolo.py" --model_name yolo_last --batch_size 64 --epochs 100 --dropout_rate 0.3 --freezing_module most_unfrozen --quick
+SCRIPT="./scripts/train_eval/do_training_yolo.py --model_name yolo_last --batch_size 64 --epochs 100 --dropout_rate 0.3 --freezing_module train_head"
+echo "Now running $SCRIPT"
+python $SCRIPT
 
-
-echo "==================================================================================="
-echo "Job ended at:"
-python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

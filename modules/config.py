@@ -95,10 +95,10 @@ OCCLUDED_TRAIN_SET_IMAGES_PATH = 	os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH,
 OCCLUDED_VAL_SET_IMAGES_PATH = 		os.path.join(OCCLUDED_TRAIN_VAL_SET_BASE_PATH, "images", "val")
 # ______________________________________________________________________
 # > OCCLUDED + ORIGINAL TRAIN VAL SET (for YOLO)
-OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_and_original_trainval_set")
-OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_YOLO_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images")
-OCCLUDED_AND_ORIGINAL_TRAIN_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images", "train")
-OCCLUDED_AND_ORIGINAL_VAL_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_SET_BASE_PATH, "images", "val")
+OCCLUDED_AND_ORIGINAL_TRAIN_VAL_OCC8_SET_BASE_PATH = os.path.join(DATASETS_PATH, "occluded_and_original_trainval_occ8_set")
+OCCLUDED_AND_ORIGINAL_TRAIN_VAL_OCC8_SET_YOLO_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_OCC8_SET_BASE_PATH, "images")
+OCCLUDED_AND_ORIGINAL_TRAIN_OCC8_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_OCC8_SET_BASE_PATH, "images", "train")
+OCCLUDED_AND_ORIGINAL_VAL_OCC8_SET_IMAGES_PATH = os.path.join(OCCLUDED_AND_ORIGINAL_TRAIN_VAL_OCC8_SET_BASE_PATH, "images", "val")
 # ______________________________________________________________________
 # > BOSPHORUS_TEST_HQ                   # this h5 will be full size not resized to small images
 BOSPHORUS_TEST_HQ_BASE_PATH = 		os.path.join(DATASETS_PATH, "bosphorus_test_HQ")
@@ -139,6 +139,7 @@ ALL_MODELS_PATHS = {
     "occft_pattlite":              	os.path.join(OCCFT_MODELS_FOLDER, "PattLite_occfinetuning__20260217-025925__0.6800", 		"PattLite_occfinetuning"),
     "occft_resnet":                	os.path.join(OCCFT_MODELS_FOLDER, "ResNet_occfinetuning__20260217-070852__0.6629", 			"ResNet_occfinetuning"),
     "occft_vgg19":                 	os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260213-003832__0.7000", 			"VGG19_occfinetuning"),
+	"occft_yolo":                 	os.path.join(OCCFT_MODELS_FOLDER, "yolo_last_occfinetuning__20260302-155211_cmplt-run_freeze-central_layers_lr-0.0001__0.6571", "yolo_last_occfinetuning.pt"),
 }
 
 # 3b) Evaluations

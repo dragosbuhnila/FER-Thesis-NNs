@@ -179,7 +179,7 @@ def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
 
 
 def train_model_yolo_training_run(model, trainval_folder,
-                                  epochs, batch_size, freezing_module, dropout_rate, patience,
+                                  epochs, batch_size, freezing_module, dropout_rate, patience, learning_rate,
                                   quick_run=False):
     # To use your own dataset with Ultralytics YOLO, ensure it follows the specified directory format required for the classification task, 
     # with separate train, test, and optionally val directories, and subdirectories for each class containing the respective images. 
@@ -205,7 +205,7 @@ def train_model_yolo_training_run(model, trainval_folder,
     result = None
     try:
         train_kwargs = dict(data=trainval_folder, imgsz=int(imgsz), batch=int(batch_size), auto_augment='autoaugment',
-                            epochs=int(epochs), save=True, save_period=3, patience=patience,
+                            epochs=int(epochs), save=True, save_period=3, patience=patience, lr0=learning_rate, optimizer="Adam",
                             val=True, plots=True, cache=True, 
                             mosaic=0.0, freeze=freezing_layer, dropout=dropout_rate) 
         if quick_run:
@@ -258,10 +258,10 @@ def evaluate_model_yolo_training_run(model, test_folder_path, debug=False):
 
 
 
-def save_model_yolo_training_run(model, model_name, test_acc):
+def save_model_yolo_training_run(model, model_name, test_acc, run_name):
     # For YOLO, we can just save the model using its built-in save method, which creates a .pt file
     base_name = f'{model_name}_occfinetuning'
-    base_path = os.path.join(OCCFT_MODELS_FOLDER, f"{base_name}__{get_timestamp()}__{test_acc:.4f}")
+    base_path = os.path.join(OCCFT_MODELS_FOLDER, f"{base_name}__{run_name}__{test_acc:.4f}")
     os.makedirs(base_path, exist_ok=True)
 
     try:
@@ -270,10 +270,4 @@ def save_model_yolo_training_run(model, model_name, test_acc):
     except Exception as e:
         print(f"An error occurred while saving the YOLO model: {e}")
 
-    # Save with mlflow too
-    try:
-        mlflow.pytorch.log_model(model, name=f"{base_name}_mlflow_model")
-        print(f"YOLO model logged to MLflow with name: {base_name}_mlflow_model")
-    except Exception as e:
-        print(f"An error occurred while logging the YOLO model to MLflow: {e}")
 

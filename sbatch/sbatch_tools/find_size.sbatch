@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_find_size
+#SBATCH --job-name=dbuh_find_size_occftmodels
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
@@ -34,7 +34,7 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
-cd /home/dbuhnila/models/FER-Thesis-NNs/mlruns
+cd /home/dbuhnila/models/FER-Thesis-NNs/data/datasets/occft
 
 echo "Currently in:"
 pwd
