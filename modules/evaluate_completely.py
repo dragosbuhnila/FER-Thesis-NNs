@@ -11,6 +11,7 @@ import pandas as pd
 
 from modules.config import EMOTIONS, SAVED_IMAGES_PATH, ALL_MODELS_PATHS
 from modules.misc import get_timestamp, create_placeholder_image
+from modules.yolo import evaluate_yolo_model_folders_complete
 
 
 
@@ -28,10 +29,14 @@ def save_or_show_figure(fig, save_path, save_instead_of_show):
     plt.close(fig)
 
 
-def plot_images_with_predictions(axes, chunk, test_generator, y_pred, y_true, confidences, class_names_fixed, placeholder_array):
+def plot_images_with_predictions(axes, chunk, test_generator_or_prediction_paths, y_pred, y_true, confidences, class_names_fixed, placeholder_array):
     """Plot images with predictions and fill remaining slots with placeholders."""
     for i, idx in enumerate(chunk):
-        img_data = test_generator.x_data[idx].astype('uint8')
+        if isinstance(test_generator_or_prediction_paths, list):
+            img_path = test_generator_or_prediction_paths[idx]
+            img_data = np.array(Image.open(img_path).convert("RGB").resize((224, 224), Image.BILINEAR))
+        else:
+            img_data = test_generator_or_prediction_paths.x_data[idx].astype('uint8')
         pil_img = Image.fromarray(img_data).resize((224, 224), Image.BILINEAR)
         resized_img = np.array(pil_img)
 
@@ -48,7 +53,7 @@ def plot_images_with_predictions(axes, chunk, test_generator, y_pred, y_true, co
         axes[j].axis("off")
 
 
-def visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_true, confidences, class_names_fixed, save_dir, save_instead_of_show):
+def visualize_high_confidence_errors(sorted_indices, test_generator_or_prediction_paths, y_pred, y_true, confidences, class_names_fixed, save_dir, save_instead_of_show):
     """Visualize high-confidence errors in batches."""
     os.makedirs(save_dir, exist_ok=True)
 
@@ -62,13 +67,13 @@ def visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_t
         fig, axes = plt.subplots(6, 3, figsize=(9, 18))
         axes = axes.flatten()
 
-        plot_images_with_predictions(axes, chunk, test_generator, y_pred, y_true, confidences, class_names_fixed, placeholder_array)
+        plot_images_with_predictions(axes, chunk, test_generator_or_prediction_paths, y_pred, y_true, confidences, class_names_fixed, placeholder_array)
 
         save_path = os.path.join(save_dir, f"high_conf_error_{fig_idx}.png")
         save_or_show_figure(fig, save_path, save_instead_of_show)
 
 
-def visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y_true, probabilities, class_names_fixed, save_dir, save_instead_of_show):
+def visualize_uncertain_predictions(uncertain_indices, test_generator_or_prediction_paths, y_pred, y_true, probabilities, class_names_fixed, save_dir, save_instead_of_show):
     """Visualize uncertain predictions in batches."""
     os.makedirs(save_dir, exist_ok=True)
 
@@ -83,7 +88,11 @@ def visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y
         axes = axes.flatten()
 
         for i, idx in enumerate(chunk):
-            img_data = test_generator.x_data[idx].astype('uint8')
+            if isinstance(test_generator_or_prediction_paths, list):
+                img_path = test_generator_or_prediction_paths[idx]
+                img_data = np.array(Image.open(img_path).convert("RGB").resize((224, 224), Image.BILINEAR))
+            else:
+                img_data = test_generator_or_prediction_paths.x_data[idx].astype('uint8')
             pil_img = Image.fromarray(img_data).resize((224, 224), Image.BILINEAR)
             resized_img = np.array(pil_img)
 
@@ -218,7 +227,7 @@ def compute_accuracy_topk(y_true: np.ndarray, y_pred_topk: np.ndarray, probabili
     return correct / len(y_true) if len(y_true) > 0 else 0.0
 
 
-def compute_accuracy_keras(y_true, probabilities):
+def compute_accuracy_keras_metrics(y_true, probabilities):
     """Evaluate accuracy using Keras metrics."""
     import tensorflow as tf
 
@@ -340,8 +349,7 @@ def compute_tsne_reduced_features(features, perplexity=30):
 # ========================= Complete Model Evaluation Functions ==================================================
 # ================================================================================================================
 
-
-def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show=True, run_name=None):
+def evaluate_keras_model(model, test_generator_or_path, model_name, save_instead_of_show=True, run_name=None):
     """Evaluate a Keras model and visualize high-confidence and uncertain predictions."""
 
     print("=======================================================================================")
@@ -353,18 +361,38 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     print(f"[INFO] time reference: {run_name}")
     print(f"[INFO] model_version: {ALL_MODELS_PATHS[model_name]}")
 
+    if "yolo" in model_name.lower():
+        is_yolo = True
+        is_keras = False
+        test_path = test_generator_or_path
+    else:
+        is_yolo = False
+        is_keras = True
+        test_generator = test_generator_or_path
+
     # 0) Prepare the predictions
     class_names_fixed = EMOTIONS
 
-    y_true = np.argmax(test_generator.y_data, axis=1)
-    test_generator.in_evaluate_mode = True
-    probabilities = model.predict(test_generator, verbose=1)
-    test_generator.in_evaluate_mode = False
+    if is_keras:
+        # Keras model: Use the test generator
+        y_true = np.argmax(test_generator.y_data, axis=1)
+        test_generator.in_evaluate_mode = True
+        probabilities = model.predict(test_generator, verbose=1)
+        test_generator.in_evaluate_mode = False
 
-    y_pred = np.argmax(probabilities, axis=1)
-    y_pred_toptwo = np.argsort(probabilities, axis=1)[:, -2:]
-    y_pred_topthree = np.argsort(probabilities, axis=1)[:, -3:]
-    confidences = np.max(probabilities, axis=1)
+        y_pred = np.argmax(probabilities, axis=1)
+        y_pred_toptwo = np.argsort(probabilities, axis=1)[:, -2:]
+        y_pred_topthree = np.argsort(probabilities, axis=1)[:, -3:]
+        confidences = np.max(probabilities, axis=1)
+
+    elif is_yolo:
+        class_names_fixed = EMOTIONS
+        y_true, y_pred, probabilities, confidences, predicted_images_paths = evaluate_yolo_model_folders_complete(model, test_path)
+
+        y_pred_toptwo = np.argsort(probabilities, axis=1)[:, -2:]
+        y_pred_topthree = np.argsort(probabilities, axis=1)[:, -3:]
+    else:
+        raise ValueError("Unsupported model type. Only Keras and YOLO models are supported.")
 
     high_confindence_threshold = 0.6
     uncertain_threshold = 0.1               # Minimum difference between top-2 probabilities to consider uncertain
@@ -372,7 +400,7 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     # 1) Accuracy
     print("[INFO] Evaluating accuracies...")
     accuracy = compute_accuracy_topk(y_true, y_pred.reshape(-1, 1), k=1)
-    accuracy_check = compute_accuracy_keras(y_true, probabilities)
+    accuracy_check = compute_accuracy_keras_metrics(y_true, probabilities)
     if not np.isclose(accuracy, accuracy_check, atol=1e-4):
         raise ValueError(f"Accuracy mismatch: top-1 accuracy is {accuracy:.4f} but Keras accuracy is {accuracy_check:.4f}. This indicates a potential issue in the evaluation logic.")
 
@@ -464,7 +492,10 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     if len(sorted_indices) > 0:
         print(f"[INFO] Found {len(sorted_indices)} high confidence errors with threshold >= {high_confindence_threshold}.")
         high_confidence_errors_save_dir = os.path.join(base_dir, "high_confidence_errors")
-        visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_true, confidences, class_names_fixed, high_confidence_errors_save_dir, save_instead_of_show)
+        if is_yolo:
+            visualize_high_confidence_errors(sorted_indices, predicted_images_paths, y_pred, y_true, confidences, class_names_fixed, high_confidence_errors_save_dir, save_instead_of_show)
+        else:
+            visualize_high_confidence_errors(sorted_indices, test_generator, y_pred, y_true, confidences, class_names_fixed, high_confidence_errors_save_dir, save_instead_of_show)
         print(f"[INFO] High confidence errors visualizations saved to: {high_confidence_errors_save_dir}")
     else:
         print("[INFO] No high confidence errors found.")
@@ -477,7 +508,10 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     if len(uncertain_indices) > 0:
         print(f"[INFO] Found {len(uncertain_indices)} uncertain predictions with difference threshold < {uncertain_threshold}.")
         uncertain_predictions_save_dir = os.path.join(base_dir, "uncertain_predictions")
-        visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y_true, probabilities, class_names_fixed, uncertain_predictions_save_dir, save_instead_of_show)
+        if is_yolo:
+            visualize_uncertain_predictions(uncertain_indices, predicted_images_paths, y_pred, y_true, probabilities, class_names_fixed, uncertain_predictions_save_dir, save_instead_of_show)
+        else:
+            visualize_uncertain_predictions(uncertain_indices, test_generator, y_pred, y_true, probabilities, class_names_fixed, uncertain_predictions_save_dir, save_instead_of_show)
         print(f"[INFO] Uncertain predictions visualizations saved to: {uncertain_predictions_save_dir}")
     else:
         print("[INFO] No uncertain predictions found.")
@@ -504,6 +538,8 @@ def evaluate_keras_model(model, test_generator, model_name, save_instead_of_show
     probs_data["True_Label"] = [class_names_fixed[label] for label in y_true]
     probs_data["Predicted_Label"] = [class_names_fixed[label] for label in y_pred]
     probs_data["Prediction_Confidence"] = confidences
+    if is_yolo:
+        probs_data["Image_Path"] = predicted_images_paths
 
     # Save the DataFrame to CSV
     os.makedirs(os.path.dirname(probs_csv_path), exist_ok=True)
@@ -640,23 +676,38 @@ def evaluate_yolo_model(model, test_generator):
 # ========================= Agreement Analysis Functions =========================================================
 # ================================================================================================================
 
-def collect_predictions_from_models(model_and_names, test_generator):    
+def collect_predictions_from_models(model_and_names, testgen_and_folders_dict):    
     class_names_fixed = EMOTIONS
+    test_generator = testgen_and_folders_dict["test_generator"]
     true_classes = np.argmax(test_generator.y_data, axis=1)
 
     all_predictions = []    
-    for model_name, model in model_and_names.items():
-        print(f"Running predictions for: {model_name}")
+    for model_name, model in model_and_names.items():       
+
+        if "yolo" in model_name.lower():
+            print(f"Evaluating YOLO model: {model_name}")
+            _, y_pred, _, _, paths = evaluate_yolo_model_folders_complete(model, testgen_and_folders_dict["test_folder"])
+            # Convert to numpy arrays if needed
+            y_pred = np.array(y_pred)
+
+            df_model = pd.DataFrame({
+                "Image_Idx": range(len(true_classes)),
+                "True_Label": [class_names_fixed[i] for i in true_classes],
+                "Predicted_Label": [class_names_fixed[i] for i in y_pred],
+                "Model_Name": model_name,
+                "Image_Path": paths,
+            })
+        else:
+            print(f"Evaluating Keras model: {model_name}")
+            probs = model.predict(test_generator, verbose=1)
+            preds = np.argmax(probs, axis=1)
         
-        probs = model.predict(test_generator, verbose=1)
-        preds = np.argmax(probs, axis=1)
-        
-        df_model = pd.DataFrame({
-            "Image_Idx": range(len(true_classes)),
-            "True_Label": [class_names_fixed[i] for i in true_classes],
-            "Predicted_Label": [class_names_fixed[i] for i in preds],
-            "Model_Name": model_name
-        })
+            df_model = pd.DataFrame({
+                "Image_Idx": range(len(true_classes)),
+                "True_Label": [class_names_fixed[i] for i in true_classes],
+                "Predicted_Label": [class_names_fixed[i] for i in preds],
+                "Model_Name": model_name
+            })
         
         all_predictions.append(df_model)
     
@@ -719,7 +770,7 @@ def agreement_statistics(df_agreement):
     return strong, good, poor
 
 
-def plot_disagreement_images(df_all, df_agreement, test_generator, save_dir, save_instead_of_show, images_per_fig=18):
+def plot_disagreement_images(df_all, df_agreement, testgen_and_folders_dict, save_dir, save_instead_of_show, images_per_fig=18):
     os.makedirs(save_dir, exist_ok=True)
     
     df_plot = df_agreement.sort_values("Pi_Overall", ascending=False)
@@ -775,7 +826,7 @@ def plot_disagreement_images(df_all, df_agreement, test_generator, save_dir, sav
             
             image_index = data_item["image_idx"]
             
-            img_data = test_generator.x_data[image_index].astype('uint8')
+            img_data = testgen_and_folders_dict["test_generator"].x_data[image_index].astype('uint8')
             pil_img = Image.fromarray(img_data).resize((224, 224), Image.BILINEAR)
             img = np.array(pil_img)
 
@@ -801,11 +852,11 @@ def plot_disagreement_images(df_all, df_agreement, test_generator, save_dir, sav
         save_or_show_figure(fig, save_path, save_instead_of_show)
 
 
-def evaluate_agreement(model_and_names, test_generator, run_name=None):
+def evaluate_agreement(model_and_names, testgen_and_folders_dict, run_name=None):
     run_name = get_timestamp() if run_name is None else run_name
     base_dir = os.path.join(SAVED_IMAGES_PATH, run_name, "agreement_analysis")
 
-    df_all = collect_predictions_from_models(model_and_names, test_generator)
+    df_all = collect_predictions_from_models(model_and_names, testgen_and_folders_dict)
     df_agreement = compute_agreement_all_images(df_all)
 
     # 1) save to csv the agreement values for potential further analysis
@@ -833,6 +884,6 @@ def evaluate_agreement(model_and_names, test_generator, run_name=None):
     # 3) plot disagreement images
     print("\nPlotting disagreement images...")
     disagreement_save_dir = os.path.join(base_dir, "disagreeing_images")
-    plot_disagreement_images(df_all, df_agreement, test_generator, disagreement_save_dir, save_instead_of_show=True)
+    plot_disagreement_images(df_all, df_agreement, testgen_and_folders_dict, disagreement_save_dir, save_instead_of_show=True)
 
     return df_all, df_agreement

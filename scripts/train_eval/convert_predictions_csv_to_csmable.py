@@ -5,7 +5,16 @@ import pandas as pd
 
 from modules.config import OCCFT_MODELS_RESULTS_PATHS, EMOTIONS
 
-FOLDER_PATHS = list(OCCFT_MODELS_RESULTS_PATHS.values())
+MODEL_NAME = "occft_yolo"
+# MODEL_NAME = None
+
+# if you set MODEL_NAME then it will only run that, else it will run all models in OCCFT_MODELS_RESULTS_PATHS
+if MODEL_NAME is not None:
+    if MODEL_NAME not in OCCFT_MODELS_RESULTS_PATHS:
+        raise ValueError(f"Model name '{MODEL_NAME}' not found in OCCFT_MODELS_RESULTS_PATHS. Available models: {list(OCCFT_MODELS_RESULTS_PATHS.keys())}")
+    FOLDER_PATHS = [OCCFT_MODELS_RESULTS_PATHS[MODEL_NAME]]
+else:
+    FOLDER_PATHS = list(OCCFT_MODELS_RESULTS_PATHS.values())
 
 if __name__ == "__main__":
 

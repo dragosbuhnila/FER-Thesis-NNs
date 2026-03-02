@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 import numpy as np
 import rich
 
-from modules.evaluate_completely import compute_accuracy_keras, compute_precision_recall_f1
+from modules.evaluate_completely import compute_accuracy_keras_metrics, compute_precision_recall_f1
 
 
 
@@ -24,7 +24,7 @@ rich.print("Predicted probabilities (y_probabilities):", y_probabilities)
 rich.print("Predicted class labels (y_pred):", y_pred)
 
 # Sparse Categorical Accuracy
-accuracy = compute_accuracy_keras(y_true, y_probabilities)
+accuracy = compute_accuracy_keras_metrics(y_true, y_probabilities)
 print("Accuracy (after update state):", accuracy)
 
 # Precision, Recall, F1-score

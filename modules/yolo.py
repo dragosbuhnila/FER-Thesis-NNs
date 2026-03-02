@@ -1,4 +1,5 @@
 import mlflow
+import numpy as np
 from sklearn.metrics import accuracy_score
 from ultralytics import YOLO
 import torch
@@ -176,6 +177,45 @@ def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
 
     # 5) Return None for loss (not computed), and accuracy
     return None, accuracy
+
+
+def evaluate_yolo_model_folders_complete(model, test_folder_path):
+    """
+    Perform inference using a YOLO model on a test folder.
+
+    Parameters:
+    - model: YOLO model.
+    - test_folder_path: Path to the test folder.
+
+    Returns:
+    - y_true: Ground truth labels.
+    - y_pred: Predicted labels.
+    - probabilities: Class probabilities for each image.
+    - confidences: Confidence scores for the predictions.
+    """
+    categories = EMOTIONS
+    classes = sorted([folder_name for folder_name in os.listdir(test_folder_path) if os.path.isdir(os.path.join(test_folder_path, folder_name))])
+    class_to_number = {class_name: index for index, class_name in enumerate(classes)}
+
+    y_true = []
+    probabilities = []
+    predicted_images_paths = []
+
+    for class_name in classes:
+        class_index = class_to_number[class_name]
+        class_folder_path = os.path.join(test_folder_path, class_name)
+        num_images = len([name for name in os.listdir(class_folder_path) if os.path.isfile(os.path.join(class_folder_path, name))])
+        y_true.extend([class_index] * num_images)
+
+        results = model.predict(class_folder_path)
+        probabilities.extend([result.probs.data.cpu().numpy() if isinstance(result.probs.data, torch.Tensor) else result.probs.data for result in results])
+        predicted_images_paths.extend([result.path for result in results])
+
+    probabilities = np.array(probabilities)
+    y_pred = np.argmax(probabilities, axis=1)
+    confidences = np.max(probabilities, axis=1)
+
+    return np.array(y_true), y_pred, probabilities, confidences, predicted_images_paths
 
 
 def train_model_yolo_training_run(model, trainval_folder,

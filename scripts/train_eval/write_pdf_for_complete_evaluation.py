@@ -91,6 +91,7 @@ def create_pdf(output_path, base_folder, agreement_folder_name="agreement_analys
         for subfolder in ["confusion_matrix", "high_confidence_errors", "tsne", "uncertain_predictions"]:
             subfolder_path = os.path.join(model_path, subfolder)
             if os.path.exists(subfolder_path):
+                i = 0
                 print(f"[INFO] Processing subfolder: {subfolder_path}")
                 elements.append(Paragraph(f"Images from {subfolder}:", body_style))
                 elements.append(Spacer(1, 5))
@@ -130,6 +131,11 @@ def add_csv_to_pdf(csv_path, elements, max_rows=40, max_columns=8):
         # Format numerical columns to 4 digits (not decimal places, but total digits)
         for col in df.select_dtypes(include=['float', 'int']).columns:
             df[col] = df[col].apply(lambda x: f"{x:.4g}" if pd.notnull(x) else x)
+
+        # Exclude Image_Path column if it exists to avoid cluttering the table with long paths
+        if 'Image_Path' in df.columns:
+            print(f"[WARNING] Excluding 'Image_Path' column from table to avoid clutter.")
+            df = df.drop(columns=['Image_Path'])
 
         # Prepare data for the table
         data = [df.columns.tolist()] + df.values.tolist()
@@ -213,7 +219,7 @@ else:
     OUTPUT_PATH = os.path.join(PROJECT_ROOT, OUTPUT_FILE_NAME)
 
 # Example usage:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/write_pdf_for_complete_evaluation.py" --folder_name 20260223-123608_cmplt-run_federica-models_original-testset_do-evaluation-completely-keras
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/write_pdf_for_complete_evaluation.py" --folder_name 20260303-003326_cmplt-run_occft-models_occluded-testset_do-evaluation-completely-keras
 if __name__ == "__main__":
     create_pdf(OUTPUT_PATH, BASE_FOLDER, agreement_folder_name="agreement_analysis", model_folder_signatures=["occft", 'finetuning'])
     print(f"[INFO] PDF report generated: {OUTPUT_PATH}")

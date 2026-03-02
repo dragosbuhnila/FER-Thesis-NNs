@@ -1,4 +1,6 @@
-import os; import sys;
+import os; import sys
+
+from matplotlib import category;
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))  
 
 import argparse
@@ -11,7 +13,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from modules.model import load_model
 from modules.data__load import load_test_generator
 from modules.misc import get_timestamp, Tee, hash_image
-from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, ALL_MODELS_PATHS, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, SAVED_IMAGES_PATH, CONSOLE_OUTPUTS_PATH
+from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, ALL_MODELS_PATHS, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, SAVED_IMAGES_PATH, CONSOLE_OUTPUTS_PATH
 
 
 
@@ -80,14 +82,20 @@ def create_black_square_images(img_array, square_sizes):
                     pbar.update(1)
     return masked_images
 
-def calculate_saliency_map(model, original_image, perturbed_images, image_probability, class_index):
+def calculate_saliency_map(model, model_name, original_image, perturbed_images, image_probability, class_index):
     """
     Calculate the saliency map based on the difference in predictions.
     """
     saliency_map = np.zeros(original_image.shape[:2], dtype=np.float32)
 
     # Predict all perturbed images as a batch
-    perturbed_predictions = model.predict(np.array(perturbed_images))
+    if "yolo" in model_name.lower():
+        import torch
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        results = model.predict(list(perturbed_images), device=device)
+        perturbed_predictions = [result.probs.data.cpu().numpy() for result in results]
+    else:
+        perturbed_predictions = model.predict(np.array(perturbed_images))
 
     # Calculate the differences for each perturbed image
     for perturbed_image, perturbed_prediction in zip(perturbed_images, perturbed_predictions):
@@ -120,7 +128,7 @@ def save_saliency_map(saliency_map, output_path):
 parser = argparse.ArgumentParser(description="Generate saliency maps using external perturbations.")
 parser.add_argument('--quick', action='store_true', help="Run on a small subset of the test data (1 batch).")
 parser.add_argument('--redirect_output', action='store_true', help="Redirect console output to a log file.")
-parser.add_argument('--models_set', type=str, choices=['occft', 'federica'], help="Specify which set of models to use.")
+parser.add_argument('--models_set', type=str, choices=['occft', 'federica', 'yolo_fede', 'occft_yolo'], help="Specify which set of models to use.")
 parser.add_argument('--test_set', type=str, choices=['occluded', 'original', 'original-180'], help="Specify which test set to use.")
 parser.add_argument('--output_folder', type=str, help="Base folder path for saving saliency maps.")
 parser.add_argument('--square_sizes', type=int, nargs='+', default=[35, 27, 19], help="Sizes of black squares for perturbations.")
@@ -132,22 +140,40 @@ if args.models_set == 'occft':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "occft" in model_name.lower()]
 elif args.models_set == 'federica':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "finetuning" in model_name.lower()]
+elif args.models_set == 'yolo_fede':
+    MODEL_NAMES = ["yolo_last"]
+elif args.models_set == 'occft_yolo':
+    MODEL_NAMES = ["occft_yolo"]
 else:
-    raise ValueError("Invalid --models_set argument. Use 'occft' or 'federica'.")
+    raise ValueError("Invalid --models_set argument. Use 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
+
+# Check if all model paths exist
+for model_name in MODEL_NAMES:
+    model_path = ALL_MODELS_PATHS[model_name]
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model file not found: {model_path}")
 
 # TEST SETS
 if args.test_set == 'occluded':
-    TEST_SET_PATH = OCCLUDED_TEST_SET_H5_PATH
+    TEST_SET_H5_PATH = OCCLUDED_TEST_SET_H5_PATH
+    TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_IMAGES_PATH
 elif args.test_set == 'original':
-    TEST_SET_PATH = ADELE_TEST_SET_H5_PATH
+    TEST_SET_H5_PATH = ADELE_TEST_SET_H5_PATH
+    TEST_SET_IMAGES_PATH = None  # Not implemented yet
 elif args.test_set == 'original-180':
-    TEST_SET_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
+    TEST_SET_H5_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
+    TEST_SET_IMAGES_PATH = None  # Not implemented yet
 else:
     raise ValueError("Invalid --test_set argument. Use 'occluded', 'original', or 'original-180'.")
-
+# Check if path exists
+if not os.path.exists(TEST_SET_H5_PATH):
+    raise FileNotFoundError(f"Test set file not found: {TEST_SET_H5_PATH}")
 
 # OUTPUT FOLDER
-OUTPUT_BASE_FOLDER_PATH = args.output_folder if args.output_folder else SAVED_IMAGES_PATH
+if args.output_folder:
+    OUTPUT_BASE_FOLDER_PATH = args.output_folder
+else:
+    OUTPUT_BASE_FOLDER_PATH = SAVED_IMAGES_PATH
 
 if args.quick:
     BATCH_SIZE = 3  # Process only 3 images in quick mode
@@ -155,11 +181,10 @@ if args.quick:
 else:
     BATCH_SIZE = 64
 
-run_name = get_timestamp()
+run_name = f"{get_timestamp()}_extpert"
 run_name += "_quick-run" if args.quick else "_cmplt-run"
 run_name += f"_{args.models_set}-models"
 run_name += f"_{args.test_set}-testset"
-run_name += f"_do_explainability_extpert_keras"
 
 # Redirect output if specified
 if args.redirect_output:
@@ -179,7 +204,12 @@ print(f"\t--square_sizes: {args.square_sizes}")
 print(f"\t--blur_sigma: {args.blur_sigma}")
 print(f"CONSTANTS:")
 print(f"\tMODEL_NAMES: {MODEL_NAMES}")
-print(f"\tTEST_SET_PATH: {TEST_SET_PATH}")
+print(f"\tTEST_SET_PATH: {TEST_SET_H5_PATH}")
+print(f"\tTEST_SET_IMAGES_PATH: {TEST_SET_IMAGES_PATH}")
+print(f"\tOUTPUT_BASE_FOLDER_PATH: {OUTPUT_BASE_FOLDER_PATH}")
+print(f"\tRUN_NAME: {run_name}")
+if args.redirect_output:
+    print(f"\tLOG_FILE_PATH: {LOG_FILE_PATH}")
 print(f"\tBATCH_SIZE: {BATCH_SIZE}")
 print(f"==============================")
 
@@ -189,6 +219,8 @@ print(f"==============================")
 # Example usage:
 # >>> test run
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occluded --quick --redirect_output
+# >>> test run yolo
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft_yolo --test_set occluded --quick --redirect_output
 if __name__ == "__main__":
     output_run_path = os.path.join(OUTPUT_BASE_FOLDER_PATH, run_name)
     os.makedirs(output_run_path, exist_ok=True)
@@ -196,9 +228,17 @@ if __name__ == "__main__":
     for model_name in MODEL_NAMES:
         print(f"[INFO] Processing model: {model_name}")
         model = load_model(model_name)
-        test_generator = load_test_generator(TEST_SET_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
+        test_generator = load_test_generator(TEST_SET_H5_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
 
-        predicted_probabilities = model.predict(test_generator.x_data)
+        if "yolo" in model_name.lower():
+            import torch
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            predicted_probabilities = []
+            for emotion in EMOTIONS:
+                results = model.predict(os.path.join(TEST_SET_IMAGES_PATH, emotion), device=device)
+                predicted_probabilities.extend([result.probs.data.cpu().numpy() for result in results])
+        else:
+            predicted_probabilities = model.predict(test_generator.x_data)
 
         for i, (image_array, gt_probabilities_i, predicted_probabilities_i) in tqdm(enumerate(zip(test_generator.x_data, test_generator.y_data, predicted_probabilities)), total=len(test_generator.x_data), desc="Processing images"):
             # show image
@@ -210,7 +250,7 @@ if __name__ == "__main__":
             image_probability = predicted_probabilities_i[gt]
 
             perturbed_images = create_black_square_images(image_array, args.square_sizes)
-            saliency_map = calculate_saliency_map(model, image_array, perturbed_images, image_probability, gt)
+            saliency_map = calculate_saliency_map(model, model_name, image_array, perturbed_images, image_probability, gt)
             blurred_map = blur_saliency_map(saliency_map, args.blur_sigma)
 
             output_folder = os.path.join(output_run_path, model_name, f"{EMOTIONS[gt]}")

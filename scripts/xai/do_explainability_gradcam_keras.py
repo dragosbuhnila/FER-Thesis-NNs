@@ -1,6 +1,8 @@
 import os; import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+import cv2
 import re
 import argparse
 import numpy as np
@@ -8,8 +10,11 @@ from tqdm import tqdm
 from PIL import Image
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from torchvision import transforms
 from tensorflow.keras.layers import Conv2D, Layer, SeparableConv2D, DepthwiseConv2D
 from tf_keras_vis.gradcam import Gradcam
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 from tf_keras_vis.utils.scores import CategoricalScore
 import warnings
@@ -20,7 +25,7 @@ from modules.train_eval_save import evaluate_model
 from modules.model import build_new_model, load_model
 from modules.data__load import load_test_generator
 from modules.misc import get_timestamp, Tee
-from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, ALL_MODELS_PATHS, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, SAVED_IMAGES_PATH, CONSOLE_OUTPUTS_PATH
+from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, ALL_MODELS_PATHS, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, SAVED_IMAGES_PATH, CONSOLE_OUTPUTS_PATH
 
 # TODO: not sure why it uses this as my model doens't need it, in case try running it with and without and see what happens
 class LayerScale(Layer):
@@ -47,7 +52,7 @@ class LayerScale(Layer):
         })
         return config
 
-def preprocess_image(image_array, target_size=(128, 128)):
+def preprocess_image_keras(image_array, target_size=(128, 128)):
     """
     Preprocess the image for Grad-CAM.
     """
@@ -56,7 +61,21 @@ def preprocess_image(image_array, target_size=(128, 128)):
     return np.expand_dims(img_array, axis=0)
 
 
-def generate_gradcam(model, image_array, class_index, target_layer, gradcam):
+def preprocess_image_yolo(image_array):
+    img = image_array
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((128, 128)),
+        transforms.ToTensor(),
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+    img = transform(img).unsqueeze(0)
+    img.requires_grad = True  # Abilita il calcolo dei gradienti per Grad-CAM
+    return img
+
+
+def generate_gradcam_keras(image_array, class_index, target_layer, gradcam):
     """
     Generate Grad-CAM saliency map for the given image and class index.
     """
@@ -66,6 +85,37 @@ def generate_gradcam(model, image_array, class_index, target_layer, gradcam):
     # Normalize the heatmap
     heatmap = np.maximum(heatmap, 0)
     heatmap /= heatmap.max() if heatmap.max() != 0 else 1
+    return heatmap
+
+
+def generate_gradcam_yolo(image, target_label, target_layer, model):
+    """
+    Generate Grad-CAM saliency map for YOLO model.
+    """
+    import torch
+
+    # Inizializza GradCAM
+    cam = GradCAM(model=model.model, target_layers=target_layer)
+    # Prepara il target: il Grad-CAM richiede esplicitamente il target della classe
+    targets = [ClassifierOutputTarget(target_label)]  # Classe 0 (modifica in base al tuo caso)
+
+    # Genera la mappa di salienza
+    grayscale_cam = cam(input_tensor=image, targets = targets)[0, :]
+    #Normalizzazione
+    #--------------------------------------------------------
+    #normalized_cam = cv2.normalize(grayscale_cam, None, 0, 1, cv2.NORM_MINMAX)
+    # Colora la mappa usando una mappa di colori (jet)
+    #heatmap = cv2.applyColorMap((normalized_cam * 255).astype(np.uint8), cv2.COLORMAP_JET)
+    #--------------------------------------------------------
+
+    #heatmap = cv2.applyColorMap((grayscale_cam).astype(np.uint8), cv2.COLORMAP_JET) #senza sriportare i valori tra 0 e 255
+    #heatmap = cv2.cvtColor(normalized_cam, cv2.COLOR_GRAY2RGB)
+    heatmap = tf.maximum(grayscale_cam, 0) / tf.math.reduce_max(grayscale_cam)
+    # Mappatura dei colori usando colormap di Matplotlib
+    #heatmap_rgb = plt.get_cmap('jet')(heatmap)  # Puoi scegliere un colormap diverso, come 'viridis', 'plasma', etc.
+
+    # Rimuovi l'alpha channel (il quarto canale) per ottenere solo RGB
+    #heatmap_rgb = heatmap_rgb[..., :3]  # Adesso è una mappa di colori RGB
     return heatmap
 
 
@@ -181,7 +231,7 @@ def get_layer_names(model, model_name, strip_prefixes=None):
 parser = argparse.ArgumentParser(description="Generate Grad-CAM saliency maps.")
 parser.add_argument('--quick', action='store_true', help="Run on a small subset of the test data (1 batch).")
 parser.add_argument('--redirect_output', action='store_true', help="Redirect console output to a log file.")
-parser.add_argument('--models_set', type=str, choices=['occft', 'federica'], help="Specify which set of models to use.")
+parser.add_argument('--models_set', type=str, choices=['occft', 'federica', 'yolo_fede', 'occft_yolo'], help="Specify which set of models to use.")
 parser.add_argument('--model_name', type=str, help="Specify a single model name to process.")
 parser.add_argument('--test_set', type=str, choices=['occluded', 'original', 'original-180'], help="Specify which test set to use.")
 parser.add_argument('--output_folder', type=str, help="Base folder path for saving Grad-CAM maps.")
@@ -195,8 +245,12 @@ if args.models_set == 'occft':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "occft" in model_name.lower()]
 elif args.models_set == 'federica':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "finetuning" in model_name.lower()]
+elif args.models_set == 'yolo_fede':
+    MODEL_NAMES = ["yolo_last"]
+elif args.models_set == 'occft_yolo':
+    MODEL_NAMES = ["occft_yolo"]
 else:
-    raise ValueError("Invalid --models_set argument. Use 'occft' or 'federica'.")
+    raise ValueError("Invalid --models_set argument. Use 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
 
 # SINGLE MODEL
 if args.model_name:
@@ -207,11 +261,14 @@ if args.model_name:
 
 # TEST SETS
 if args.test_set == 'occluded':
-    TEST_SET_PATH = OCCLUDED_TEST_SET_H5_PATH
+    TEST_SET_H5_PATH = OCCLUDED_TEST_SET_H5_PATH
+    TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_IMAGES_PATH
 elif args.test_set == 'original':
-    TEST_SET_PATH = ADELE_TEST_SET_H5_PATH
+    TEST_SET_H5_PATH = ADELE_TEST_SET_H5_PATH
+    TEST_SET_IMAGES_PATH = None  # Not implemented yet
 elif args.test_set == 'original-180':
-    TEST_SET_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
+    TEST_SET_H5_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
+    TEST_SET_IMAGES_PATH = None  # Not implemented yet
 else:
     raise ValueError("Invalid --test_set argument. Use 'occluded', 'original', or 'original-180'.")
 
@@ -221,7 +278,10 @@ if args.sequential:
         print(f"[WARNING] --sequential flag is set but the selected model(s) do not seem to be pattlite or vgg models. This flag will be ignored.")
 
 # OUTPUT FOLDER
-OUTPUT_BASE_FOLDER_PATH = args.output_folder if args.output_folder else SAVED_IMAGES_PATH
+if args.output_folder:
+    OUTPUT_BASE_FOLDER_PATH = args.output_folder
+else:
+    OUTPUT_BASE_FOLDER_PATH = SAVED_IMAGES_PATH
 
 if args.quick:
     BATCH_SIZE = 3  # Process only 3 images in quick mode
@@ -229,15 +289,14 @@ if args.quick:
 else:
     BATCH_SIZE = 64
 
-RUN_NAME = get_timestamp()
+RUN_NAME = f"{get_timestamp()}_gradcam"
 RUN_NAME += "_quick-run" if args.quick else "_cmplt-run"
 RUN_NAME += f"_{args.models_set}-models"
 RUN_NAME += f"_{args.test_set}-testset"
-RUN_NAME += f"_do_explainability_gradcam_keras"
 
 # Redirect output if specified
 if args.redirect_output:
-    LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{RUN_NAME}_do_explainability_gradcam_keras.log")
+    LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{RUN_NAME}.log")
     log_dir = os.path.dirname(LOG_FILE_PATH)
     os.makedirs(log_dir, exist_ok=True)
     sys.stdout = Tee(LOG_FILE_PATH)
@@ -249,7 +308,7 @@ for arg_name, arg_value in vars(args).items():
     print(f"\t{arg_name}: {arg_value}")
 print(f"CONSTANTS:")
 print(f"\tMODEL_NAMES: {MODEL_NAMES}")
-print(f"\tTEST_SET_PATH: {TEST_SET_PATH}")
+print(f"\tTEST_SET_PATH: {TEST_SET_H5_PATH}")
 print(f"\tBATCH_SIZE: {BATCH_SIZE}")
 print(f"\tOUTPUT_BASE_FOLDER_PATH: {OUTPUT_BASE_FOLDER_PATH}")
 print(f"\tRUN_NAME: {RUN_NAME}")
@@ -260,8 +319,10 @@ print(f"==============================")
 # ==================================== MAIN ====================================
 
 # Example usage:
-# >>> test run
+# >>> test run keras
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --redirect_output --models_set occft --test_set occluded --sequential
+# >>> test run yolo
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --quick --redirect_output --models_set occft_yolo --test_set occluded
 # >>> pattlite only
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occluded --model_name occft_pattlite
 # >>> vgg only
@@ -286,42 +347,68 @@ if __name__ == "__main__":
         # 1) Get target layer names for Grad-CAM, convert to sequential model if needed, and setup the gradcam task
         if ("pattlite" in model_name or "vgg" in model_name) and args.sequential:
             print(f"[INFO] Model {model_name} is a pattlite or vgg model and --sequential flag is set, using sequential model wrapper for Grad-CAM")
-            target_layer_names = get_layer_names(model, model_name)
+            target_layers = get_layer_names(model, model_name)
 
             sequential_model = build_new_model(model, model_name)
             model = sequential_model
             gradcam_model = sequential_model
             clone = True
+        elif "yolo" in model_name.lower():
+            print(f"[INFO] Model {model_name} is a YOLO model, using the base model for Grad-CAM")
+            target_layers = {
+                "module_1": [model.model.model[1]],
+                "module_2": [model.model.model[2].cv1, model.model.model[2].cv2],
+                "module_3": [model.model.model[3]],
+                "module_4": [model.model.model[4].cv1, model.model.model[4].cv2],
+                "module_5": [model.model.model[5]],
+                "module_6": [model.model.model[6].cv1, model.model.model[6].cv2],
+                "module_7": [model.model.model[7]],
+                "module_8": [model.model.model[8].cv1, model.model.model[8].cv2],
+            }
         else:
             print(f"[INFO] Model {model_name} is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM")
-            target_layer_names = get_layer_names(model.get_layer('base_model'), model_name)
+            target_layers = get_layer_names(model.get_layer('base_model'), model_name)
 
             gradcam_model = model.get_layer('base_model')
             clone = False
 
-        print(f"[DEBUG] Successfully loaded model {model_name}. Target layers ({len(target_layer_names)} layers):")
-        for target_layer_name in target_layer_names:
-            print(f"\t- {target_layer_name}")
+        print(f"[DEBUG] Successfully loaded model {model_name}. Target layers ({len(target_layers)} layers):")
+        if "yolo" in model_name.lower():
+            for module_name, layer_list in target_layers.items():
+                print(f"\t- {module_name}:")
+                for layer in layer_list:
+                    print(f"\t\t- {layer}")
+        else:
+            for target_layer in target_layers:
+                print(f"\t- {target_layer}")
 
         if args.only_show_layer_names:
             print(f"[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.")
             continue
         
-        print(f"[INFO] Setting up Grad-CAM for model {model_name} with clone={clone}")
-        gradcam = Gradcam(gradcam_model, model_modifier=ReplaceToLinear(), clone=clone)
+        if "yolo" in model_name.lower():
+            # cam = GradCAM(model=model.model, target_layers=target_layers) 
+            # For yolo you need to initialize it later bcse you need to specify the target layer(s) already
+            print(f"[INFO] Not yet setting up Grad-CAM for YOLO model {model_name} as it requires a different approach and needs to be initialized later with the target layers.")
+            gradcam = None
+        else:
+            print(f"[INFO] Setting up Grad-CAM for model {model_name} with clone={clone}")
+            gradcam = Gradcam(gradcam_model, model_modifier=ReplaceToLinear(), clone=clone)
         # _______________________________________________________________________________________
 
         # 2) Evaluate the model on the test set to check everything is working fine before generating Grad-CAM maps (for now check manually)
-        test_generator = load_test_generator(TEST_SET_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
-        test_loss, test_acc = evaluate_model(model, model_name, test_generator)
-        print(f"[INFO] Test accuracy for model {model_name} on test set {args.test_set}: {test_acc:.4f}")
+        test_generator = load_test_generator(TEST_SET_H5_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
+        if "yolo" in model_name.lower():
+            _, test_acc = evaluate_model(model, model_name, None, TEST_SET_IMAGES_PATH)
+        else:
+            _, test_acc = evaluate_model(model, model_name, test_generator)
+            print(f"[INFO] Test accuracy for model {model_name} on test set {args.test_set}: {test_acc:.4f}")
         # _______________________________________________________________________________________
 
 
-
-        print(f"[INFO] Found {len(target_layer_names)} target layers for Grad-CAM")
+        print(f"[INFO] Found {len(target_layers)} target layers for Grad-CAM")
         for i, (image_array, gt_probabilities_i) in tqdm(enumerate(zip(test_generator.x_data, test_generator.y_data)), total=len(test_generator.x_data), desc="Processing images"):
-            for target_layer_name in target_layer_names:
+            for target_layer_name in target_layers:
                 # Save example input image in quick mode
                 if args.quick:
                     Image.fromarray(image_array.astype(np.uint8)).save(os.path.join(output_run_path, f"example_input_image_{i}_layer_{target_layer_name}.png"))
@@ -330,10 +417,18 @@ if __name__ == "__main__":
                 gt = np.argmax(gt_probabilities_i)
 
                 # Preprocess the image
-                preprocessed_image = preprocess_image(image_array)
+                if "yolo" in model_name.lower():
+                    preprocessed_image = preprocess_image_yolo(image_array)
+                else:
+                    preprocessed_image = preprocess_image_keras(image_array)
 
                 # Generate Grad-CAM saliency map
-                heatmap = generate_gradcam(model, preprocessed_image, gt, target_layer_name, gradcam)
+                if "yolo" in model_name.lower():
+                    if gradcam is not None and i == 0:
+                        raise ValueError(f"Grad-CAM for YOLO model {model_name} should not have been initialized before, but it is not None. Please check the code.")
+                    heatmap = generate_gradcam_yolo(preprocessed_image, gt, target_layers[target_layer_name], model)
+                else:
+                    heatmap = generate_gradcam_keras(preprocessed_image, gt, target_layer_name, gradcam)
 
                 # Save the saliency map
                 output_folder = os.path.join(output_run_path, model_name, target_layer_name, f"{EMOTIONS[gt]}")
