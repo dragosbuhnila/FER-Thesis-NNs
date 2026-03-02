@@ -16,7 +16,7 @@ from PIL import Image
 from tqdm import tqdm
 import argparse
 
-from modules.config import ADELE_TEST_SET_IMAGES_PATH, ALL_MODELS_PATHS, CANONICAL_FACES_CUT, EMOTIONS, LANDMARKER_MODEL_PATH, SAVED_IMAGES_PATH
+from modules.config import ADELE_TEST_SET_IMAGES_PATH, ALL_MODELS_PATHS, CANONICAL_FACES_CUT, EMOTIONS, LANDMARKER_MODEL_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, SAVED_IMAGES_PATH
 
 def _normalized_to_pixel_coordinates(
     normalized_x: float, normalized_y: float, image_width: int,
@@ -78,7 +78,7 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
                                         num_faces=1)
     detector = vision.FaceLandmarker.create_from_options(options)
 
-    dataset_images_path = ADELE_TEST_SET_IMAGES_PATH    # path delle immagini del test set
+    dataset_images_path = OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH
     print(f'[WARNING] hardcoded path for images to occluded test set. You should parametrize this. Path: {dataset_images_path}')
     canonical_faces_path = CANONICAL_FACES_CUT  # path delle facce canoniche
 
@@ -154,14 +154,20 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
             # prendere l'elenco di immagini nella cartella emot_folder con il nome che inizia con img
             # my current names look like the following: image_50_3d841d89d769a83e3f6c458f3f06e921.png
             dataset_image_filename_full = dataset_image.split('.')[0]
-            dataset_image_essential_name = dataset_image_filename_full.split('_')[0] + "_" + dataset_image_filename_full.split('_')[1] 
-            gt_emotion = dataset_image_filename_full.split('_')[2]
-            if gt_emotion != emotion:
-                raise ValueError(f"Emotion in image name {gt_emotion} does not match folder emotion {emotion}")
+            dataset_image_essential_name_d3 = dataset_image_filename_full.split('_')[0] + "_" + dataset_image_filename_full.split('_')[1] 
+            dataset_image_essential_name_d0 = dataset_image_filename_full.split('_')[0] + "_" + str(int(dataset_image_filename_full.split('_')[1]))
+            gt_emotion = emotion
 
             for filename in bubbles_images_for_current_gt_emotion:
-                if f"{dataset_image_essential_name}__predictedclass" in filename:
+                if f"{dataset_image_essential_name_d3}__predictedclass" in filename:
                     predicted_class = filename.split('_')[4]
+                    dataset_image_essential_name = dataset_image_essential_name_d3
+                    if predicted_class not in EMOTIONS:
+                        raise ValueError(f"Predicted class {predicted_class} not in EMOTIONS list")       
+                    break
+                elif f"{dataset_image_essential_name_d0}__predictedclass" in filename:
+                    predicted_class = filename.split('_')[4]
+                    dataset_image_essential_name = dataset_image_essential_name_d0
                     if predicted_class not in EMOTIONS:
                         raise ValueError(f"Predicted class {predicted_class} not in EMOTIONS list")       
                     break
