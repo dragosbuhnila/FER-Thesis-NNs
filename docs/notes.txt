@@ -59,4 +59,5 @@ layers: accuracies all ok
 	
 	
 > RUN bubbles YOLO and then CSM bubbles for YOLO and check if results make sense, since as of now they looked a little bit all over the place, having white shit even outside the face area
-> RUN training
+> RUN training as soon as foldered merged dataset is loaded and UNZIPped
+> RECHECK all XAI to see if they actually ran on occluded test set
