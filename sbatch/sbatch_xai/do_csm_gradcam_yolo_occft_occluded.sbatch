@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_csm_extpert_keras_occft_occluded
+#SBATCH --job-name=dbuh_do_csm_gradcam_yolo_occft_occluded
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
@@ -41,7 +41,8 @@ pwd
 # =====================================================================================
 
 
-COMMAND_TO_RUN="./scripts/xai/do_csm.py --run_name 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras --xai_method extpert"
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_csm.py" --redirect_output --run_name 20260227-174619_quick-run_occft-models_occluded-testset_do_explainability_gradcam_keras --xai_method gradcam
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --run_name 20260302-235310_gradcam_cmplt-run_occft_yolo-models_occluded-testset --xai_method gradcam"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

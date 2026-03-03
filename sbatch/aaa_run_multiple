@@ -57,6 +57,7 @@ sbatch ./sbatch/sbatch_xai/do_explainability_bubbles_yolo_occft_occluded.sbatch
 # extpert
 sbatch ./sbatch/sbatch_xai/do_explainability_extpert_keras_occft_occluded.sbatch
 sbatch ./sbatch/sbatch_xai/do_explainability_extpert_keras_occft_original.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_extpert_yolo_occft_occluded.sbatch
 # gradcam
 sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded.sbatch
 
@@ -68,6 +69,7 @@ sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__incep
 sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__pattlite.sbatch
 sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__resnet.sbatch
 sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__vgg.sbatch
+sbatch ./sbatch/sbatch_xai/do_explainability_gradcam_keras_occft_occluded__yolo.sbatch
 # _____________________________________________________________
 
 
