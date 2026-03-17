@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuhnila/tesi
+#SBATCH --job-name=dbuh_test_offline_occgens_all_onlypos
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_a40
@@ -41,7 +41,7 @@ pwd
 
 BATCH_SIZE="128"
 
-COMMAND_TO_RUN="./scripts/datasets/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} -s"
+COMMAND_TO_RUN="./scripts/datasets/test_offline_occgens_all.py --batch_size ${BATCH_SIZE} --show_loader_images_b4aug -s --only_positive_occlusions"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

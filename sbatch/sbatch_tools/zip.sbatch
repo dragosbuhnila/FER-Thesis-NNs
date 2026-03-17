@@ -36,7 +36,7 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="zip -r data/datasets/occluded_and_original_trainval_occ8_set.zip data/datasets/occluded_and_original_trainval_occ8_set"
+COMMAND_TO_RUN="zip -r data/xais_of_interest.zip data/xais_of_interest"
 echo "Now running $COMMAND_TO_RUN"
 $COMMAND_TO_RUN
 

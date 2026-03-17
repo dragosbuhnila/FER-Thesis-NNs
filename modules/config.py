@@ -140,6 +140,9 @@ ALL_MODELS_PATHS = {
     "occft_resnet":                	os.path.join(OCCFT_MODELS_FOLDER, "ResNet_occfinetuning__20260217-070852__0.6629", 			"ResNet_occfinetuning"),
     "occft_vgg19":                 	os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260213-003832__0.7000", 			"VGG19_occfinetuning"),
 	"occft_yolo":                 	os.path.join(OCCFT_MODELS_FOLDER, "yolo_last_occfinetuning__20260302-163800_cmplt-run_freeze-most_unfrozen__0.6886", "yolo_last_occfinetuning.pt"),
+	# ----------------------------------- OTHER MODELS
+	# VGG19_occfinetuning__20260308-172924__0.7057
+	"vgg_special_fullratio":		os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260308-172924__0.7057", "VGG19_occfinetuning"),
 }
 
 # 3b) Evaluations

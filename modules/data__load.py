@@ -399,7 +399,7 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
 # ======================    load test, load train, load val, load all ==============================
 # ==================================================================================================
 
-def generate_occlusion_indexer(X_occ: np.ndarray, X_train_occ_original_hashes: np.ndarray, occs: np.ndarray, pos_or_negs: np.ndarray):
+def generate_occlusion_indexer(X_occ: np.ndarray, X_train_occ_original_hashes: np.ndarray, occs: np.ndarray, pos_or_negs: np.ndarray, only_positive_occlusions: bool = False):
     # Add parallelization for both cpu and tf gpu later
     occlusion_indexer = {}
     types_of_occlusion = set()
@@ -413,6 +413,8 @@ def generate_occlusion_indexer(X_occ: np.ndarray, X_train_occ_original_hashes: n
             occlusion_indexer[original_hash] = {}
 
         occlusion_type = f"{occ}_{pos_or_neg}"
+        if only_positive_occlusions and pos_or_neg != 1:
+            continue
         types_of_occlusion.add(occlusion_type)
         occlusion_indexer[original_hash][occlusion_type] = img
 
@@ -421,7 +423,7 @@ def generate_occlusion_indexer(X_occ: np.ndarray, X_train_occ_original_hashes: n
 def load_offline_data_generators(original_trainval_path: str, occluded_trainval_path: str, occluded_test_path: str,
                                 training_occlusion_probability: float = 0.8, validation_occlusion_probability: float = 1.0, # matching_amount=0.2, pos_or_neg=None
                                 masking_function_name: str = "lines", use_label_smoothing: bool = True, 
-                                small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False,
+                                small_subset=False, batch_size=64, dont_augment=False, dont_rebalance_trainval=False, only_positive_occlusions=False,
                                 debug_prints=False):
     print(f"[INFO] {get_timestamp()} Loading data from H5 files... (expected time for full occluded dataset with 250k+ images is ~5 minutes)", flush=True)
     # 1) Load training and validation data
@@ -479,8 +481,8 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
     del X_val_occ_original_hashes_set
     del X_val_hashes_set
 
-    train_occlusion_indexer, types_of_occlusion = generate_occlusion_indexer(X_train_occ, X_train_occ_original_hashes, occ_train, pos_or_neg_train)
-    val_occlusion_indexer, _ =   generate_occlusion_indexer(X_val_occ, X_val_occ_original_hashes, occ_val, pos_or_neg_val)
+    train_occlusion_indexer, types_of_occlusion = generate_occlusion_indexer(X_train_occ, X_train_occ_original_hashes, occ_train, pos_or_neg_train, only_positive_occlusions)
+    val_occlusion_indexer, _ =   generate_occlusion_indexer(X_val_occ, X_val_occ_original_hashes, occ_val, pos_or_neg_val, only_positive_occlusions)
     print(f"[INFO] {get_timestamp()} Generated occlusion indexers for training and validation sets.", flush=True)
 
     # Validate that all expected occlusion types are present
@@ -488,7 +490,12 @@ def load_offline_data_generators(original_trainval_path: str, occluded_trainval_
         position_of_neutral = EMOTIONS.index("NEUTRAL")
         emotion_indices = list(range(len(EMOTIONS)))
         emotions_indices_without_neutral = emotion_indices[:position_of_neutral] + emotion_indices[position_of_neutral+1:]
-        expected_types_of_occlusions = [f"{occ}_1" for occ in emotions_indices_without_neutral] + [f"{occ}_0" for occ in emotions_indices_without_neutral]
+
+        if only_positive_occlusions:
+            expected_types_of_occlusions = [f"{occ}_1" for occ in emotions_indices_without_neutral]
+        else:
+            expected_types_of_occlusions = [f"{occ}_1" for occ in emotions_indices_without_neutral] + [f"{occ}_0" for occ in emotions_indices_without_neutral]
+            
         for expected_type in expected_types_of_occlusions:
             if expected_type not in types_of_occlusion:
                 error_message = f"Expected occlusion type '{expected_type}' not found in occlusion indexer."
