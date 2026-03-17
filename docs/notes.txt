@@ -58,6 +58,47 @@ layers: accuracies all ok
 	
 	
 	
-> RUN bubbles YOLO and then CSM bubbles for YOLO and check if results make sense, since as of now they looked a little bit all over the place, having white shit even outside the face area
-> RUN training as soon as foldered merged dataset is loaded and UNZIPped
-> RECHECK all XAI to see if they actually ran on occluded test set
+> Download zip after checkin size
+
+
+
+
+
+
+next meeting:
+> check model results by comparing architectures with those on literature review from a year ago
+	OK 1/2: 
+> controlla origine dei paper se sono su conferenze o solo arxiv
+	OK 7/7
+> guarda paper ricevuto via mail della Marcolin e trova connessioni tra cervello e CNN
+	OK 0/2
+> valutare raggruppo di accuracy metodo
+	OK 1/1: just round
+> left/right analysis instead of ROI
+	OK 2/2: analyze and write some lines
+> RUN meandif, statistical granular, statistical folders
+	OK 4/4: analyze results	   CORRECT: USE DW9 INSTEAD OF PW8 IN PATTLITE/MOBILENET ---- NOOOO, idk why just use pw like fede
+		- there's some blocks where it should be white (empty) but isn't
+			> BEST_VS_WORST
+			> YOLO_BUB VS REBLEO
+				this has even a really big value! (OK THIS IS ACTUALLY NORMAL BC A BLANK IMAGE WAS KEPT AND THUS THE DIFFERENCE WILL BE ALMOST TOTAL. THE FACT THAT ITS NOT 1 MEANS THAT PROBABLY THERE'S REALLY FEW PIXELS WHICH WE SHOULD JUST THROW AWAY (CHECK IF IT'S BECAUSE OF NEGATIVE MASKS, PROBABLY YES)
+			> YOLO_EXT VS REBLEO
+		- also, put all gradcams for a specific model in a shared thingy so that I can see things
+			> like for Efficient net, gradcam is all over the place, like, last layers scan vertically, and first layer have some full image thing
+			
+			
+			
+perche usare movilenet1 e non i piu nuovi? Perche lo usa pattlite
+change all graphs showing pattlite to mobilenet
+confirm our CNNs are deterninistic and gradcam too (since others arent)
+check if by any chance the confusion matrices of gradcam xai aren't transposed
+ragiona su perche dovrebbe essereci comportamento riga/colonna in primi/ultimi layer
+vai a cercare il paper sul label domain shift
+
+valuta question canoniche per match/mismatch e valuta la questione dei diversi training per una sola rete per vederle come individui diversi e farne gruppi?
+
+extra: run xais with occft models on old test set and run again lr, to see if lr depends on test set or on training
+
+
+do bosphorus images appear in the training set????
+
