@@ -91,10 +91,14 @@ if __name__ == "__main__":
             # Sort infos by accuracy (ascending order)
             infos = sorted(infos, key=lambda info: float(info["acc"]) if info["acc"] else 0)
 
+            if occ == "10":
+                occ_display = "1.0"
+            else:
+                occ_display = f"0.{occ}" if occ else "N/A"
             ids = ", ".join(info["id"] for info in infos)
             accs = ", ".join(f"0.{info['acc']}" if info["acc"] else "N/A" for info in infos)
             table.add_row(
-                f"0.{occ}" if occ else "N/A",
+                occ_display,
                 unf if unf else "N/A",
                 str(longep),
                 ids,

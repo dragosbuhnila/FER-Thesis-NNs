@@ -1,0 +1,258 @@
+========== SETTINGS ==========
+ARGS:
+	quick: False
+	redirect_output: True
+	models_set: occft
+	model_name: None
+	test_set: occluded
+	output_folder: None
+	no_layer_scale: False
+	sequential: False
+	only_show_layer_names: True
+CONSTANTS:
+	MODEL_NAMES: ['occft_convnext', 'occft_efficientnetb1', 'occft_inceptionv3', 'occft_pattlite', 'occft_resnet', 'occft_vgg19', 'occft_yolo']
+	TEST_SET_PATH: c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\datasets\occluded_test_set\occluded_test_set.h5
+	BATCH_SIZE: 64
+	OUTPUT_BASE_FOLDER_PATH: c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\results_light\saved_images
+	RUN_NAME: 20260303-225349_gradcam_cmplt-run_occft-models_occluded-testset
+	LOG_FILE_PATH: c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\results_light\console_outputs\20260303-225349_gradcam_cmplt-run_occft-models_occluded-testset.log
+==============================
+[INFO] Loading model occft_convnext with LayerScale
+Loading model: occft_convnext from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\ConvNeXt_occfinetuning__20260216-225503__0.6771\ConvNeXt_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+Loading model: occft_convnext from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\ConvNeXt_occfinetuning__20260216-225503__0.6771\ConvNeXt_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+[INFO] Model occft_convnext is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM
+[DEBUG] Successfully loaded model occft_convnext. Target layers (31 layers):
+	- convnext_base_stage_0_block_0_depthwise_conv
+	- convnext_base_stage_0_block_1_depthwise_conv
+	- convnext_base_stage_0_block_2_depthwise_conv
+	- convnext_base_stage_1_block_0_depthwise_conv
+	- convnext_base_stage_1_block_1_depthwise_conv
+	- convnext_base_stage_1_block_2_depthwise_conv
+	- convnext_base_stage_2_block_0_depthwise_conv
+	- convnext_base_stage_2_block_1_depthwise_conv
+	- convnext_base_stage_2_block_2_depthwise_conv
+	- convnext_base_stage_2_block_3_depthwise_conv
+	- convnext_base_stage_2_block_4_depthwise_conv
+	- convnext_base_stage_2_block_5_depthwise_conv
+	- convnext_base_stage_2_block_6_depthwise_conv
+	- convnext_base_stage_2_block_7_depthwise_conv
+	- convnext_base_stage_2_block_8_depthwise_conv
+	- convnext_base_stage_2_block_9_depthwise_conv
+	- convnext_base_stage_2_block_10_depthwise_conv
+	- convnext_base_stage_2_block_11_depthwise_conv
+	- convnext_base_stage_2_block_12_depthwise_conv
+	- convnext_base_stage_2_block_13_depthwise_conv
+	- convnext_base_stage_2_block_14_depthwise_conv
+	- convnext_base_stage_2_block_15_depthwise_conv
+	- convnext_base_stage_2_block_16_depthwise_conv
+	- convnext_base_stage_2_block_17_depthwise_conv
+	- convnext_base_stage_2_block_18_depthwise_conv
+	- convnext_base_stage_2_block_19_depthwise_conv
+	- convnext_base_stage_2_block_20_depthwise_conv
+	- convnext_base_stage_2_block_21_depthwise_conv
+	- convnext_base_stage_2_block_22_depthwise_conv
+	- convnext_base_stage_2_block_23_depthwise_conv
+	- convnext_base_stage_2_block_24_depthwise_conv
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+[INFO] Loading model occft_efficientnetb1 with LayerScale
+Loading EfficientNet model: occft_efficientnetb1 from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\EfficientNetB1_occfinetuning__20260217-001742__0.6343\EfficientNetB1_occfinetuning
+Loading EfficientNet model: occft_efficientnetb1 from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\EfficientNetB1_occfinetuning__20260217-001742__0.6343\EfficientNetB1_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+[INFO] Model occft_efficientnetb1 is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM
+[DEBUG] Successfully loaded model occft_efficientnetb1. Target layers (16 layers):
+	- stem_conv
+	- block1a_project_conv
+	- block1b_project_conv
+	- block2a_project_conv
+	- block2b_project_conv
+	- block2c_project_conv
+	- block3a_project_conv
+	- block3b_project_conv
+	- block3c_project_conv
+	- block4a_project_conv
+	- block4b_project_conv
+	- block4c_project_conv
+	- block4d_project_conv
+	- block5a_project_conv
+	- block5b_project_conv
+	- block5c_project_conv
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+[INFO] Loading model occft_inceptionv3 with LayerScale
+Loading model: occft_inceptionv3 from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\InceptionV3_occfinetuning__20260212-212538__0.6743\InceptionV3_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+Loading model: occft_inceptionv3 from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\InceptionV3_occfinetuning__20260212-212538__0.6743\InceptionV3_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+[INFO] Model occft_inceptionv3 is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM
+[DEBUG] Successfully loaded model occft_inceptionv3. Target layers (40 layers):
+	- conv2d
+	- conv2d_1
+	- conv2d_2
+	- conv2d_3
+	- conv2d_4
+	- conv2d_8
+	- conv2d_6
+	- conv2d_9
+	- conv2d_5
+	- conv2d_7
+	- conv2d_10
+	- conv2d_11
+	- conv2d_15
+	- conv2d_13
+	- conv2d_16
+	- conv2d_12
+	- conv2d_14
+	- conv2d_17
+	- conv2d_18
+	- conv2d_22
+	- conv2d_20
+	- conv2d_23
+	- conv2d_19
+	- conv2d_21
+	- conv2d_24
+	- conv2d_25
+	- conv2d_27
+	- conv2d_28
+	- conv2d_26
+	- conv2d_29
+	- conv2d_34
+	- conv2d_35
+	- conv2d_31
+	- conv2d_36
+	- conv2d_32
+	- conv2d_37
+	- conv2d_30
+	- conv2d_33
+	- conv2d_38
+	- conv2d_39
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+[INFO] Loading model occft_pattlite with LayerScale
+Loading model: occft_pattlite from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\PattLite_occfinetuning__20260217-025925__0.6800\PattLite_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+Loading model: occft_pattlite from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\PattLite_occfinetuning__20260217-025925__0.6800\PattLite_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+[INFO] Model occft_pattlite is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM
+[DEBUG] Successfully loaded model occft_pattlite. Target layers (18 layers): (mobilenet)
+	- conv1
+	- conv_dw_1
+	- conv_pw_1
+	- conv_dw_2
+	- conv_pw_2
+	- conv_dw_3
+	- conv_pw_3
+	- conv_dw_4
+	- conv_pw_4
+	- conv_dw_5
+	- conv_pw_5
+	- conv_dw_6
+	- conv_pw_6
+	- conv_dw_7
+	- conv_pw_7
+	- conv_dw_8
+	- conv_pw_8
+	- conv_dw_9
+
+	I actually ignored depthwise convolutions for gradcam unfortunately because fede did so too
+
+
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+[INFO] Loading model occft_resnet with LayerScale
+Loading model: occft_resnet from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\ResNet_occfinetuning__20260217-070852__0.6629\ResNet_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+Loading model: occft_resnet from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\ResNet_occfinetuning__20260217-070852__0.6629\ResNet_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+[INFO] Model occft_resnet is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM
+[DEBUG] Successfully loaded model occft_resnet. Target layers (13 layers):
+	- conv1_conv
+	- conv2_block1_3_conv
+	- conv2_block2_3_conv
+	- conv2_block3_3_conv
+	- conv3_block1_3_conv
+	- conv3_block2_3_conv
+	- conv3_block3_3_conv
+	- conv3_block4_3_conv
+	- conv4_block1_3_conv
+	- conv4_block2_3_conv
+	- conv4_block3_3_conv
+	- conv4_block4_3_conv
+	- conv4_block5_3_conv
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+[INFO] Loading model occft_vgg19 with LayerScale
+Loading model: occft_vgg19 from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\VGG19_occfinetuning__20260213-003832__0.7000\VGG19_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+Loading model: occft_vgg19 from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\VGG19_occfinetuning__20260213-003832__0.7000\VGG19_occfinetuning. Custom objects: dict_keys(['loss', 'LayerScale'])
+[INFO] Model occft_vgg19 is not a pattlite or vgg model or --sequential flag is not set, using non-sequential model wrapper for Grad-CAM
+[DEBUG] Successfully loaded model occft_vgg19. Target layers (12 layers):
+	- block1_conv1
+	- block1_conv2
+	- block2_conv1
+	- block2_conv2
+	- block3_conv1
+	- block3_conv2
+	- block3_conv3
+	- block3_conv4
+	- block4_conv1
+	- block4_conv2
+	- block4_conv3
+	- block4_conv4
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+[INFO] Loading model occft_yolo with LayerScale
+Loading YOLO model: occft_yolo from c:\Users\Dragos\Roba\Lectures\YM2.2\Thesis\e Models\data\models\occft\yolo_last_occfinetuning__20260302-163800_cmplt-run_freeze-most_unfrozen__0.6886\yolo_last_occfinetuning.pt
+[INFO] Model occft_yolo is a YOLO model, using the base model for Grad-CAM
+[DEBUG] Successfully loaded model occft_yolo. Target layers (8 layers):
+	- module_1:
+		- Conv(
+  (conv): Conv2d(16, 32, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_2:
+		- Conv(
+  (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+		- Conv(
+  (conv): Conv2d(48, 32, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_3:
+		- Conv(
+  (conv): Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_4:
+		- Conv(
+  (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+		- Conv(
+  (conv): Conv2d(128, 64, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_5:
+		- Conv(
+  (conv): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_6:
+		- Conv(
+  (conv): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+		- Conv(
+  (conv): Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_7:
+		- Conv(
+  (conv): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+  (act): SiLU(inplace=True)
+)
+	- module_8:
+		- Conv(
+  (conv): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+		- Conv(
+  (conv): Conv2d(384, 256, kernel_size=(1, 1), stride=(1, 1))
+  (act): SiLU(inplace=True)
+)
+[INFO] --only_show_layer_names flag is set, exiting after printing target layer names.
+
+
+
+
+
+
+NOTE:
+i layer dal 31 in poi di EfficientNet hanno GRADCAM non valide, perché non lo so ma è così anche per i modelli di federica

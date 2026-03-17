@@ -8,7 +8,7 @@ from modules.model import load_model
 from modules.visualize import plot_image;
 from modules.data__load import load_test_generator
 from modules.evaluate_completely import evaluate_keras_model, evaluate_agreement
-from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH,\
+from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_180ROTATED_TEST_SET_IMAGES_PATH, ADELE_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH,\
                             ALL_MODELS_PATHS, CONSOLE_OUTPUTS_PATH, EMOTIONS, OCCLUDED_TEST_SET_RESIZED_PATH
 
 
@@ -30,6 +30,8 @@ if args.models_set == 'occft':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "occft" in model_name.lower()]
 elif args.models_set == 'federica':
     MODEL_NAMES = [model_name for model_name in ALL_MODELS_PATHS.keys() if "finetuning" in model_name.lower()]
+    if "yolo_last" in ALL_MODELS_PATHS.keys():
+        MODEL_NAMES.append("yolo_last")  # Add YOLO model to Federica's models if it exists in ALL_MODELS_PATHS
 else:
     raise ValueError("Invalid --models_set argument. Use 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
 # check if all model paths exist else raise
@@ -60,7 +62,7 @@ elif args.test_set == 'original':
     TEST_SET_IMAGES_PATH = ADELE_TEST_SET_IMAGES_PATH
 elif args.test_set == 'original-180':
     TEST_SET_H5_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = None  # not implemented yet
+    TEST_SET_IMAGES_PATH = ADELE_180ROTATED_TEST_SET_IMAGES_PATH
 else:
     raise ValueError("Invalid --test_set argument. Use 'occluded' for the occluded test set, 'original' for the original test set.")
 # check if path exists else raise
@@ -92,22 +94,25 @@ print(f"==============================")
 
 # >>> test run:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --quick
-# >>> occft run on occluded test set:
+
+# >>> occft models on occluded test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded
-# >>> occft run on original test set:
+# >>> occft models on original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set original
-# >>> federica run on 180rotated original test set:
+# >>> fede models on 180rotated original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set federica --test_set original-180
 # >>> fede models on original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set federica --test_set original --redirect_output
 
-# >>> occft_yolo on occluded test set:
+# >>> occft_yolo on occluded test set EVAL:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --model_name occft_yolo --test_set occluded --redirect_output --only_evaluation
-# >>> occft_yolo on original test set:
+# >>> occft_yolo on original test set EVAL:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --model_name occft_yolo --test_set original --redirect_output --only_evaluation
 
-# >>> only agreement on all!
+# >>> only agreement on all! occluded test set
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --only_agreement
+# >>> only agreement on all! original test set
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set original --redirect_output --only_agreement
 
 if __name__ == "__main__":
     if len(MODEL_NAMES) == 1 and "yolo" in MODEL_NAMES[0].lower():

@@ -13,6 +13,16 @@ mlruns.zip
 /mlflow_windows.db
 /yolo11n.pt
 
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.pdf
+
+/**/*.png
+/**/*.jpg
+/**/*.jpeg
+/**/*.pdf
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -35,6 +35,7 @@ MODELS_DIR = 			os.path.join(DATA_BASE_DIR, "models")
 MLFLOW_DIR = 			os.path.join(PROJECT_ROOT, "mlruns")
 MLFLOW_DB_WINDOWS = 	os.path.join(PROJECT_ROOT, "mlflow_windows.db")
 OUT_ERR_DIR = 			os.path.join(PROJECT_ROOT, "out_err")
+XAI_DIR = 				os.path.join(DATA_BASE_DIR, "xais_of_interest")
 
 # 1a) Emotions
 # ______________________________________________________________________
@@ -145,6 +146,8 @@ ALL_MODELS_PATHS = {
 	"vgg_special_fullratio":		os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260308-172924__0.7057", "VGG19_occfinetuning"),
 }
 
+OCCFT_MODELS_PATHS = {model_name: model_path for model_name, model_path in ALL_MODELS_PATHS.items() if "occft" in model_name.lower()}
+
 # 3b) Evaluations
 # ______________________________________________________________________
 EVALUATIONS_FOLDER_PATH = os.path.join(DATA_BASE_DIR, "evaluations")
@@ -235,6 +238,22 @@ for images_dict in [BOSPHORUS_DUPLICATE_IMAGES, BOSPHORUS_UNLANDMARKABLE_IMAGES]
 		BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT[split].append(idx_to_remove)
 		if config_do_remove_ok_idx_too and ok_idx is not None:
 			BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT[split].append(ok_idx)
+
+
+# 6) XAI
+HEATMAPS_DIR_PATH = os.path.join(XAI_DIR, "HEATMAPS")
+CONFUSION_MATRICES_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "CONFUSION_MATRICES")
+BUBBLES_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "Bubbles")
+EXTERNAL_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "EXTERNAL")
+GRADCAM_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "GRADCAM")
+GRADCAM_LAYERS_PDFS_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "GRADCAM_LAYERS_PDFS")
+MERGED_HEATMAPS_PDFS_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "MERGED_HEATMAPS_PDFS")
+
+
+# 7) other folders
+DOCS_FOLDER = os.path.join(PROJECT_ROOT, "docs")
+MODEL_DOCS_FOLDER = os.path.join(DOCS_FOLDER, "models")
+
 
 
 if __name__ == "__main__":

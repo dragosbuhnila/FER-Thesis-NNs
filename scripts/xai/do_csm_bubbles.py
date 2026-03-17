@@ -36,6 +36,12 @@ def _normalized_to_pixel_coordinates(
   y_px = min(math.floor(normalized_y * image_height), image_height - 1)
   return x_px, y_px
 
+
+def remove_miniscule_values(heatmap, tot, eps):
+    heatmap = heatmap if (tot > 0 and float(np.max(heatmap)) > eps) else np.zeros_like(heatmap, dtype=float)
+    return heatmap
+
+
 def sottrazione_norm(model_bubbles_path, img_name, emotion_gt, emotion_predicted, only_pos = False):
     # img è il nome dell'immagine senza estensione
     # emotion è la stringa che indica l'emozione predetta
@@ -84,6 +90,9 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
 
     al = 0.6
     lim = limite
+
+    # Anti-rumore overlay (EVITA "aloni blu" su celle che devono restare "base only")
+    EPS = 1e-6
     
     # creare un subplot 7x7
     fig, axs = plt.subplots(7, 7, figsize=(20, 20))
