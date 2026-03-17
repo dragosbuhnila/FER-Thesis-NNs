@@ -222,6 +222,7 @@ def build_model_finetuning(learning_rate, dropout_rate, l2_reg, initial_bias, mo
 
 
 def load_model(model_name, model_path_subset=ALL_MODELS_PATHS, debug=False, additional_custom_objects=None):
+    # When loading a new model, check if Adam optimizer and Focal loss are set, as I'm afraid there might be some issues when saving EfficientNet or maybe even other models
     if additional_custom_objects is not None:
         custom_objects.update(additional_custom_objects)
 

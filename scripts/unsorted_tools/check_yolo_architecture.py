@@ -21,6 +21,10 @@ if __name__ == "__main__":
     model = load_yolo_model(MODEL_NAME)
     net = model.model
 
+        # Calculate and print the total parameter count
+    total_params = sum(p.numel() for p in net.parameters())
+    print(f"Total parameter count: {total_params}")
+
     # print number of layers
     total_modules = sum(1 for _ in net.modules())
     print("Total modules:", total_modules)
