@@ -24,9 +24,9 @@ echo "==========================================================================
 echo "Upgraded pip!"
 echo "=========================================================================="
 
-python -m pip install tf_keras_vis imageio deprecated --no-deps
+python -m pip install grad-cam ttach --no-deps
 echo "=========================================================================="
-echo "Installed other dependencies! (tf_keras_vis imageio deprecated --no-deps)"
+echo "Installed other dependencies! (grad-cam ttach --no-deps)"
 echo "=========================================================================="
 
 

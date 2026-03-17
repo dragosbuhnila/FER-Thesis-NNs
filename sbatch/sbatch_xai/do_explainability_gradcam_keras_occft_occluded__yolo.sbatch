@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_csm_extpert_keras_occft_occluded
+#SBATCH --job-name=dbuh_do_explainability_gradcam_keras_occft_occluded__yolo
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
+#SBATCH --partition=gpu_a100
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=20G
@@ -40,8 +40,11 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
+# Example usage:
+# >>> test run
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occluded
 
-COMMAND_TO_RUN="./scripts/xai/do_csm.py --run_name 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras --xai_method extpert"
+COMMAND_TO_RUN="./scripts/xai/do_explainability_gradcam_keras.py --models_set occft_yolo --test_set occluded"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

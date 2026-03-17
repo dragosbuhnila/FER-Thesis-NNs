@@ -67,9 +67,9 @@ echo "==========================================================================
 echo "Installed other dependencies! (h5py, numpy, Pillow, scikit-learn, ultralytics, gdown, mediapipe, mlflow, waitress, argparse, rich, seaborn, reportlab)"
 echo "=========================================================================="
 
-python -m pip install tf_keras_vis imageio deprecated --no-deps
+python -m pip install tf_keras_vis imageio deprecated grad-cam ttach --no-deps
 echo "=========================================================================="
-echo "Installed other dependencies! (tf_keras_vis imageio deprecated --no-deps)"
+echo "Installed other dependencies! (tf_keras_vis imageio deprecated grad-cam ttach --no-deps)"
 echo "=========================================================================="
 
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"

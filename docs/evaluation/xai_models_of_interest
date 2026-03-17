@@ -1,0 +1,17 @@
+## bubbles
+occft-keras-models on occluded-test-set
+    > 20260225-111509_bubbles_cmplt-run_occft-models_occluded-testset
+occft-yolo-model   on occluded-test-set
+    > 20260301-170747_bubbles_cmplt-run_yolo_fede-models_occluded-testset
+
+## extpert
+occft-keras-models on occluded-test-set
+    > 20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras
+occft-yolo-model   on occluded-test-set
+    > 20260302-235310_extpert_cmplt-run_occft_yolo-models_occluded-testset
+
+## gradcam
+occft-keras-models on occluded-test-set
+    > 20260227-232502_cmplt-run_occft-models_occluded-testset_do_explainability_gradcam_keras_merged
+occft-yolo-model   on occluded-test-set
+    > 20260302-235310_gradcam_cmplt-run_occft_yolo-models_occluded-testset
