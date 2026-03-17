@@ -18,6 +18,11 @@ docs/**/*.jpg
 docs/**/*.jpeg
 docs/**/*.pdf
 
+/**/*.png
+/**/*.jpg
+/**/*.jpeg
+/**/*.pdf
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
