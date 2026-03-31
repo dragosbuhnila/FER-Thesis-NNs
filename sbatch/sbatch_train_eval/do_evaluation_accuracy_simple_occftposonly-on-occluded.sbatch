@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_evaluation_accuracy_simple_vgg-full-occ-on-original
+#SBATCH --job-name=dbuh_do_evaluation_accuracy_simple_occftposonly-on-occluded
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=gpu_v100
@@ -47,10 +47,10 @@ pwd
 # >>> occft run on original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set original
 
-PARAM_MODEL_NAME="vgg_special_fullratio"
-PARAM_TEST_SET="ADELE"
+PARAM_MODEL_NAMES="resnet_special_posonly,mobilenet_special_posonly,vgg_special_posonly,inceptionv3_special_posonly,convnext_special_posonly,efficientnetb1_special_posonly"
+PARAM_TEST_SET="OCCLUDED"
 
-SCRIPT="./scripts/train_eval/do_evaluation_accuracy_simple.py --model_name $PARAM_MODEL_NAME --test_set $PARAM_TEST_SET"
+SCRIPT="./scripts/train_eval/do_evaluation_accuracy_simple.py --model_names $PARAM_MODEL_NAMES --test_set $PARAM_TEST_SET"
 
 echo "Now running $SCRIPT"
 python $SCRIPT

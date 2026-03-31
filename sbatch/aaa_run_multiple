@@ -34,16 +34,20 @@ sbatch ./sbatch/sbatch_tools/rotate_dataset.sbatch
 
 ## Run evaluations
 # eval complete keras with 3 combinations
-sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_occft-on-occluded.sbatch
-sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_occft-on-original.sbatch
-sbatch ./sbatch/sbatch_train/do_evaluation_complete_keras_fede-on-180rotated-original.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_complete_keras_occft-on-occluded.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_complete_keras_occft-on-original.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_complete_keras_fede-on-180rotated-original.sbatch
 # eval simple on inception and resnet
-sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_InceptionV3.sbatch
-sbatch ./sbatch/sbatch_train/do_evaluation_accuracy_simple_ResNet.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_accuracy_simple_InceptionV3.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_accuracy_simple_ResNet.sbatch
 # group accuracies for all occft even bad models
 sbatch ./sbatch/sbatch_tools/group_models_by_run_filename.sbatch
 # write pdf with analyses
 sbatch ./sbatch/sbatch_tools/write_pdf_for_complete_evaluation.sbatch
+# eval simple special models
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_accuracy_simple_occftfullratio-on-original.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_accuracy_simple_occftposonly-on-original.sbatch
+sbatch ./sbatch/sbatch_train_eval/do_evaluation_accuracy_simple_occftposonly-on-occluded.sbatch
 # _____________________________________________________________
 
 
