@@ -5,7 +5,7 @@ from modules.misc import get_timestamp, Tee
 from modules.model import load_model
 from modules.visualize import plot_image;
 from modules.data__load import load_test_generator
-from modules.evaluate_completely import evaluate_keras_model
+from modules.evaluate_completely import evaluate_model_completely
 from modules.config import OCCLUDED_TEST_SET_H5_PATH, ALL_MODELS_PATHS, CONSOLE_OUTPUTS_PATH
 
 
@@ -48,5 +48,5 @@ if __name__ == "__main__":
 
     for model_name in MODEL_NAMES:
         model = load_model(model_name)
-        accuracies, precision_recall_f1, probabilities, y_true, y_pred = evaluate_keras_model(model, test_generator, model_name, run_name=run_name)
+        accuracies, precision_recall_f1, probabilities, y_true, y_pred = evaluate_model_completely(model, test_generator, model_name, run_name=run_name)
         

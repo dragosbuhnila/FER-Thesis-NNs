@@ -349,7 +349,7 @@ def compute_tsne_reduced_features(features, perplexity=30):
 # ========================= Complete Model Evaluation Functions ==================================================
 # ================================================================================================================
 
-def evaluate_keras_model(model, test_generator_or_path, model_name, save_instead_of_show=True, run_name=None):
+def evaluate_model_completely(model, test_generator_or_path, model_name, save_instead_of_show=True, run_name=None, only_confusion=False):
     """Evaluate a Keras model and visualize high-confidence and uncertain predictions."""
 
     print("=======================================================================================")
@@ -393,6 +393,16 @@ def evaluate_keras_model(model, test_generator_or_path, model_name, save_instead
         y_pred_topthree = np.argsort(probabilities, axis=1)[:, -3:]
     else:
         raise ValueError("Unsupported model type. Only Keras and YOLO models are supported.")
+
+
+    if only_confusion:
+        print("[INFO] Only confusion matrix requested, skipping other evaluations.")
+        conf_matrix = confusion_matrix(y_true, y_pred, labels=range(len(EMOTIONS)))
+        confusion_matrix_save_dir = os.path.join(base_dir, "confusion_matrix")
+        visualize_confusion_matrix(conf_matrix, class_names_fixed, model_name, confusion_matrix_save_dir, save_instead_of_show)
+        print(f"[INFO] Confusion matrix visualizations saved to: {confusion_matrix_save_dir}")
+        return
+
 
     high_confindence_threshold = 0.6
     uncertain_threshold = 0.1               # Minimum difference between top-2 probabilities to consider uncertain

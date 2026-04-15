@@ -226,6 +226,11 @@ else:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/write_pdf_for_complete_evaluation.py" --folder_name 20260303-073508_cmplt-run_occft-models_occluded-testset_do-evaluation-completely-keras
 # fede on oridinal
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/write_pdf_for_complete_evaluation.py" --folder_name 20260303-080448_cmplt-run_federica-models_original-testset_do-evaluation-completely-keras
+
+# occft on occluded-matching
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/write_pdf_for_complete_evaluation.py" --folder_name 20260330-162842_cmplt-run_occft-models_occluded-matching-testset_do-evaluation-completely-keras
+# occft on occluded-mismatching
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/write_pdf_for_complete_evaluation.py" --folder_name 20260330-162915_cmplt-run_occft-models_occluded-mismatching-testset_do-evaluation-completely-keras
 if __name__ == "__main__":
     create_pdf(OUTPUT_PATH, BASE_FOLDER, agreement_folder_name="agreement_analysis", model_folder_signatures=["occft", 'finetuning'])
     print(f"[INFO] PDF report generated: {OUTPUT_PATH}")

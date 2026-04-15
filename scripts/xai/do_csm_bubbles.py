@@ -1,6 +1,8 @@
 # cdm stands for Canonical Saliency Map. 
 # Credits to Adele Roggia for basically the whole code. (Dragos Buhnila) I merely reorganized it a little and added argparsing.
 import os; import sys
+
+from modules.misc import TEST_SET_PATHS, Tee, extract_image_index_original_or_180rotated, get_test_set_name_from_run_name, get_timestamp
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import numpy as np
@@ -16,7 +18,7 @@ from PIL import Image
 from tqdm import tqdm
 import argparse
 
-from modules.config import ADELE_TEST_SET_IMAGES_PATH, ALL_MODELS_PATHS, CANONICAL_FACES_CUT, EMOTIONS, LANDMARKER_MODEL_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, SAVED_IMAGES_PATH
+from modules.config import ADELE_TEST_SET_IMAGES_PATH, ALL_MODELS_PATHS, CANONICAL_FACES_CUT, CONSOLE_OUTPUTS_PATH, EMOTIONS, LANDMARKER_MODEL_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, SAVED_IMAGES_PATH
 
 def _normalized_to_pixel_coordinates(
     normalized_x: float, normalized_y: float, image_width: int,
@@ -75,7 +77,7 @@ def sottrazione_norm(model_bubbles_path, img_name, emotion_gt, emotion_predicted
 
     return diff
 
-def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_m, mappa_colore, save_image, save_heatmap, visualize):
+def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_m, mappa_colore, save_image, save_heatmap, visualize, unoccluded_back_images_path):
 
     base_options = python.BaseOptions(model_asset_path=LANDMARKER_MODEL_PATH)
     options = vision.FaceLandmarkerOptions(base_options=base_options,
@@ -84,7 +86,8 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
                                         num_faces=1)
     detector = vision.FaceLandmarker.create_from_options(options)
 
-    dataset_images_path = OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH
+    dataset_images_path = unoccluded_back_images_path
+
     print(f'[WARNING] hardcoded path for images to occluded test set. You should parametrize this. Path: {dataset_images_path}')
     canonical_faces_path = CANONICAL_FACES_CUT  # path delle facce canoniche
 
@@ -367,7 +370,7 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
         plt.show()
    
 
-def compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, positivi,
+def compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, unoccluded_back_images_path, positivi,
                                 save_image=True, save_heatmap=True, visualize=False,
                                 mappa_colore = 'jet'):   # PiYG (con -1 come limite inf) o jet
     model_name = os.path.basename(model_bubbles_path)
@@ -382,14 +385,30 @@ def compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, positivi,
     else:
         lim_m = -1
 
-    compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_m, mappa_colore, save_image, save_heatmap, visualize)
+    compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_m, mappa_colore, save_image, save_heatmap, visualize, unoccluded_back_images_path)
     print(f"completed")
 
 # ================================= SETTINGS =================================
 
-argparser = argparse.ArgumentParser(description='Compute CSM bubbles for all models.')
-argparser.add_argument('--run_name', type=str, default='20260221-184815_bubbles_cmplt-run_occft-models_original-testset', help='Name of the run to process. It should match the folder name in SAVED_IMAGES_PATH where the bubble images are stored.')
-args = argparser.parse_args()
+parser = argparse.ArgumentParser(description='Compute CSM bubbles for all models.')
+parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
+parser.add_argument('--run_name', type=str, required=True, help='Name of the run to process. It should match the folder name in SAVED_IMAGES_PATH where the bubble images are stored.')
+args = parser.parse_args()
+
+if "bubbles" not in args.run_name.lower():
+    raise ValueError(f"Run name {args.run_name} does not seem to be a valid bubbles run name (it should contain the word 'bubbles'). Please check the run name and try again.")
+
+test_set_name = get_test_set_name_from_run_name(args.run_name)
+TEST_SET_IMAGES_PATH = TEST_SET_PATHS[test_set_name]['unoccluded_back_images_path']
+EXTRACT_IMAGE_INDEX_FUNCTION = extract_image_index_original_or_180rotated # change this if pattern of filenames changes
+
+# Redirect output if specified
+if args.redirect_output:
+    LOG_FILE_PATH = os.path.join(CONSOLE_OUTPUTS_PATH, f"{get_timestamp()}_DO_CSM_from_{args.run_name}.log")
+    log_dir = os.path.dirname(LOG_FILE_PATH)
+    os.makedirs(log_dir, exist_ok=True)
+    sys.stdout = Tee(LOG_FILE_PATH)
+    sys.stderr = Tee(LOG_FILE_PATH)
 
 
 
@@ -417,4 +436,4 @@ if __name__ == "__main__":
         print(f"\tmodel_bubbles_path: {model_bubbles_path}")
         # print(f"\tbubbles_path: {bubbles_path}")
         # print(f"\tPOSITIVI: {POSITIVI}")
-        compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, positivi=POSITIVI)
+        compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, TEST_SET_IMAGES_PATH, positivi=POSITIVI)

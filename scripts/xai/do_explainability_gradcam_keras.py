@@ -24,8 +24,16 @@ warnings.filterwarnings("ignore", category=UserWarning, module='tensorflow')
 from modules.train_eval_save import evaluate_model
 from modules.model import build_new_model, load_model
 from modules.data__load import load_test_generator
-from modules.misc import get_timestamp, Tee
-from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, ALL_MODELS_PATHS, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, SAVED_IMAGES_PATH, CONSOLE_OUTPUTS_PATH
+from modules.misc import get_timestamp, Tee, make_xai_result_image_name
+from modules.misc import TEST_SET_CHOICES, TEST_SET_PATHS
+from modules.config import (
+    ALL_MODELS_PATHS,
+    CONSOLE_OUTPUTS_PATH,
+    SAVED_IMAGES_PATH,
+    EMOTIONS,
+)
+
+
 
 # TODO: not sure why it uses this as my model doens't need it, in case try running it with and without and see what happens
 class LayerScale(Layer):
@@ -233,7 +241,7 @@ parser.add_argument('--quick', action='store_true', help="Run on a small subset 
 parser.add_argument('--redirect_output', action='store_true', help="Redirect console output to a log file.")
 parser.add_argument('--models_set', type=str, choices=['occft', 'federica', 'yolo_fede', 'occft_yolo'], help="Specify which set of models to use.")
 parser.add_argument('--model_name', type=str, help="Specify a single model name to process.")
-parser.add_argument('--test_set', type=str, choices=['occluded', 'original', 'original-180'], help="Specify which test set to use.")
+parser.add_argument('--test_set', type=str, choices=TEST_SET_CHOICES, help="Specify which test set to use.")
 parser.add_argument('--output_folder', type=str, help="Base folder path for saving Grad-CAM maps.")
 parser.add_argument('--no_layer_scale', action='store_true', help="Do not use LayerScale in the model.")
 parser.add_argument('--sequential', action='store_true', help="Force the use of the sequential model wrapper for Grad-CAM, if models are pattlite or vgg.")
@@ -259,18 +267,13 @@ if args.model_name:
     else:
         raise ValueError(f"Model name '{args.model_name}' not found in the selected models set '{args.models_set}'. Available models: {MODEL_NAMES}")
 
-# TEST SETS
-if args.test_set == 'occluded':
-    TEST_SET_H5_PATH = OCCLUDED_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_IMAGES_PATH
-elif args.test_set == 'original':
-    TEST_SET_H5_PATH = ADELE_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = None  # Not implemented yet
-elif args.test_set == 'original-180':
-    TEST_SET_H5_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = None  # Not implemented yet
-else:
-    raise ValueError("Invalid --test_set argument. Use 'occluded', 'original', or 'original-180'.")
+TEST_SET_H5_PATH = TEST_SET_PATHS[args.test_set]['h5_path']
+TEST_SET_IMAGES_PATH = TEST_SET_PATHS[args.test_set]['images_path']
+
+if not os.path.exists(TEST_SET_H5_PATH):
+    raise FileNotFoundError(f"Test set file not found: {TEST_SET_H5_PATH}")
+if not os.path.exists(TEST_SET_IMAGES_PATH):
+    raise FileNotFoundError(f"Test set images folder not found: {TEST_SET_IMAGES_PATH}")
 
 # SEQUENTIAL
 if args.sequential:
@@ -334,6 +337,49 @@ print(f"==============================")
 # >>> show layer names federica
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set federica --test_set original --only_show_layer_names
 
+
+# # >>> occft on subsets
+# # occluded-matching
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occluded-matching --redirect_output
+
+# # occluded-mismatching
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occluded-mismatching --redirect_output
+
+# # occlusion-positive-angry
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-positive-angry --redirect_output
+
+# # occlusion-positive-disgust
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-positive-disgust --redirect_output
+
+# # occlusion-positive-fear
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-positive-fear --redirect_output
+
+# # occlusion-positive-happy
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-positive-happy --redirect_output
+
+# # occlusion-positive-sad
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-positive-sad --redirect_output
+
+# # occlusion-positive-surprise
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-positive-surprise --redirect_output
+
+# # occlusion-negative-angry
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-negative-angry --redirect_output
+
+# # occlusion-negative-disgust
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-negative-disgust --redirect_output
+
+# # occlusion-negative-fear
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-negative-fear --redirect_output
+
+# # occlusion-negative-happy
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-negative-happy --redirect_output
+
+# # occlusion-negative-sad
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-negative-sad --redirect_output
+
+# # occlusion-negative-surprise
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_gradcam_keras.py" --models_set occft --test_set occlusion-negative-surprise --redirect_output
 if __name__ == "__main__":
     output_run_path = os.path.join(OUTPUT_BASE_FOLDER_PATH, RUN_NAME)
     os.makedirs(output_run_path, exist_ok=True)
@@ -401,7 +447,7 @@ if __name__ == "__main__":
         # _______________________________________________________________________________________
 
         # 2) Evaluate the model on the test set to check everything is working fine before generating Grad-CAM maps (for now check manually)
-        test_generator = load_test_generator(TEST_SET_H5_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
+        test_generator, test_paths = load_test_generator(TEST_SET_H5_PATH, batch_size=BATCH_SIZE, small_subset=args.quick, include_paths=True)
         if "yolo" in model_name.lower():
             _, test_acc = evaluate_model(model, model_name, None, TEST_SET_IMAGES_PATH)
         else:
@@ -411,12 +457,14 @@ if __name__ == "__main__":
 
 
         print(f"[INFO] Found {len(target_layers)} target layers for Grad-CAM")
-        for i, (image_array, gt_probabilities_i) in tqdm(enumerate(zip(test_generator.x_data, test_generator.y_data)), total=len(test_generator.x_data), desc="Processing images"):
+        for i, (image_array, gt_probabilities_i, path) in tqdm(enumerate(zip(test_generator.x_data, test_generator.y_data, test_paths)), total=len(test_generator.x_data), desc="Processing images"):
+            image_name = make_xai_result_image_name(path)
+
             for target_layer_name in target_layers:
                 # Save example input image in quick mode
                 if args.quick:
-                    Image.fromarray(image_array.astype(np.uint8)).save(os.path.join(output_run_path, f"example_input_image_{i}_layer_{target_layer_name}.png"))
-                    print(f"[DEBUG] Saved example input image to {os.path.join(output_run_path, f'example_input_image_{i}_layer_{target_layer_name}.png')}")
+                    Image.fromarray(image_array.astype(np.uint8)).save(os.path.join(output_run_path, f"example_input_{image_name}_layer_{target_layer_name}.png"))
+                    print(f"[DEBUG] Saved example input image to {os.path.join(output_run_path, f'example_input_{image_name}_layer_{target_layer_name}.png')}")
 
                 gt = np.argmax(gt_probabilities_i)
 
@@ -437,10 +485,10 @@ if __name__ == "__main__":
                 # Save the saliency map
                 output_folder = os.path.join(output_run_path, model_name, target_layer_name, f"{EMOTIONS[gt]}")
                 os.makedirs(output_folder, exist_ok=True)
-                filename_abspath_nonpy = os.path.join(output_folder, f"image_{i}")
+                filename_abspath_nonpy = os.path.join(output_folder, image_name)
                 save_gradcam_map(heatmap, filename_abspath_nonpy)
 
                 if args.quick:
-                    print(f"[DEBUG] Saved Grad-CAM map for image {i} (GT: {EMOTIONS[gt]}) to {filename_abspath_nonpy}.npy and .png")
+                    print(f"[DEBUG] Saved Grad-CAM map for image {i} ({image_name}) (GT: {EMOTIONS[gt]}) to {filename_abspath_nonpy}.npy and .png")
 
         print(f"[INFO] Grad-CAM maps for model {model_name} saved to {output_run_path}")

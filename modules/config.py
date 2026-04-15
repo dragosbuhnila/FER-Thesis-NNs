@@ -74,13 +74,63 @@ ADELE_180ROTATED_TEST_SET_H5_PATH = 	os.path.join(ADELE_180ROTATED_TEST_SET_BASE
 ADELE_180ROTATED_TEST_SET_IMAGES_PATH = os.path.join(ADELE_180ROTATED_TEST_SET_BASE_PATH, "extracted_images")
 # ______________________________________________________________________
 # > OCCLUDED_TEST_SET
-OCCLUDED_TEST_SET_BASE_PATH = 		os.path.join(DATASETS_PATH, "occluded_test_set")
-OCCLUDED_TEST_SET_H5_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
-OCCLUDED_TEST_SET_IMAGES_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ")
-OCCLUDED_TEST_SET_UNOCCLUDED_BACK_LARGE_IMAGES_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ_unoccluded_back")
-OCCLUDED_TEST_SET_RESIZED_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "output_images_testset_resized")
+OCCLUDED_TEST_SET_BASE_PATH = 							os.path.join(DATASETS_PATH, "occluded_test_set")
+OCCLUDED_TEST_SET_H5_PATH = 							os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set.h5")
+OCCLUDED_TEST_SET_H5_NEWFILENAMES_PATH = 				os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_newfilenames.h5")
+OCCLUDED_TEST_SET_IMAGES_PATH = 						os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_LARGE_IMAGES_PATH = 	os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "bosphorus_test_HQ_unoccluded_back")
+OCCLUDED_TEST_SET_RESIZED_PATH = 						os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "output_images_testset_resized")
 OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH = os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "unoccluded_back_images")
-OCCLUDED_TEST_SET_YAML_PATH = 		os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_yaml")
+OCCLUDED_TEST_SET_YAML_PATH = 							os.path.join(OCCLUDED_TEST_SET_BASE_PATH, "occluded_test_set_yaml")
+# ______________________________________________________________________
+# > OCCLUDED_TEST_SET subsets
+OCCLUDED_TEST_SET_SUBSETS_BASE_PATH = 								os.path.join(DATASETS_PATH, "occluded_test_set_subsets")
+# 	 match/mismatch
+OCCLUDED_TEST_SET_H5_MATCHING_RESIZED_IMAGES_PATH = 				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_matching.h5")
+OCCLUDED_TEST_SET_H5_MISMATCHING_RESIZED_IMAGES_PATH = 				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_mismatching.h5")
+OCCLUDED_TEST_SET_RESIZED_MATCHING_PATH = 							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_matching")
+OCCLUDED_TEST_SET_RESIZED_MISMATCHING_PATH = 						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_mismatching")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MATCHING_RESIZED_IMAGES_PATH = 	os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_matching")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MISMATCHING_RESIZED_IMAGES_PATH =	os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_mismatching")
+#    occlusion types (12 types, 6 criteria for emotion and 2 for positivity)
+OCCLUDED_TEST_SET_H5_POSITIVE_ANGRY_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_positive_angry.h5")
+OCCLUDED_TEST_SET_H5_POSITIVE_DISGUST_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_positive_disgust.h5")
+OCCLUDED_TEST_SET_H5_POSITIVE_FEAR_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_positive_fear.h5")
+OCCLUDED_TEST_SET_H5_POSITIVE_HAPPY_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_positive_happy.h5")
+OCCLUDED_TEST_SET_H5_POSITIVE_SAD_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_positive_sad.h5")
+OCCLUDED_TEST_SET_H5_POSITIVE_SURPRISE_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_positive_surprise.h5")
+OCCLUDED_TEST_SET_H5_NEGATIVE_ANGRY_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_negative_angry.h5")
+OCCLUDED_TEST_SET_H5_NEGATIVE_DISGUST_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_negative_disgust.h5")
+OCCLUDED_TEST_SET_H5_NEGATIVE_FEAR_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_negative_fear.h5")
+OCCLUDED_TEST_SET_H5_NEGATIVE_HAPPY_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_negative_happy.h5")
+OCCLUDED_TEST_SET_H5_NEGATIVE_SAD_PATH =							os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_negative_sad.h5")
+OCCLUDED_TEST_SET_H5_NEGATIVE_SURPRISE_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "occluded_test_set_negative_surprise.h5")
+
+OCCLUDED_TEST_SET_RESIZED_POSITIVE_ANGRY_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_positive_angry")
+OCCLUDED_TEST_SET_RESIZED_POSITIVE_DISGUST_PATH =					os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_positive_disgust")
+OCCLUDED_TEST_SET_RESIZED_POSITIVE_FEAR_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_positive_fear")
+OCCLUDED_TEST_SET_RESIZED_POSITIVE_HAPPY_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_positive_happy")
+OCCLUDED_TEST_SET_RESIZED_POSITIVE_SAD_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_positive_sad")
+OCCLUDED_TEST_SET_RESIZED_POSITIVE_SURPRISE_PATH =					os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_positive_surprise")
+OCCLUDED_TEST_SET_RESIZED_NEGATIVE_ANGRY_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_negative_angry")
+OCCLUDED_TEST_SET_RESIZED_NEGATIVE_DISGUST_PATH =					os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_negative_disgust")
+OCCLUDED_TEST_SET_RESIZED_NEGATIVE_FEAR_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_negative_fear")
+OCCLUDED_TEST_SET_RESIZED_NEGATIVE_HAPPY_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_negative_happy")
+OCCLUDED_TEST_SET_RESIZED_NEGATIVE_SAD_PATH =						os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_negative_sad")
+OCCLUDED_TEST_SET_RESIZED_NEGATIVE_SURPRISE_PATH =					os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "output_images_testset_resized_negative_surprise")
+
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_POSITIVE_ANGRY_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_positive_angry")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_POSITIVE_DISGUST_PATH =			os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_positive_disgust")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_POSITIVE_FEAR_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_positive_fear")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_POSITIVE_HAPPY_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_positive_happy")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_POSITIVE_SAD_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_positive_sad")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_POSITIVE_SURPRISE_PATH =			os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_positive_surprise")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_NEGATIVE_ANGRY_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_negative_angry")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_NEGATIVE_DISGUST_PATH =			os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_negative_disgust")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_NEGATIVE_FEAR_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_negative_fear")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_NEGATIVE_HAPPY_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_negative_happy")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_NEGATIVE_SAD_PATH =				os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_negative_sad")
+OCCLUDED_TEST_SET_UNOCCLUDED_BACK_NEGATIVE_SURPRISE_PATH =			os.path.join(OCCLUDED_TEST_SET_SUBSETS_BASE_PATH, "unoccluded_back_images_negative_surprise")
 # ______________________________________________________________________
 # > ORIGINAL_TRAIN_VAL_SET
 ORIGINAL_TRAIN_VAL_SET_BASE_PATH = 			os.path.join(DATASETS_PATH, "original_train_val_set")
@@ -167,6 +217,7 @@ LANDMARKER_MODEL_PATH = 			os.path.join(MEDIAPIPE_PATH, "face_landmarker.task")
 LANDMARK_COORDINATES_FOLDER_PATH = 	os.path.join(AUXILIARY_DATA_DIR, "landmark_coordinates")
 LANDMARK_COORDINATES_CACHE_EXPECTED_SIZE = 26951 # expected number of landmark coordinate files. If the size of the db changes this should change accordingly
 CANONICAL_FACES_CUT = 				os.path.join(AUXILIARY_DATA_DIR, "canonical_faces_cut")
+CANONICAL_FACES_CUT_OCCLUDED =		os.path.join(CANONICAL_FACES_CUT, "canonical_faces_occluded")
 
 
 # 5) Datasets
@@ -238,13 +289,17 @@ for images_dict in [BOSPHORUS_DUPLICATE_IMAGES, BOSPHORUS_UNLANDMARKABLE_IMAGES]
 
 
 # 6) XAI
-HEATMAPS_DIR_PATH = os.path.join(XAI_DIR, "HEATMAPS")
-CONFUSION_MATRICES_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "CONFUSION_MATRICES")
-BUBBLES_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "Bubbles")
-EXTERNAL_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "EXTERNAL")
-GRADCAM_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "GRADCAM")
-GRADCAM_LAYERS_PDFS_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "GRADCAM_LAYERS_PDFS")
-MERGED_HEATMAPS_PDFS_DIR_PATH = os.path.join(HEATMAPS_DIR_PATH, "MERGED_HEATMAPS_PDFS")
+# ______________________________________________________________________
+# > OCCFT on OCCSET
+HEATMAPS_OCC_OCC_DIR_PATH = os.path.join(XAI_DIR, "OCCFT_on_OCCSET", "HEATMAPS")
+CONFUSION_OCC_OCC_MATRICES_DIR_PATH = os.path.join(HEATMAPS_OCC_OCC_DIR_PATH, "CONFUSION_MATRICES")
+BUBBLES_OCC_OCC_DIR_PATH = os.path.join(HEATMAPS_OCC_OCC_DIR_PATH, "Bubbles")
+EXTERNAL_OCC_OCC_DIR_PATH = os.path.join(HEATMAPS_OCC_OCC_DIR_PATH, "EXTERNAL")
+GRADCAM_OCC_OCC_DIR_PATH = os.path.join(HEATMAPS_OCC_OCC_DIR_PATH, "GRADCAM")
+GRADCAM_OCC_OCC_LAYERS_PDFS_DIR_PATH = os.path.join(HEATMAPS_OCC_OCC_DIR_PATH, "GRADCAM_LAYERS_PDFS")
+MERGED_OCC_OCC_HEATMAPS_PDFS_DIR_PATH = os.path.join(HEATMAPS_OCC_OCC_DIR_PATH, "MERGED_HEATMAPS_PDFS")
+# > OCCFT on ORIGINAL
+
 
 
 # 7) other folders

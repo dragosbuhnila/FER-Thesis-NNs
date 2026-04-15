@@ -3,11 +3,12 @@ import numpy as np
 from modules.config import SMALL_SUBSET_SIZE
 
 
-def load_data_and_labels(file_path, info, occlusion_dataset=False, small_subset=False):
+def load_data_and_labels(file_path, info, occlusion_dataset=False, small_subset=False, include_paths=False):
     class_names = None
     subset_size = SMALL_SUBSET_SIZE if small_subset else None
 
     with h5py.File(file_path, 'r') as f:
+        # 1) Branch for the offline (already occluded) dataset
         if occlusion_dataset and info == 'train':
             # Dataset looks like this:
             #   X_train.shape: (144469, 128, 128, 3)
@@ -51,6 +52,7 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False, small_subset=
         elif occlusion_dataset and info == 'test':
             raise ValueError("Occlusion dataset should not have test data, but info is 'test'. This does not mean that the test set can't be occluded, just that this flag should only be used for loading the training and validation sets")
         
+        # 2) Branch for the original (not occluded) dataset
         elif info == 'train':
             # Dataset looks like this:
             #   X_train.shape: (21332, 128, 128, 3)
@@ -63,10 +65,18 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False, small_subset=
             #   y_train: [0 0 0 ... 6 6 6]
             #   y_val.shape: (5273,)
             #   y_val: [0 0 0 ... 6 6 6]
-            X_train = np.array(f['X_train'][:subset_size])
-            y_train = np.array(f['y_train'][:subset_size])
-            X_val = np.array(f['X_val'][:subset_size])
-            y_val = np.array(f['y_val'][:subset_size])
+            # check if there's f['X']
+            if 'X' in f:
+                X_train = np.array(f['X'][:subset_size])
+                y_train = np.array(f['y'][:subset_size])
+                X_val = None
+                y_val = None
+            else:
+                X_train = np.array(f['X_train'][:subset_size])
+                y_train = np.array(f['y_train'][:subset_size])
+                X_val = np.array(f['X_val'][:subset_size])
+                y_val = np.array(f['y_val'][:subset_size])
+                
             class_names = [name.decode('utf-8') for name in f['class_names']]
             
             return X_train, y_train, X_val, y_val, class_names
@@ -84,6 +94,9 @@ def load_data_and_labels(file_path, info, occlusion_dataset=False, small_subset=
             X_test = np.array(f['X_test'][:subset_size])
             y_test = np.array(f['y_test'][:subset_size])
             class_names = [name.decode('utf-8') for name in f['class_names']]
+            if include_paths:
+                paths = np.array(f['paths'][:subset_size])
+                return X_test, y_test, class_names, paths
             
             return X_test, y_test, class_names
         else:

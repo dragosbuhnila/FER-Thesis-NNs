@@ -3,7 +3,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 
 import re
 
-from modules.config import GRADCAM_DIR_PATH, OCCFT_MODELS_PATHS
+from modules.config import GRADCAM_OCC_OCC_DIR_PATH, OCCFT_MODELS_PATHS
 
 def natural_sort_key(s):
     """Generate a key for natural sorting."""
@@ -11,12 +11,12 @@ def natural_sort_key(s):
 
 if __name__ == "__main__":
     
-    model_folders = os.listdir(GRADCAM_DIR_PATH)
+    model_folders = os.listdir(GRADCAM_OCC_OCC_DIR_PATH)
     for model_folder in model_folders:
         if not model_folder in OCCFT_MODELS_PATHS:
             print(f"Model folder '{model_folder}' not found in OCCFT_MODELS_PATHS. Skipping.")
             continue
-        model_folder_path = os.path.join(GRADCAM_DIR_PATH, model_folder)
+        model_folder_path = os.path.join(GRADCAM_OCC_OCC_DIR_PATH, model_folder)
         gradcam_layer_folders = os.listdir(model_folder_path)
 
         # first round to check if layer_0 folder exists so that you name layers in order correctly

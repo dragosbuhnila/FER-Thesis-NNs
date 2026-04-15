@@ -6,7 +6,7 @@ from fpdf import FPDF
 import re
 import unicodedata
 
-from modules.config import GRADCAM_DIR_PATH, GRADCAM_LAYERS_PDFS_DIR_PATH
+from modules.config import GRADCAM_OCC_OCC_DIR_PATH, GRADCAM_OCC_OCC_LAYERS_PDFS_DIR_PATH
 
 
 def layer_sort_key(layer_folder_name):
@@ -32,7 +32,7 @@ def safe_str_for_pdf(s):
 
 
 def create_pdf_for_model(model_folder, output_dir, debug=False):
-    model_path = os.path.join(GRADCAM_DIR_PATH, model_folder)
+    model_path = os.path.join(GRADCAM_OCC_OCC_DIR_PATH, model_folder)
     layer_folders = [f for f in os.listdir(model_path) if os.path.isdir(os.path.join(model_path, f))]
     layer_folders.sort(key=layer_sort_key)
 
@@ -123,8 +123,8 @@ def create_pdf_for_model(model_folder, output_dir, debug=False):
 
 
 if __name__ == "__main__":
-    model_folders = [f for f in os.listdir(GRADCAM_DIR_PATH) if os.path.isdir(os.path.join(GRADCAM_DIR_PATH, f))]
-    output_dir = GRADCAM_LAYERS_PDFS_DIR_PATH
+    model_folders = [f for f in os.listdir(GRADCAM_OCC_OCC_DIR_PATH) if os.path.isdir(os.path.join(GRADCAM_OCC_OCC_DIR_PATH, f))]
+    output_dir = GRADCAM_OCC_OCC_LAYERS_PDFS_DIR_PATH
 
     for model_folder in model_folders:
         print(f"Processing model: {model_folder}")

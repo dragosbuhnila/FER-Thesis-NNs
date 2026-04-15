@@ -1,5 +1,6 @@
 /.venv
 /data
+/data_extra
 /modules/__pycache__/config.cpython-311.pyc
 /results_heavy/*
 !/results_heavy/placeholder
@@ -7,6 +8,10 @@
 /results_light/console_outputs
 /results_light/saved_images
 /results_light/saved_images/*
+results_light/CONFRONTI NEW
+results_light/CONFRONTI NEW/*
+results_light/xai_subsets
+results_light/xai_subsets/*
 /mlruns
 mlruns.zip
 /runs

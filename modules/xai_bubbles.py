@@ -9,7 +9,7 @@ import shutil
 import zipfile
 
 from modules.config import EMOTIONS
-from modules.misc import get_timestamp, zip_folder 
+from modules.misc import get_timestamp, make_xai_result_image_name, zip_folder 
 
 
 
@@ -191,8 +191,52 @@ def normalize_image(image):
     else:
         return image
 
+import matplotlib.pyplot as plt
+from matplotlib import cm
 
-def process_image(image_array, model, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance):
+def visualize_masked_images(masked_images, masks=None, n_samples=32, n_cols=8, figsize=(12,8), save_path=None, overlay=True):
+    """
+    Display or save a grid of masked images.
+    - masked_images: array (N,H,W,3) with values in [0,1] or [0,255]
+    - masks: optional array (N,H,W) with values in [0,1] to overlay as heatmap
+    - n_samples: how many images to show (first n_samples)
+    - n_cols: columns in grid
+    - save_path: if provided, save the figure to this path
+    - overlay: if True and masks provided, overlay mask on image with alpha
+    """
+    imgs = np.array(masked_images)
+    if imgs.dtype != np.float32 and imgs.dtype != np.float64:
+        imgs = imgs.astype(np.float32) / 255.0
+    total = min(n_samples, imgs.shape[0])
+    n_cols = max(1, n_cols)
+    n_rows = int(np.ceil(total / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+    axes = axes.flatten() if total > 1 else [axes]
+
+    for i in range(n_rows * n_cols):
+        ax = axes[i] if i < len(axes) else None
+        if ax is None:
+            continue
+        ax.axis('off')
+        if i < total:
+            img = imgs[i]
+            ax.imshow(np.clip(img, 0, 1))
+            if overlay and masks is not None and i < len(masks):
+                mask = masks[i]
+                cmap = cm.get_cmap('jet')
+                colored = cmap(mask)  # RGBA
+                ax.imshow(colored[..., :3], alpha=0.45)
+        else:
+            ax.set_visible(False)
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight', dpi=150)
+    else:
+        plt.show()
+    plt.close(fig)
+
+def process_image(image_array, model, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance, visualize=False):
     """
     Process a single image to generate bubble masks and planes.
     Returns the predicted class, probability, and generated planes.
@@ -212,7 +256,9 @@ def process_image(image_array, model, model_name, class_names_fixed, bubble_radi
         history_of_num_bubbles.append(num_bubbles)
         print(f"\tTesting with {num_bubbles} bubbles...")
 
-        masked_images, masks = get_masks(image_array, bubble_radius, num_bubbles, iterations)
+        masked_images, masks = get_masks(image_array, bubble_radius=26, num_bubbles=10, iterations=64)
+        if visualize:
+            visualize_masked_images(masked_images, masks, n_samples=24, n_cols=6, figsize=(12,8), save_path='masked_grid.png')
         batch_planes, mask_classes = get_batch_planes(masked_images, masks, model, model_name, class_names_fixed)
 
         true_plane_len = sum(1 for c in mask_classes if c == predicted_index)
@@ -270,7 +316,8 @@ def save_planes_and_images(image_name, image_array, predicted_index, predicted_p
 
 def generate_bubbles_planes(model: object, model_name: str, test_generator: object, 
                             output_base_folder_path: str, run_name: str = None,
-                            iterations: int = 200, bubble_radius: int = 26, accuracy_target: float = 0.5, accuracy_tolerance: float = 0.3):
+                            iterations: int = 200, bubble_radius: int = 26, accuracy_target: float = 0.5, accuracy_tolerance: float = 0.3,
+                            visualize: bool = False):
     """
         Generate bubble-based explanations and plane visualizations for model predictions on test images.
         This function processes a test dataset through a model, generating bubble-based visual explanations
@@ -305,6 +352,7 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
 
     images = test_generator.x_data
     onehot_y = test_generator.y_data
+    paths = test_generator.paths
     labels = np.argmax(onehot_y, axis=1)
 
     print(f"[INFO] Processing {len(labels)} images with model '{model_name}'...")
@@ -313,13 +361,14 @@ def generate_bubbles_planes(model: object, model_name: str, test_generator: obje
     #    model_name/                (e.g. occft_convnext)
     #      emotion_gt/              (e.g. HAPPY)
     #        images_names_with_three_formats
-    for idx, (image_array, label) in tqdm(enumerate(zip(images, labels)), total=len(labels), desc="Processing images", unit="image"):
-        image_name = f"image_{idx}"
+    for idx, (image_array, label, path) in tqdm(enumerate(zip(images, labels, paths)), total=len(labels), desc="Processing images", unit="image"):
+        image_name = make_xai_result_image_name(path)
+
         output_subfolder = os.path.join(output_folder, class_names_fixed[label])
         os.makedirs(output_subfolder, exist_ok=True)
 
         predicted_index, predicted_probability, all_planes, history_of_num_bubbles = process_image(
-            image_array, model, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance
+            image_array, model, model_name, class_names_fixed, bubble_radius, iterations, accuracy_target, accuracy_tolerance, visualize=visualize
         )
 
         save_planes_and_images(image_name, image_array, predicted_index, predicted_probability, all_planes, class_names_fixed, output_subfolder, history_of_num_bubbles)

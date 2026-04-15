@@ -12,8 +12,15 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from modules.model import load_model
 from modules.data__load import load_test_generator
-from modules.misc import get_timestamp, Tee, hash_image
-from modules.config import ADELE_180ROTATED_TEST_SET_H5_PATH, ADELE_TEST_SET_H5_PATH, ALL_MODELS_PATHS, EMOTIONS, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, SAVED_IMAGES_PATH, CONSOLE_OUTPUTS_PATH
+from modules.misc import get_timestamp, Tee, hash_image, make_xai_result_image_name
+from modules.misc import TEST_SET_CHOICES, TEST_SET_PATHS
+from modules.config import (
+    ALL_MODELS_PATHS,
+    CONSOLE_OUTPUTS_PATH,
+    SAVED_IMAGES_PATH,
+    EMOTIONS,
+)
+
 
 
 
@@ -129,7 +136,7 @@ parser = argparse.ArgumentParser(description="Generate saliency maps using exter
 parser.add_argument('--quick', action='store_true', help="Run on a small subset of the test data (1 batch).")
 parser.add_argument('--redirect_output', action='store_true', help="Redirect console output to a log file.")
 parser.add_argument('--models_set', type=str, choices=['occft', 'federica', 'yolo_fede', 'occft_yolo'], help="Specify which set of models to use.")
-parser.add_argument('--test_set', type=str, choices=['occluded', 'original', 'original-180'], help="Specify which test set to use.")
+parser.add_argument('--test_set', type=str, choices=TEST_SET_CHOICES, help="Specify which test set to use.")
 parser.add_argument('--output_folder', type=str, help="Base folder path for saving saliency maps.")
 parser.add_argument('--square_sizes', type=int, nargs='+', default=[35, 27, 19], help="Sizes of black squares for perturbations.")
 parser.add_argument('--blur_sigma', type=float, default=2.0, help="Sigma value for Gaussian blurring.")
@@ -153,21 +160,14 @@ for model_name in MODEL_NAMES:
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found: {model_path}")
 
-# TEST SETS
-if args.test_set == 'occluded':
-    TEST_SET_H5_PATH = OCCLUDED_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = OCCLUDED_TEST_SET_IMAGES_PATH
-elif args.test_set == 'original':
-    TEST_SET_H5_PATH = ADELE_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = None  # Not implemented yet
-elif args.test_set == 'original-180':
-    TEST_SET_H5_PATH = ADELE_180ROTATED_TEST_SET_H5_PATH
-    TEST_SET_IMAGES_PATH = None  # Not implemented yet
-else:
-    raise ValueError("Invalid --test_set argument. Use 'occluded', 'original', or 'original-180'.")
-# Check if path exists
+
+TEST_SET_H5_PATH = TEST_SET_PATHS[args.test_set]['h5_path']
+TEST_SET_IMAGES_PATH = TEST_SET_PATHS[args.test_set]['images_path']
+
 if not os.path.exists(TEST_SET_H5_PATH):
     raise FileNotFoundError(f"Test set file not found: {TEST_SET_H5_PATH}")
+if not os.path.exists(TEST_SET_IMAGES_PATH):
+    raise FileNotFoundError(f"Test set images folder not found: {TEST_SET_IMAGES_PATH}")
 
 # OUTPUT FOLDER
 if args.output_folder:
@@ -221,6 +221,50 @@ print(f"==============================")
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occluded --quick --redirect_output
 # >>> test run yolo
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft_yolo --test_set occluded --quick --redirect_output
+
+
+# # >>> occft on subsets
+# # occluded-matching
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occluded-matching --redirect_output
+
+# # occluded-mismatching
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occluded-mismatching --redirect_output
+
+# # occlusion-positive-angry
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-positive-angry --redirect_output
+
+# # occlusion-positive-disgust
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-positive-disgust --redirect_output
+
+# # occlusion-positive-fear
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-positive-fear --redirect_output
+
+# # occlusion-positive-happy
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-positive-happy --redirect_output
+
+# # occlusion-positive-sad
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-positive-sad --redirect_output
+
+# # occlusion-positive-surprise
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-positive-surprise --redirect_output
+
+# # occlusion-negative-angry
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-negative-angry --redirect_output
+
+# # occlusion-negative-disgust
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-negative-disgust --redirect_output
+
+# # occlusion-negative-fear
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-negative-fear --redirect_output
+
+# # occlusion-negative-happy
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-negative-happy --redirect_output
+
+# # occlusion-negative-sad
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-negative-sad --redirect_output
+
+# # occlusion-negative-surprise
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/xai/do_explainability_extpert_keras.py" --models_set occft --test_set occlusion-negative-surprise --redirect_output
 if __name__ == "__main__":
     output_run_path = os.path.join(OUTPUT_BASE_FOLDER_PATH, run_name)
     os.makedirs(output_run_path, exist_ok=True)
@@ -228,7 +272,7 @@ if __name__ == "__main__":
     for model_name in MODEL_NAMES:
         print(f"[INFO] Processing model: {model_name}")
         model = load_model(model_name)
-        test_generator = load_test_generator(TEST_SET_H5_PATH, batch_size=BATCH_SIZE, small_subset=args.quick)
+        test_generator, test_paths = load_test_generator(TEST_SET_H5_PATH, batch_size=BATCH_SIZE, small_subset=args.quick, include_paths=True)
 
         if "yolo" in model_name.lower():
             import torch
@@ -240,7 +284,9 @@ if __name__ == "__main__":
         else:
             predicted_probabilities = model.predict(test_generator.x_data)
 
-        for i, (image_array, gt_probabilities_i, predicted_probabilities_i) in tqdm(enumerate(zip(test_generator.x_data, test_generator.y_data, predicted_probabilities)), total=len(test_generator.x_data), desc="Processing images"):
+        for i, (image_array, gt_probabilities_i, predicted_probabilities_i, path) in tqdm(enumerate(zip(test_generator.x_data, test_generator.y_data, predicted_probabilities, test_paths)), total=len(test_generator.x_data), desc="Processing images"):
+            image_name = make_xai_result_image_name(path)
+
             # show image
             if args.quick:
                 Image.fromarray(image_array.astype(np.uint8)).save(os.path.join(output_run_path, f"example_input_image.png"))
@@ -255,11 +301,11 @@ if __name__ == "__main__":
 
             output_folder = os.path.join(output_run_path, model_name, f"{EMOTIONS[gt]}")
             os.makedirs(output_folder, exist_ok=True)
-            filename_abspath_nonpy = os.path.join(output_folder, f"image_{i}")
+            filename_abspath_nonpy = os.path.join(output_folder, image_name)
             save_saliency_map(saliency_map, filename_abspath_nonpy)
             blurred_filaname_abspath_nonpy = filename_abspath_nonpy + "_blurred"
             save_saliency_map(blurred_map, blurred_filaname_abspath_nonpy)
             if args.quick:
-                print(f"[DEBUG] Saved saliency map for image {i} (GT: {EMOTIONS[gt]}, Predicted Prob: {image_probability:.4f}) to {filename_abspath_nonpy}.npy and .png")
+                print(f"[DEBUG] Saved saliency map for image {i} ({image_name}) (GT: {EMOTIONS[gt]}, Predicted Prob: {image_probability:.4f}) to {filename_abspath_nonpy}.npy and .png")
 
         print(f"[INFO] Saliency maps for model {model_name} saved to {output_run_path}")

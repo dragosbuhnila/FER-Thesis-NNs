@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 import h5py
 import numpy as np
 from PIL import Image
+from typing import Optional, Sequence, Tuple
 
 from modules.config import BOSPHORUS_TEST_HQ_H5_PATH, BOSPHORUS_TEST_HQ_IMAGES_PATH, OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_IMAGES_PATH, OCCLUDED_TEST_SET_RESIZED_PATH, \
                             ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH
@@ -19,61 +20,60 @@ H5_PATH = ORIGINAL_TRAIN_VAL_SET_H5_PATH  # OCCLUDED_TEST_SET_H5_PATH, EXAMPLE_H
 
 # =============================== END OF MACROS ===============================
 
+def create_h5_from_folder(images_folder_path: str,
+                          h5_path: str,
+                          resize_to: Optional[Tuple[int,int]] = None,
+                          class_names: Optional[Sequence[str]] = None,
+                          save_paths: bool = True,
+                          compress: bool = True) -> dict:
+    """Create an HDF5 dataset from a folder of class subfolders.
+
+    - images_folder_path: root folder containing one folder per class.
+    - h5_path: output .h5 file path.
+    - resize_to: (w,h) to resize images, or None to keep original sizes.
+    - class_names: optional explicit order of class folders; if None uses sorted directories.
+    - save_paths: save original image paths into HDF5.
+    - compress: use gzip compression for image dataset.
+    Returns a summary dict with counts and class_names.
+    """
+    if class_names is None:
+        class_names = [d for d in sorted(os.listdir(images_folder_path))
+                       if os.path.isdir(os.path.join(images_folder_path, d))]
+    X, y, paths = [], [], []
+    for class_idx, class_name in enumerate(class_names):
+        class_folder = os.path.join(images_folder_path, class_name)
+        if not os.path.isdir(class_folder):
+            continue
+        for fname in sorted(os.listdir(class_folder)):
+            img_path = os.path.join(class_folder, fname)
+            try:
+                img = Image.open(img_path).convert('RGB')
+                if resize_to:
+                    img = img.resize(resize_to)
+                arr = np.array(img)
+            except Exception:
+                continue
+            X.append(arr)
+            y.append(class_idx)
+            paths.append(img_path)
+    if len(X) == 0:
+        raise ValueError("No images found in folder: " + images_folder_path)
+    X = np.stack(X, axis=0)
+    y = np.array(y, dtype=np.int32)
+    with h5py.File(h5_path, "w") as f:
+        kwargs = {"data": X}
+        if compress:
+            f.create_dataset("X", data=X, compression="gzip")
+        else:
+            f.create_dataset("X", data=X)
+        f.create_dataset("y", data=y)
+        f.create_dataset("class_names", data=np.array(class_names).astype('S'))
+        if save_paths:
+            f.create_dataset("paths", data=np.array(paths).astype('S'))
+    return {"n_images": X.shape[0], "class_names": class_names}
 
 
 if __name__ == "__main__":
-    if not JUST_CHECK_RESULT:
-        # 2) Generate new h5 with the contents of the test set
-        class_names = sorted(os.listdir(IMAGES_FOLDER_PATH))
-        paths = []
-        X_test = []
-        y_test = []
-        for class_idx, class_name in enumerate(class_names):
-            class_folder = os.path.join(IMAGES_FOLDER_PATH, class_name)
-            image_files = sorted(os.listdir(class_folder))
-            for image_file in image_files:
-                image_path = os.path.join(class_folder, image_file)
-                # Load PNG image as RGB NumPy array and resize to (128, 128, 3)
-                if RESIZE_TO_SMALL:
-                    image = np.array(Image.open(image_path).convert('RGB').resize((128, 128)))
-                else:
-                    image = np.array(Image.open(image_path).convert('RGB'))
-                X_test.append(image)
-                y_test.append(class_idx)  # Store class index instead of name
-                paths.append(image_path)
-
-                # # Also save the images to OCCLUDED_TEST_SET_RESIZED_PATH
-                # save_folder = os.path.join(OCCLUDED_TEST_SET_RESIZED_PATH, class_name)
-                # os.makedirs(save_folder, exist_ok=True)
-                # Image.fromarray(image).save(os.path.join(save_folder, image_file))
-        X_test = np.array(X_test)
-        y_test = np.array(y_test)
-
-        # 3) Save new h5
-        with h5py.File(H5_PATH, "w") as f:
-            f.create_dataset("X_test", data=X_test)
-            f.create_dataset("y_test", data=y_test)  # Now integers
-            f.create_dataset("class_names", data=np.array(class_names).astype('S'))  # Save as bytes
-            f.create_dataset("paths", data=np.array(paths).astype('S'))  # Save as bytes
-        print(f"Saved {X_test.shape[0]} images to {H5_PATH}")
-
-    # 4) Verify
-    print("======================")
-    print("Verifying new h5 contents:")
-    with h5py.File(H5_PATH, "r") as f:
-        for key in f.keys():
-            try:
-                shape = f[key].shape
-            except Exception:
-                shape = '(unknown)'
-            print(f"{key}.shape: {shape}")
-            if "X" not in key:
-                if key == "paths":
-                    print(f"{key} (first and last five): {f[key][:5]} ... {f[key][-5:]}")
-                else:
-                    # careful printing large arrays
-                    val = f[key][...]
-                    print(f"{key}: {val}")
-            else:
-                print(f"{key} dtype: {f[key].dtype}")
-    print("======================")
+    resize = (128,128) if RESIZE_TO_SMALL else None
+    summary = create_h5_from_folder(IMAGES_FOLDER_PATH, H5_PATH, resize_to=resize)
+    print(f"Saved {summary['n_images']} images to {H5_PATH}")

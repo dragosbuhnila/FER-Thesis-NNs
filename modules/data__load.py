@@ -15,11 +15,14 @@ from modules.misc import hash_image, get_timestamp
 
 
 
-def load_test_generator(path, batch_size=64, small_subset=False):
+def load_test_generator(path, batch_size=64, small_subset=False, include_paths=False):
     """
     Load only the test generator from a test H5 file (path).
     """
-    X_test, y_test, class_names = load_data_and_labels(path, 'test')
+    if include_paths:
+        X_test, y_test, class_names, test_paths = load_data_and_labels(path, 'test', include_paths=True)
+    else:
+        X_test, y_test, class_names = load_data_and_labels(path, 'test', include_paths=False)
 
     if small_subset:
         X_test = X_test[:batch_size]
@@ -63,7 +66,9 @@ def load_test_generator(path, batch_size=64, small_subset=False):
         label_smoothing=0,
     )
 
-    return data_generator
+    if include_paths:
+        return data_generator, test_paths
+    return data_generator, 
 
 
 
@@ -199,7 +204,8 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
     # 1) Load training and validation data
     # ____________________________________
     X_train, y_train, X_val, y_val, trainval_class_names = load_data_and_labels(trainval_path, 'train')
-    X_test, y_test, test_class_names = load_data_and_labels(test_path, 'test')
+    if test_path is not None:
+        X_test, y_test, test_class_names = load_data_and_labels(test_path, 'test')
 
     if remove_dupes:
         for split, indices in BOSPHORUS_INDICES_TO_REMOVE_BY_SPLIT.items():
@@ -216,14 +222,16 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         y_train = y_train[:debug_limit]
         X_val = X_val[:debug_limit]
         y_val = y_val[:debug_limit]
-        X_test = X_test[:debug_limit]
-        y_test = y_test[:debug_limit]
+        if test_path is not None:
+            X_test = X_test[:debug_limit]
+            y_test = y_test[:debug_limit]
     
 
     # 1.b) Hashing
     # ____________________________________
     X_train_hashes = np.array([hash_image(img) for img in X_train])
-    X_val_hashes = np.array([hash_image(img) for img in X_val])
+    if X_val is not None:
+        X_val_hashes = np.array([hash_image(img) for img in X_val])
     # X_test_hashes = np.array([hash_image(img) for img in X_test])
     
 
@@ -232,9 +240,9 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
     for emotion in EMOTIONS:
         if emotion not in trainval_class_names:
             raise ValueError(f"Class '{emotion}' not found in training/validation class names from H5 file.")
-        if emotion not in test_class_names:
+        if test_path is not None and emotion not in test_class_names:
             raise ValueError(f"Class '{emotion}' not found in test class names from H5 file.")
-    class_names = test_class_names
+    class_names = trainval_class_names
 
 
     # 2) Landmarking
@@ -249,22 +257,29 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
     if run_detection:
         if parallelize:
             X_train_landmarks = np.array(Parallel(n_jobs=-1)(   delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_train, X_train_hashes), desc="Detecting training landmarks")     ))
-            X_val_landmarks = np.array(Parallel(n_jobs=-1)(     delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_val, X_val_hashes), desc="Detecting validation landmarks")     ))
+            if X_val is not None:
+                X_val_landmarks = np.array(Parallel(n_jobs=-1)(     delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_val, X_val_hashes), desc="Detecting validation landmarks")     ))
             # X_test_landmarks = np.array(Parallel(n_jobs=-1)(    delayed(detect_facial_landmarks)(img, img_hash, False, True, True) for img, img_hash in tqdm(zip(X_test, X_test_hashes), desc="Detecting test landmarks")          ))
         else:
             X_train_landmarks = np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_train, X_train_hashes)])
-            X_val_landmarks =   np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_val, X_val_hashes)])
+            if X_val is not None:
+                X_val_landmarks =   np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_val, X_val_hashes)])
             # X_test_landmarks =  np.array([detect_facial_landmarks(img, img_hash, False, True, True) for img, img_hash in zip(X_test, X_test_hashes)])
     else:
         if parallelize:
             X_train_landmarks = np.array(Parallel(n_jobs=-1)(   delayed(load_landmark_coordinates)(X_train_hash)    for X_train_hash in tqdm(X_train_hashes, desc="Loading training landmarks")     ))
-            X_val_landmarks = np.array(Parallel(n_jobs=-1)(     delayed(load_landmark_coordinates)(X_val_hash)      for X_val_hash in   tqdm(X_val_hashes, desc="Loading validation landmarks")     ))
+            if X_val is not None:
+                X_val_landmarks = np.array(Parallel(n_jobs=-1)(     delayed(load_landmark_coordinates)(X_val_hash)      for X_val_hash in   tqdm(X_val_hashes, desc="Loading validation landmarks")     ))
             # X_test_landmarks = np.array(Parallel(n_jobs=-1)(    delayed(load_landmark_coordinates)(X_test_hash)     for X_test_hash in  tqdm(X_test_hashes, desc="Loading test landmarks")          ))
         else:
             X_train_landmarks = np.array([load_landmark_coordinates(X_train_hash) for X_train_hash in tqdm(X_train_hashes, desc="Loading training landmarks")])
-            X_val_landmarks =   np.array([load_landmark_coordinates(X_val_hash)   for X_val_hash in   tqdm(X_val_hashes, desc="Loading validation landmarks")])
+            if X_val is not None:
+                X_val_landmarks = np.array([load_landmark_coordinates(X_val_hash)   for X_val_hash in   tqdm(X_val_hashes, desc="Loading validation landmarks")])
             # X_test_landmarks =  np.array([load_landmark_coordinates(X_test_hash)  for X_test_hash in  tqdm(X_test_hashes, desc="Loading test landmarks")])
-    print(f"Landmarks detected for training and validation sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}")
+    if X_val is not None:
+        print(f"Landmarks detected for training and validation sets. X_train_landmarks length: {len(X_train_landmarks)}, X_val_landmarks length: {len(X_val_landmarks)}")
+    else:
+        print(f"Landmarks detected for training set. X_train_landmarks length: {len(X_train_landmarks)}")
 
     # 2b) Remove 0-length landmark entries (i.e. images where no landmarks were detected)
     #           I filter them here already so that I don't have to handle it at runtime
@@ -291,10 +306,13 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
             return X_data_filtered, y_data_filtered, X_hashes_filtered, X_landmarks_filtered, paths_data
 
     X_train, y_train, X_train_hashes, X_train_landmarks, _ = filter_zero_length_landmarks(X_train, y_train, X_train_hashes, X_train_landmarks, None, name="train")
-    X_val, y_val, X_val_hashes, X_val_landmarks, _ = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, None, name="val")
+    if X_val is not None:
+        X_val, y_val, X_val_hashes, X_val_landmarks, _ = filter_zero_length_landmarks(X_val, y_val, X_val_hashes, X_val_landmarks, None, name="val")
     # X_test, y_test, X_test_hashes, X_test_landmarks, _ = filter_zero_length_landmarks(X_test, y_test, X_test_hashes, X_test_landmarks, None, name="test")
     
-    train_length = len(X_train); val_length = len(X_val); test_length = len(X_test)
+    train_length = len(X_train)
+    val_length = len(X_val) if X_val is not None else 0
+    test_length = len(X_test) if test_path is not None else 0
     print(f"After filtering zero-length landmarks: X_train length: {train_length}, X_val length: {val_length}, X_test length: {test_length}. Cumulated length: {train_length + val_length + test_length}")
 
     # for images, labels, image_landmarks, image_hashes in zip(X_train, y_train, X_train_landmarks, X_train_hashes):
@@ -313,14 +331,17 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
     # in data.py we shuffle the following:
     #       batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths = shuffle(batch_x, batch_y, batch_x_hashes, batch_x_landmarks, batch_paths)
     X_train, y_train, X_train_hashes, X_train_landmarks = shuffle(X_train, y_train, X_train_hashes, X_train_landmarks)
-    X_val, y_val, X_val_hashes, X_val_landmarks = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks)
-    
+    if X_val is not None:
+        X_val, y_val, X_val_hashes, X_val_landmarks = shuffle(X_val, y_val, X_val_hashes, X_val_landmarks)
+
     # 4) One-hot encoding, augmentations, generators
     # ____________________________________
     NUM_CLASSES = len(class_names)
     y_train_one_hot = to_categorical(y_train, num_classes=NUM_CLASSES)
-    y_val_one_hot = to_categorical(y_val, num_classes=NUM_CLASSES)
-    y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
+    if X_val is not None:
+        y_val_one_hot = to_categorical(y_val, num_classes=NUM_CLASSES)
+    if test_path is not None:
+        y_test_one_hot = to_categorical(y_test, num_classes=NUM_CLASSES)
 
     # 5)  Augmentations
     # ____________________________________
@@ -365,32 +386,38 @@ def load_online_data_generators(trainval_path, test_path, training_occlusion_pro
         dont_rebalance_trainval=dont_rebalance_trainval,
         yield_hashes=yield_hashes,
         )
-    val_generator = OnlineOcclusionGenerator(
-        x_data=X_val,
-        y_data=y_val_one_hot,
-        x_hashes=X_val_hashes,
-        x_landmarks=X_val_landmarks,
-        paths_data=None,
-        data_inf='valid',
-        batch_size=batch_size,
-        augmentations=train_augmentations,
-        label_smoothing=0,
-        masking_function_name=masking_function_name,
-        occlusion_probability=validation_occlusion_probability,
-        mismatch=mismatch,
-        matching_amount=matching_amount,
-        pos_or_neg=pos_or_neg,
-        dont_rebalance_trainval=dont_rebalance_trainval,
-        yield_hashes=yield_hashes,
+    if X_val is not None:
+        val_generator = OnlineOcclusionGenerator(
+            x_data=X_val,
+            y_data=y_val_one_hot,
+            x_hashes=X_val_hashes,
+            x_landmarks=X_val_landmarks,
+            paths_data=None,
+            data_inf='valid',
+            batch_size=batch_size,
+            augmentations=train_augmentations,
+            label_smoothing=0,
+            masking_function_name=masking_function_name,
+            occlusion_probability=validation_occlusion_probability,
+            mismatch=mismatch,
+            matching_amount=matching_amount,
+            pos_or_neg=pos_or_neg,
+            dont_rebalance_trainval=dont_rebalance_trainval,
+            yield_hashes=yield_hashes,
+            )
+    else:
+        val_generator = None
+    if test_path is not None:
+        test_generator = OldCustomBalancedDataGenerator(
+            x_data=X_test,
+            y_data=y_test_one_hot,
+            data_inf='test',
+            batch_size=batch_size,
+            augmentations={},
+            label_smoothing=0,
         )
-    test_generator = OldCustomBalancedDataGenerator(
-        x_data=X_test,
-        y_data=y_test_one_hot,
-        data_inf='test',
-        batch_size=batch_size,
-        augmentations={},
-        label_smoothing=0,
-    )
+    else:
+        test_generator = None
     
     return train_generator, val_generator, test_generator, initial_bias
 

@@ -6,12 +6,11 @@ from fpdf import FPDF
 import re
 
 from modules.config import (
-    HEATMAPS_DIR_PATH,
-    BUBBLES_DIR_PATH,
-    CONFUSION_MATRICES_DIR_PATH,
-    EXTERNAL_DIR_PATH,
-    GRADCAM_DIR_PATH,
-    MERGED_HEATMAPS_PDFS_DIR_PATH,
+    BUBBLES_OCC_OCC_DIR_PATH,
+    CONFUSION_OCC_OCC_MATRICES_DIR_PATH,
+    EXTERNAL_OCC_OCC_DIR_PATH,
+    GRADCAM_OCC_OCC_DIR_PATH,
+    MERGED_OCC_OCC_HEATMAPS_PDFS_DIR_PATH,
 )
 
 # Layout settings (pixels) — much narrower model-name column to save space
@@ -38,7 +37,7 @@ def natural_sort_key(s):
     return [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)]
 
 def find_last_gradcam_layer(model_folder):
-    model_path = os.path.join(GRADCAM_DIR_PATH, model_folder)
+    model_path = os.path.join(GRADCAM_OCC_OCC_DIR_PATH, model_folder)
     if not os.path.isdir(model_path):
         return None
     subdirs = [d for d in os.listdir(model_path) if os.path.isdir(os.path.join(model_path, d))]
@@ -68,16 +67,16 @@ def find_last_gradcam_layer(model_folder):
 def find_csm_for_model(model_folder):
     """Return list of 4 image paths: [CONFUSION_MATRICES, Bubbles, EXTERNAL, GRADCAM] or None."""
     res = []
-    cm_path = os.path.join(CONFUSION_MATRICES_DIR_PATH, model_folder, f"{model_folder}_cm.png")
+    cm_path = os.path.join(CONFUSION_OCC_OCC_MATRICES_DIR_PATH, model_folder, f"{model_folder}_cm.png")
     res.append(cm_path if os.path.exists(cm_path) else None)
-    b1 = os.path.join(BUBBLES_DIR_PATH, model_folder, "CSM_sottrazione_norm.png")
-    b2 = os.path.join(BUBBLES_DIR_PATH, model_folder, "CSM.png")
+    b1 = os.path.join(BUBBLES_OCC_OCC_DIR_PATH, model_folder, "CSM_sottrazione_norm.png")
+    b2 = os.path.join(BUBBLES_OCC_OCC_DIR_PATH, model_folder, "CSM.png")
     res.append(b1 if os.path.exists(b1) else (b2 if os.path.exists(b2) else None))
-    ex_path = os.path.join(EXTERNAL_DIR_PATH, model_folder, "CSM.png")
+    ex_path = os.path.join(EXTERNAL_OCC_OCC_DIR_PATH, model_folder, "CSM.png")
     res.append(ex_path if os.path.exists(ex_path) else None)
     layer = find_last_gradcam_layer(model_folder)
     if layer:
-        g_path = os.path.join(GRADCAM_DIR_PATH, model_folder, layer, "CSM.png")
+        g_path = os.path.join(GRADCAM_OCC_OCC_DIR_PATH, model_folder, layer, "CSM.png")
         res.append(g_path if os.path.exists(g_path) else None)
     else:
         res.append(None)
@@ -245,12 +244,12 @@ def build_pdf(png_paths, pdf_outpath):
     pdf.output(pdf_outpath)
 
 if __name__ == "__main__":
-    model_folders = [f for f in os.listdir(GRADCAM_DIR_PATH) if os.path.isdir(os.path.join(GRADCAM_DIR_PATH, f))]
+    model_folders = [f for f in os.listdir(GRADCAM_OCC_OCC_DIR_PATH) if os.path.isdir(os.path.join(GRADCAM_OCC_OCC_DIR_PATH, f))]
     model_folders.sort(key=natural_sort_key)
 
     pages = [model_folders[i:i+ROWS] for i in range(0, len(model_folders), ROWS)]
     merged_pngs = []
-    out_dir = MERGED_HEATMAPS_PDFS_DIR_PATH
+    out_dir = MERGED_OCC_OCC_HEATMAPS_PDFS_DIR_PATH
     os.makedirs(out_dir, exist_ok=True)
 
     for pi, slice_models in enumerate(pages):
