@@ -41,7 +41,7 @@ pwd
 # =====================================================================================
 
 
-COMMAND_TO_RUN="./scripts/xai/do_csm_bubbles.py --run_name 20260301-170747_bubbles_cmplt-run_yolo_fede-models_occluded-testset"
+COMMAND_TO_RUN="./scripts/xai/do_csm_bubbles.py --run_name 20260302-191319_bubbles_cmplt-run_occft_yolo-models_occluded-testset"
 echo "Now running $COMMAND_TO_RUN"
 python $COMMAND_TO_RUN
 

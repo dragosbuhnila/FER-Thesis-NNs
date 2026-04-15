@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_training_ConvNeXt_occ2_unf12_longep_acc
+#SBATCH --job-name=dbuh_do_training_ConvNeXt_occ8_unf12_longep_posonly_acc
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a40
+#SBATCH --partition=gpu_a100
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=40G
@@ -41,7 +41,7 @@ pwd
 
 
 
-SCRIPT="./scripts/train_eval/do_training.py --long_epochs --gen_train_occlusion_ratio 0.2 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12"
+SCRIPT="./scripts/train_eval/do_training.py --long_epochs --gen_train_occlusion_ratio 0.8 --batch_size 64 --model_name ConvNeXt --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 12 --only_positive_occlusions"
 echo "Now running $SCRIPT"
 python $SCRIPT
 

@@ -174,6 +174,7 @@ FINETUNING_MODELS_FOLDER = 			os.path.join(FEDERICA_MODELS_FOLDER, "finetuning")
 
 OCCFT_MODELS_FOLDER = 				os.path.join(MODELS_PATH, "occft")
 
+# pattlite is actually mobilenet, but it was orignially called pattlite in federica's code (wrongly). When meeting either of the names, the architecture is always the same: mobilenetv1 bacbkone + pattlite upgrade
 ALL_MODELS_PATHS = {
 	# ----------------------------------- FEDERICA'S FINAL MODELS
     "resnet_finetuning": 			os.path.join(FINETUNING_MODELS_FOLDER, 	"pretrained_ResNet_finetuning"),
@@ -191,6 +192,20 @@ ALL_MODELS_PATHS = {
     "occft_resnet":                	os.path.join(OCCFT_MODELS_FOLDER, "ResNet_occfinetuning__20260217-070852__0.6629", 			"ResNet_occfinetuning"),
     "occft_vgg19":                 	os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260213-003832__0.7000", 			"VGG19_occfinetuning"),
 	"occft_yolo":                 	os.path.join(OCCFT_MODELS_FOLDER, "yolo_last_occfinetuning__20260302-163800_cmplt-run_freeze-most_unfrozen__0.6886", "yolo_last_occfinetuning.pt"),
+	# ----------------------------------- MY MODELS FULLRATIO 
+	"resnet_special_fullratio":			os.path.join(OCCFT_MODELS_FOLDER, "ResNet_occfinetuning__20260308-165646__0.6343", "ResNet_occfinetuning"),
+	"mobilenet_special_fullratio": 		os.path.join(OCCFT_MODELS_FOLDER, "PattLite_occfinetuning__20260308-164205__0.6371", "PattLite_occfinetuning"),
+	"vgg_special_fullratio":			os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260308-172924__0.7057", "VGG19_occfinetuning"),
+	"inceptionv3_special_fullratio": 	os.path.join(OCCFT_MODELS_FOLDER, "InceptionV3_occfinetuning__20260308-173516__0.6429", "InceptionV3_occfinetuning"),
+	"convnext_special_fullratio": 		os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_occfinetuning__20260308-164148__0.6686", "ConvNeXt_occfinetuning"),
+	"efficientnetb1_special_fullratio": os.path.join(OCCFT_MODELS_FOLDER, "EfficientNetB1_occfinetuning__20260308-174526__0.5943", "EfficientNetB1_occfinetuning"),
+	# ----------------------------------- MY MODELS POSITIVE OCCLUSIONS ONLY
+	"resnet_special_posonly":			os.path.join(OCCFT_MODELS_FOLDER, "ResNet_occfinetuning__20260309-133648__0.5286", "ResNet_occfinetuning"),
+	"mobilenet_special_posonly": 		os.path.join(OCCFT_MODELS_FOLDER, "PattLite_occfinetuning__20260309-131714__0.4514", "PattLite_occfinetuning"),
+	"vgg_special_posonly":				os.path.join(OCCFT_MODELS_FOLDER, "VGG19_occfinetuning__20260309-135404__0.5514", "VGG19_occfinetuning"),
+	"inceptionv3_special_posonly": 		os.path.join(OCCFT_MODELS_FOLDER, "InceptionV3_occfinetuning__20260309-134158__0.5371", "InceptionV3_occfinetuning"),
+	"convnext_special_posonly": 		os.path.join(OCCFT_MODELS_FOLDER, "ConvNeXt_occfinetuning__20260309-131814__0.5486", "ConvNeXt_occfinetuning"),
+	"efficientnetb1_special_posonly": 	os.path.join(OCCFT_MODELS_FOLDER, "EfficientNetB1_occfinetuning__20260309-133425__0.4971", "EfficientNetB1_occfinetuning"),
 }
 
 OCCFT_MODELS_PATHS = {model_name: model_path for model_name, model_path in ALL_MODELS_PATHS.items() if "occft" in model_name.lower()}

@@ -10,7 +10,7 @@ from modules.data__load import load_offline_data_generators
 from modules.data import refresh_show_flags
 from modules.model import build_model_occfinetuning
 from modules.config import ADELE_TEST_SET_H5_PATH, ORIGINAL_TRAIN_VAL_SET_H5_PATH, OCCLUDED_TRAIN_VAL_SET_H5_PATH, OCCLUDED_TEST_SET_H5_PATH, MLFLOW_DIR, CONSOLE_OUTPUTS_PATH, GLOBALS
-from modules.train_eval_save import addestra_modello, salva_modello, valuta_modello; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from modules.train_eval_save import train_model_keras_training_run, save_model_keras_training_run, evaluate_model_keras_training_run; sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from modules.misc import Tee, get_timestamp
 
 
@@ -43,6 +43,7 @@ def main():
     parser.add_argument('--redirect_output', action='store_true', help='If set, redirect stdout and stderr to a log file')
     parser.add_argument('--gen_train_occlusion_ratio', type=float, required=False, help='Occlusion ratio for generating occluded training samples. Default is 0.8', default=0.8)
     parser.add_argument('--long_epochs', action='store_true', help='If set, epochs len will be like len(occluded_images) instead of len(original_images). The former is 250k+ images, the latter is 20k+ images. ')
+    parser.add_argument('--only_positive_occlusions', action='store_true', help='When generating the occlusion indexer, only include positive occlusions (where the emotion in the occluded image is different from the original image). By default, both positive and negative occlusions are included.')
     args = parser.parse_args()
 
     # Recupera i parametri dalla linea di comando
@@ -92,6 +93,7 @@ def main():
     print(f"\tbatch_size: {batch_size}")
     print(f"\tlong_epochs: {long_epochs}")
     print(f"\tgen_train_occlusion_ratio: {gen_train_occlusion_ratio}")
+    print(f"\tonly_positive_occlusions: {args.only_positive_occlusions}")
     print(f"TRAINING PARAMS:")
     print(f"\tTRAIN_ES_PATIENCE: {TRAIN_ES_PATIENCE}")
     print(f"\tTRAIN_LR_PATIENCE: {TRAIN_LR_PATIENCE}")
@@ -115,7 +117,8 @@ def main():
 
                                                                                                     # Command line args for working ---------------------------
                                                                                                     batch_size=batch_size,
-                                                                                                    training_occlusion_probability=gen_train_occlusion_ratio
+                                                                                                    training_occlusion_probability=gen_train_occlusion_ratio,
+                                                                                                    only_positive_occlusions=args.only_positive_occlusions,
                                                                                                 ) 
 
     model = build_model_occfinetuning(FT_LR, FT_DROPOUT, l2_reg, initial_bias, model_name, unfreeze=unfreeze)
@@ -141,9 +144,9 @@ def main():
         mlflow.log_param("unfreeze", unfreeze)
         mlflow.log_param("gen_train_occlusion_ratio", gen_train_occlusion_ratio)
 
-        history = addestra_modello(model, train_generator, valid_generator, test_generator, FT_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name)
-        test_loss, test_acc = valuta_modello(model, test_generator, run, model_name)
-        salva_modello(model, run, model_name, test_acc)
+        history = train_model_keras_training_run(model, train_generator, valid_generator, test_generator, FT_EPOCH, TRAIN_ES_PATIENCE, TRAIN_LR_PATIENCE, ES_LR_MIN_DELTA, TRAIN_MIN_LR, run, model_name)
+        test_loss, test_acc = evaluate_model_keras_training_run(model, test_generator, run, model_name)
+        save_model_keras_training_run(model, run, model_name, test_acc)
 
     ## *** termina Neptune run o alternativa ***
 

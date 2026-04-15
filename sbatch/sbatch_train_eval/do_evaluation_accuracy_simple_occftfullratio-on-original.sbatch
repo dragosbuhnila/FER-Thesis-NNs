@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_do_training_PattLite_occ8_unf11_longep_posonly_acc
+#SBATCH --job-name=dbuh_do_evaluation_accuracy_simple_occftfullratio-on-original
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=gpu_a100
-#SBATCH --time=24:00:00
+#SBATCH --partition=gpu_v100
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
-#SBATCH --mem=40G
+#SBATCH --mem=1G
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
@@ -28,6 +28,7 @@ export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
 echo "=========================================================================="
 echo "Activated venv!"
 python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
@@ -39,13 +40,25 @@ pwd
 # =================================== Run Code ========================================
 # =====================================================================================
 
+# >>> test run:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --quick
+# >>> occft run on occluded test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded
+# >>> occft run on original test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set original
 
-# Optimal unfreeze was 13 (second one 12 by a small margin, 11 was not picked but probably would have yielded similar results, 
-#     with it being layer:base_model) but I left 11 by error so now ill keep it that way as it shouldn't be that bad
-SCRIPT="./scripts/train_eval/do_training.py --long_epochs --gen_train_occlusion_ratio 0.8 --batch_size 64 --model_name PattLite --FT_EPOCH 100 --dropout_rate 0.3 --learning_rate  0.0001 --l2_reg 0.00200041712955451 --unfreeze 11 --only_positive_occlusions"
+PARAM_MODEL_NAMES="resnet_special_fullratio,mobilenet_special_fullratio,vgg_special_fullratio,inceptionv3_special_fullratio,convnext_special_fullratio,efficientnetb1_special_fullratio"
+PARAM_TEST_SET="ADELE"
+
+SCRIPT="./scripts/train_eval/do_evaluation_accuracy_simple.py --model_names $PARAM_MODEL_NAMES --test_set $PARAM_TEST_SET"
+
 echo "Now running $SCRIPT"
 python $SCRIPT
 
+
+echo "==================================================================================="
+echo "Job ended at:"
+python -c "from datetime import datetime; print(datetime.now().isoformat(sep=' ', timespec='seconds'))"
 
 
 # =====================================================================================

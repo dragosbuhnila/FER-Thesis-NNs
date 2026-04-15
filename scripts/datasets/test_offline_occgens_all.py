@@ -36,6 +36,7 @@ parser.add_argument("--show_loader_images_final",   action='store_true', help="S
 parser.add_argument("--use_profiler",               action='store_true', help="Use cProfile to profile the data loading process")
 parser.add_argument("--redirect_output",            action='store_true', help="Redirect console output to a log file. This does not mean terminal won't show stderr/out")
 parser.add_argument("--debug_prints",               action='store_true', help="Print additional debug information during data loading (such as all variable values in data__load.py, and the list of all images that had issues with landmark detection or face detection, if any)")
+parser.add_argument("--only_positive_occlusions", action='store_true', help="When generating the occlusion indexer, only include positive occlusions (where the emotion in the occluded image is different from the original image). By default, both positive and negative occlusions are included.")
 parser.add_argument("-s", "--save_loader_images_instead_of_plot",         action='store_true', help="Save images from the data loader instead of plotting them (useful for debugging in non-interactive environments and for keeping a record of the images that were shown during debugging)")
 args = parser.parse_args()
 
@@ -62,6 +63,7 @@ print(f"\tuse_profiler: {args.use_profiler}")
 print(f"\tredirect_output: {args.redirect_output}")
 print(f"\tsave_loader_images_instead_of_plot: {args.save_loader_images_instead_of_plot}")
 print(f"\tdebug_prints: {args.debug_prints}")
+print(f"\tonly_positive_occlusions: {args.only_positive_occlusions}")
 print("GLOBALS: ")
 for key, value in GLOBALS.items():
     print(f"\t{key}: {value}")
@@ -96,7 +98,8 @@ if __name__ == "__main__":
                                                             small_subset=args.small_subset,
                                                             batch_size=args.batch_size,
                                                             dont_augment=args.dont_augment,
-                                                            debug_prints=args.debug_prints
+                                                            debug_prints=args.debug_prints,
+                                                            only_positive_occlusions=args.only_positive_occlusions
                                                         )
 
     for generator, name in [(train_generator, "train"), (val_generator, "validation"), (test_generator, "test")]:

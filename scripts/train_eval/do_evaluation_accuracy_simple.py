@@ -34,7 +34,7 @@ PATHS = {
     "180ADELE": {
         "test_set_small": ADELE_180ROTATED_TEST_SET_IMAGES_PATH,
         "test_set_h5": ADELE_180ROTATED_TEST_SET_H5_PATH,
-    }
+    },
 }
 
 available_models = list(ALL_MODELS_PATHS.keys())
@@ -42,21 +42,43 @@ available_models = list(ALL_MODELS_PATHS.keys())
 # 0) Setup macros as args
 parser = argparse.ArgumentParser(description='Evaluate model on test sets')
 parser.add_argument('--test_set', choices=list(PATHS.keys()), required=True,    help=f'Test set to use for evaluation. Options: {list(PATHS.keys())}')
-parser.add_argument('--model_name', choices=available_models, required=True,    help=f'Name of the model to evaluate. Options: {available_models}')
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('--model_name', choices=available_models,
+                   help=f'Name of the model to evaluate. Options: {available_models}')
+group.add_argument('--model_names', type=str,
+                   help=f'Comma-separated list of model names to evaluate. Options: {available_models}')
 parser.add_argument('--yolo_use_folders_instead_of_gen', action="store_true",   help=f"If set, it will use an alternative function from Federica's code, which unfortunately yields a different result")
 parser.add_argument('--redirect_output', action="store_true",                   help="Redirect the output to a log file. Console will still view output in real time.")
 parser.add_argument('--debug', action="store_true",                             help="Print lots of info during run.")
 
 args = parser.parse_args()
+
+if args.model_name and args.model_names:
+    raise ValueError("Cannot specify both --model_name and --model_names. Please choose one.")
+
 TEST_SET = args.test_set
-MODEL_NAME = args.model_name
+
+# Build list of model names (single or comma-separated list)
+if args.model_name:
+    model_names = [args.model_name]
+else:
+    model_names = [m.strip() for m in args.model_names.split(',') if m.strip()]
+
+# Validate every model exists in ALL_MODELS_PATHS
+invalid = [m for m in model_names if m not in available_models]
+if invalid:
+    raise ValueError(f"Models not found in ALL_MODELS_PATHS: {invalid}")
+
+# Disallow grouping if any model is a YOLO variant (too long to handle)
+if args.model_names and any("yolo" in m.lower() for m in model_names):
+    raise ValueError("YOLO models are not allowed in --model_names; run YOLO models individually with --model_name")
 
 USA_VALUTA_INVECE_DI_EVALUATE = False
 # you may choose to enable this option, but if model is detected to be yolo it will automatically be falsified
-if "yolo" in MODEL_NAME.lower():
+if "yolo" in model_names[0].lower():
     USA_VALUTA_INVECE_DI_EVALUATE = False
 
-if args.yolo_use_folders_instead_of_gen and "yolo" not in MODEL_NAME.lower():
+if args.yolo_use_folders_instead_of_gen and "yolo" not in model_names[0].lower():
     raise ValueError("YOLO_FOLDERS_INSTEAD_OF_GENERATOR can only be True for YOLO models, to test accuracy issues using different evaluation methods.")
 
 MODEL_PATHS_SUBSET = ALL_MODELS_PATHS
@@ -123,30 +145,31 @@ if __name__ == "__main__":
     print(f"Loaded {TEST_SET} test set with {len(test_generator.x_data)} samples.")
 
     # 2) Run the evaluations on the test set
-    models_results = {name: {"test_loss": None, "test_acc": None} for name in [MODEL_NAME]}
+    models_results = {name: {"test_loss": None, "test_acc": None} for name in model_names}
 
-    print("======================================")
-    print(f"Evaluating model: {MODEL_NAME}")
+    for MODEL_NAME in model_names:
+        print("======================================")
+        print(f"Evaluating model: {MODEL_NAME}")
 
-    # a) Load the model
-    model = load_model(MODEL_NAME, MODEL_PATHS_SUBSET, debug=args.debug)
+        # a) Load the model
+        model = load_model(MODEL_NAME, MODEL_PATHS_SUBSET, debug=args.debug)
 
-    if model is None:
-        raise ValueError(f"load_model returned None. Model loading not implemented for this model type. Model name: {MODEL_NAME}")
-    else:
-        # b) Evaluate the model
-        if not args.yolo_use_folders_instead_of_gen or "yolo" not in MODEL_NAME.lower():
-            if USA_VALUTA_INVECE_DI_EVALUATE:
-                test_loss, test_acc = evaluate_model_keras_training_run(model, test_generator, None, MODEL_NAME)
-            else:
-                test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=args.debug)
+        if model is None:
+            raise ValueError(f"load_model returned None. Model loading not implemented for this model type. Model name: {MODEL_NAME}")
         else:
-            # THIS EXISTS FOR YOLO. FOR NOW THE "CORRECT" VERSION IS THE ONE WITH FOLDERS
-            test_loss, test_acc = evaluate_model(model, MODEL_NAME, None, PATHS[TEST_SET]["test_set_small"], debug=args.debug)
-        
-        models_results[MODEL_NAME]["test_loss"] = test_loss
-        models_results[MODEL_NAME]["test_acc"] = test_acc
-    print("======================================")
+            # b) Evaluate the model
+            if not args.yolo_use_folders_instead_of_gen or "yolo" not in MODEL_NAME.lower():
+                if USA_VALUTA_INVECE_DI_EVALUATE:
+                    test_loss, test_acc = evaluate_model_keras_training_run(model, test_generator, None, MODEL_NAME)
+                else:
+                    test_loss, test_acc = evaluate_model(model, MODEL_NAME, test_generator, debug=args.debug)
+            else:
+                # THIS EXISTS FOR YOLO. FOR NOW THE "CORRECT" VERSION IS THE ONE WITH FOLDERS
+                test_loss, test_acc = evaluate_model(model, MODEL_NAME, None, PATHS[TEST_SET]["test_set_small"], debug=args.debug)
+            
+            models_results[MODEL_NAME]["test_loss"] = test_loss
+            models_results[MODEL_NAME]["test_acc"] = test_acc
+        print("======================================")
 
     # 3) Print the final results
     print(f"\n\nFinal evaluation results on {TEST_SET.lower()} test set:")
