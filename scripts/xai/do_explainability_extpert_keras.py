@@ -279,8 +279,11 @@ if __name__ == "__main__":
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             predicted_probabilities = []
             for emotion in EMOTIONS:
-                results = model.predict(os.path.join(TEST_SET_IMAGES_PATH, emotion), device=device)
-                predicted_probabilities.extend([result.probs.data.cpu().numpy() for result in results])
+                folder_path = os.path.join(TEST_SET_IMAGES_PATH, emotion)
+                # Add this check for subsets that might not have all emotion folders (negative ones, that don't have the matching emotion)
+                if os.path.exists(folder_path):
+                    results = model.predict(os.path.join(TEST_SET_IMAGES_PATH, emotion), device=device)
+                    predicted_probabilities.extend([result.probs.data.cpu().numpy() for result in results])
         else:
             predicted_probabilities = model.predict(test_generator.x_data)
 

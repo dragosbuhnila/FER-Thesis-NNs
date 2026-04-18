@@ -1,12 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_zip_occluded_trainval_set_yolo_ver
+#SBATCH --job-name=dbuh_do_csm_gradcam_14_subsets
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
-#SBATCH --partition=cpu_skylake
-#SBATCH --time=06:00:00
+#SBATCH --partition=gpu_a40
+#SBATCH --time=24:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=100M
+#SBATCH --mem=20G
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
 #SBATCH --output=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 #SBATCH --error=/home/dbuhnila/models/FER-Thesis-NNs/out_err/%j_%x.log
 
@@ -21,13 +22,17 @@ module load miniconda3/3.13.25
 source activate base
 conda activate fer-thesis
 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
+export XLA_FLAGS="--xla_gpu_cuda_data_dir=/home/dbuhnila/.conda/envs/fer-thesis"
+
 echo "=========================================================================="
 echo "Activated venv!"
+python -c "import sys; print('Python executable:', sys.executable); print('Environment:', sys.prefix)"
+python -c "import tensorflow as tf; print('tf',tf.__version__); print(tf.sysconfig.get_build_info()); print('gpus:', tf.config.list_physical_devices('GPU'))"
 echo "=========================================================================="
 
 cd /home/dbuhnila/models/FER-Thesis-NNs
 pwd
-echo "=========================================================================="
 
 
 
@@ -36,9 +41,40 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="zip -r data/models/occft_all_models.zip data/models/occft"
+# occluded-matching
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-003935_gradcam_cmplt-run_occft-models_occluded-matching-testset"
 echo "Now running $COMMAND_TO_RUN"
-$COMMAND_TO_RUN
+python $COMMAND_TO_RUN
+
+# occlusion-negative-angry
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-003953_gradcam_cmplt-run_occft-models_occlusion-negative-angry-testset"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+# occlusion-negative-disgust
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-004006_gradcam_cmplt-run_occft-models_occlusion-negative-disgust-testset"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+# occlusion-negative-fear
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-004020_gradcam_cmplt-run_occft-models_occlusion-negative-fear-testset"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+# occlusion-negative-happy
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-004033_gradcam_cmplt-run_occft-models_occlusion-negative-happy-testset"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+# occlusion-negative-sad
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-004048_gradcam_cmplt-run_occft-models_occlusion-negative-sad-testset"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
+
+# occlusion-negative-surprise
+COMMAND_TO_RUN="./scripts/xai/do_csm.py --xai_method gradcam --run_name 20260417-004102_gradcam_cmplt-run_occft-models_occlusion-negative-surprise-testset"
+echo "Now running $COMMAND_TO_RUN"
+python $COMMAND_TO_RUN
 
 
 echo "==================================================================================="

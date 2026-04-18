@@ -5,6 +5,9 @@ from modules.config import OCCLUDED_TEST_SET_H5_PATH, OCCLUDED_TEST_SET_H5_NEWFI
 import h5py
 import numpy as np
 
+# WARNING: On linux for some reason i can't get the basename() to work so you'll need to find a fix to it.
+#       - For the time being I'll just copy the converted h5 from my windows machine
+
 if __name__ == "__main__":
     # Load the original h5 file
     with h5py.File(OCCLUDED_TEST_SET_H5_PATH, 'r') as f:

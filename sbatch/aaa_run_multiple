@@ -90,7 +90,30 @@ sbatch ./sbatch/sbatch_xai/do_csm_gradcam_keras_occft_occluded.sbatch
 # _____________________________________________________________
 
 
-
 ## Install conda libs
 sbatch ./sbatch/sbatch_meta/install_conda_env_parts.sbatch
 # _____________________________________________________________
+
+
+## Sub Datasets
+<!-- update_h5... is not working!! For some reason the basename() is not working correctly on linux and i don't have the time to find an alternative, although I'm sure it's easy. I just copied the h5 from windows. -->
+<!-- sbatch ./sbatch/sbatch_datasets/update_h5_paths_to_image_i_filenames.sbatch -->
+sbatch ./sbatch/sbatch_datasets/split_occluded_dataset_in_14_subsets.sbatch
+
+sbatch ./sbatch/sbatch_xai/do_xai_bubbles_14_subsets.sbatch
+sbatch ./sbatch/sbatch_xai/do_xai_extpert_14_subsets.sbatch
+sbatch ./sbatch/sbatch_xai/do_xai_gradcam_14_subsets.sbatch
+sbatch ./sbatch/sbatch_xai/do_xai_gradcam_14_subsets_yolo_only.sbatch
+
+sbatch ./sbatch/sbatch_xai/do_csm_bubbles_14_subsets.sbatch
+sbatch ./sbatch/sbatch_xai/do_csm_extpert_14_subsets.sbatch
+sbatch ./sbatch/sbatch_xai/do_csm_gradcam_14_subsets.sbatch
+sbatch ./sbatch/sbatch_xai/do_csm_gradcam_14_subsets_yolo_only.sbatch
+
+
+# rsync (run from you machine!)
+rsync -avz --progress "dbuhnila@hpc-legionlogin.polito.it:/home/dbuhnila/models/FER-Thesis-NNs/data/models/occft_all_models.zip" "/mnt/c/Users/Dragos/Roba/Lectures/YM2.2/Thesis Backups/all_models.zip"
+
+# tools
+sbatch ./sbatch/sbatch_tools/read_h5_architecture.sbatch
+sbatch ./sbatch/sbatch_tools/zip.sbatch

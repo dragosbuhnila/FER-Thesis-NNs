@@ -1,0 +1,2 @@
+Note that do_xai and do_explainability refer to the same tasks of bubbles, extpert, and gradcam, but I changed name later on.
+    (csm instead is the second step, which takes all the XAI heatmaps and aggregates them canonically. CSM stands in fact for Canonical Saliency Map)
