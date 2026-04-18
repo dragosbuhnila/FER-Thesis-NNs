@@ -148,6 +148,10 @@ def process(root, pattern, output_dir, mode, per_row=4, target_cell=(360,360)):
             os.remove(f)
         except: pass
 
+# >>> Run with more resolution and normalized CMs:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/merge_confusion_matrices.py" --cell-size 600 600
+# >>> Run with more resolution and raw CMs:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/merge_confusion_matrices.py" --cell-size 600 600 --mode raw
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--pattern", default="20260401-*_cmplt-run_occft-models_*-testset_do-evaluation-completely-keras",
@@ -159,6 +163,6 @@ if __name__ == "__main__":
     p.add_argument("--cell-size", type=int, nargs=2, metavar=('W','H'), default=(360,360))
     args = p.parse_args()
 
-    hard_root = os.path.join(RESULTS_LIGHT_PATH, "xai_subsets")
-    hard_output = os.path.join(RESULTS_LIGHT_PATH, "xai_subsets")
+    hard_root = os.path.join(RESULTS_LIGHT_PATH, "xai_subsets", "confusion_matrices")
+    hard_output = os.path.join(RESULTS_LIGHT_PATH, "xai_subsets", "confusion_matrices")
     process(hard_root, args.pattern, hard_output, mode=args.mode, per_row=args.per_row, target_cell=tuple(args.cell_size))

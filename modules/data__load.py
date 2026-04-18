@@ -68,7 +68,7 @@ def load_test_generator(path, batch_size=64, small_subset=False, include_paths=F
 
     if include_paths:
         return data_generator, test_paths
-    return data_generator, 
+    return data_generator
 
 
 

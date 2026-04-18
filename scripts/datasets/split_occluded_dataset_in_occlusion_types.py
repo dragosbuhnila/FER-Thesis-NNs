@@ -86,27 +86,33 @@ def parse_occlusion_type(filename):
     
     return positivity, emotion
 
-def split_images_by_occlusion_type(source_dir, output_dirs):
+def split_images_by_occlusion_type(source_dir, output_dirs, create_folder_for_all_emotions=False):
     """Split images into directories based on occlusion type."""
-    for root, _, files in os.walk(source_dir):
-        for file in files:
-            if file.endswith(".png"):
-                try:
-                    positivity, emotion = parse_occlusion_type(file)
-                    destination_dir = output_dirs[f"{positivity}_{emotion}"]
-                    
-                    # Maintain folder structure
-                    relative_path = os.path.relpath(root, source_dir)
-                    destination_folder = os.path.join(destination_dir, relative_path)
-                    os.makedirs(destination_folder, exist_ok=True)
+    if create_folder_for_all_emotions:
+        for _, subset_path in output_dirs.items():
+            for emotion in EMOTIONS:
+                emotion_folder = os.path.join(subset_path, emotion)
+                os.makedirs(emotion_folder, exist_ok=True) 
 
-                    # Copy the file
-                    source_path = os.path.join(root, file)
-                    destination_path = os.path.join(destination_folder, file)
-                    shutil.copy(source_path, destination_path)
-                    print(f"Copied: {source_path} -> {destination_path}")
-                except ValueError as e:
-                    print(f"Skipping file due to error: {e}")
+    # for root, _, files in os.walk(source_dir):
+    #     for file in files:
+    #         if file.endswith(".png"):
+    #             try:
+    #                 positivity, emotion = parse_occlusion_type(file)
+    #                 destination_dir = output_dirs[f"{positivity}_{emotion}"]
+                    
+    #                 # Maintain folder structure
+    #                 relative_path = os.path.relpath(root, source_dir)
+    #                 destination_folder = os.path.join(destination_dir, relative_path)
+    #                 os.makedirs(destination_folder, exist_ok=True)
+
+    #                 # Copy the file
+    #                 source_path = os.path.join(root, file)
+    #                 destination_path = os.path.join(destination_folder, file)
+    #                 shutil.copy(source_path, destination_path)
+    #                 print(f"Copied: {source_path} -> {destination_path}")
+    #             except ValueError as e:
+    #                 print(f"Skipping file due to error: {e}")
 
 def load_h5_dataset(h5_path):
     """Load the dataset from an H5 file."""
@@ -155,23 +161,23 @@ def split_h5_by_occlusion_type(h5_path, output_paths):
         print(f"{key}: {len(X)} samples")
 
 if __name__ == "__main__":
-    # Images dataset - unoccluded back resized 
-    unoccluded_back_dirs = {
-        f"{pos}_{emo}": globals()[f"OCCLUDED_TEST_SET_UNOCCLUDED_BACK_{pos.upper()}_{emo}_PATH"]
-        for pos in POSITIVITY for emo in BASE_EMOTIONS
-    }
-    split_images_by_occlusion_type(OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, unoccluded_back_dirs)
+    # # Images dataset - unoccluded back resized 
+    # unoccluded_back_dirs = {
+    #     f"{pos}_{emo}": globals()[f"OCCLUDED_TEST_SET_UNOCCLUDED_BACK_{pos.upper()}_{emo}_PATH"]
+    #     for pos in POSITIVITY for emo in BASE_EMOTIONS
+    # }
+    # split_images_by_occlusion_type(OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, unoccluded_back_dirs)
 
     # Images dataset - resized
     resized_dirs = {
         f"{pos}_{emo}": globals()[f"OCCLUDED_TEST_SET_RESIZED_{pos.upper()}_{emo}_PATH"]
         for pos in POSITIVITY for emo in BASE_EMOTIONS
     }
-    split_images_by_occlusion_type(OCCLUDED_TEST_SET_RESIZED_PATH, resized_dirs)
+    split_images_by_occlusion_type(OCCLUDED_TEST_SET_RESIZED_PATH, resized_dirs, create_folder_for_all_emotions=True)
 
-    # H5 dataset
-    h5_output_paths = {
-        f"{pos}_{emo}": globals()[f"OCCLUDED_TEST_SET_H5_{pos.upper()}_{emo}_PATH"]
-        for pos in POSITIVITY for emo in BASE_EMOTIONS
-    }
-    split_h5_by_occlusion_type(OCCLUDED_TEST_SET_H5_NEWFILENAMES_PATH, h5_output_paths)
+    # # H5 dataset
+    # h5_output_paths = {
+    #     f"{pos}_{emo}": globals()[f"OCCLUDED_TEST_SET_H5_{pos.upper()}_{emo}_PATH"]
+    #     for pos in POSITIVITY for emo in BASE_EMOTIONS
+    # }
+    # split_h5_by_occlusion_type(OCCLUDED_TEST_SET_H5_NEWFILENAMES_PATH, h5_output_paths)

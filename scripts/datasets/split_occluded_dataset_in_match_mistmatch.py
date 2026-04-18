@@ -7,6 +7,7 @@ import h5py
 import numpy as np
 
 from modules.config import (
+    EMOTIONS,
     OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH,
     OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MATCHING_RESIZED_IMAGES_PATH,
     OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MISMATCHING_RESIZED_IMAGES_PATH,
@@ -22,10 +23,17 @@ from modules.config import (
 
 
 
-def split_images_dataset(source_dir, matching_dir, mismatching_dir):
+def split_images_dataset(source_dir, matching_dir, mismatching_dir, create_folder_for_all_emotions=False):
     # Ensure output directories exist
     os.makedirs(matching_dir, exist_ok=True)
     os.makedirs(mismatching_dir, exist_ok=True)
+
+    if create_folder_for_all_emotions:
+        for subset_path in [matching_dir, mismatching_dir]:
+            for emotion in EMOTIONS:
+                emotion_folder = os.path.join(subset_path, emotion)
+                os.makedirs(emotion_folder, exist_ok=True) 
+
 
     # Walk through the source directory
     for root, _, files in os.walk(source_dir):
@@ -109,8 +117,8 @@ def split_h5_dataset(h5_path, matching_h5_path, mismatching_h5_path):
 
 
 if __name__ == "__main__":
-    split_images_dataset(OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MATCHING_RESIZED_IMAGES_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MISMATCHING_RESIZED_IMAGES_PATH)
+    # split_images_dataset(OCCLUDED_TEST_SET_UNOCCLUDED_BACK_RESIZED_IMAGES_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MATCHING_RESIZED_IMAGES_PATH, OCCLUDED_TEST_SET_UNOCCLUDED_BACK_MISMATCHING_RESIZED_IMAGES_PATH)
 
-    split_images_dataset(OCCLUDED_TEST_SET_RESIZED_PATH, OCCLUDED_TEST_SET_RESIZED_MATCHING_PATH, OCCLUDED_TEST_SET_RESIZED_MISMATCHING_PATH)
+    split_images_dataset(OCCLUDED_TEST_SET_RESIZED_PATH, OCCLUDED_TEST_SET_RESIZED_MATCHING_PATH, OCCLUDED_TEST_SET_RESIZED_MISMATCHING_PATH, create_folder_for_all_emotions=True)
 
-    split_h5_dataset(OCCLUDED_TEST_SET_H5_NEWFILENAMES_PATH, OCCLUDED_TEST_SET_H5_MATCHING_RESIZED_IMAGES_PATH, OCCLUDED_TEST_SET_H5_MISMATCHING_RESIZED_IMAGES_PATH)
+    # split_h5_dataset(OCCLUDED_TEST_SET_H5_NEWFILENAMES_PATH, OCCLUDED_TEST_SET_H5_MATCHING_RESIZED_IMAGES_PATH, OCCLUDED_TEST_SET_H5_MISMATCHING_RESIZED_IMAGES_PATH)

@@ -117,20 +117,15 @@ def visualize_uncertain_predictions(uncertain_indices, test_generator_or_predict
 
 
 def visualize_confusion_matrix(cm, class_names, model_name, save_dir, save_instead_of_show):
-    """
-    Visualize and save the confusion matrix and its normalized version.
-
-    Parameters:
-    - cm: Confusion matrix (2D array).
-    - class_names: List of class names for the axes.
-    - model_name: Name of the model (used for saving the plots).
-    - save_dir: Directory where the plots will be saved.
-    - save_instead_of_show: Whether to save the figure instead of showing it.
-    """
     os.makedirs(save_dir, exist_ok=True)
 
-    # Compute normalized confusion matrix
-    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    # Safe normalization: rows with sum 0 remain all zeros instead of producing NaN/empty values
+    cm = np.array(cm)
+    cm_normalized = np.zeros_like(cm, dtype=float)
+    row_sums = cm.sum(axis=1)
+    nonzero_rows = row_sums > 0
+    if np.any(nonzero_rows):
+        cm_normalized[nonzero_rows] = cm[nonzero_rows].astype(float) / row_sums[nonzero_rows][:, np.newaxis]
 
     # Plot and save the confusion matrix
     fig = plt.figure(figsize=(10, 7))

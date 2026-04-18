@@ -1,1 +1,0 @@
-1) Fix the issue with images that have a slightly tilted/rotated head having landmarks/occlusion rotated towards the opposite direction (see onenote)

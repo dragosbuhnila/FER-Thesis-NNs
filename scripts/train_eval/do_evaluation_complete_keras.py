@@ -57,7 +57,7 @@ elif args.models_set == 'federica':
     if "yolo_last" in ALL_MODELS_PATHS.keys():
         MODEL_NAMES.append("yolo_last")  # Add YOLO model to Federica's models if it exists in ALL_MODELS_PATHS
 else:
-    raise ValueError("Invalid --models_set argument. Use 'occft' for occluded fine-tuned models, 'federica' for Federica's models.")
+    raise ValueError(f"Invalid --models_set argument. Use 'occft' for occluded fine-tuned models, 'federica' for Federica's models. Provided is '{args.models_set}'.")
 # check if all model paths exist else raise
 for model_name in MODEL_NAMES:
     model_path = ALL_MODELS_PATHS[model_name]
@@ -183,56 +183,56 @@ print(f"==============================")
 
 # =================================================================================================================
 
-# >>> test run:
+# # >>> test run:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --quick
 
-# >>> occft models on occluded test set:
+# # >>> occft models on occluded test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded
-# >>> occft models on original test set:
+# # >>> occft models on original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set original
-# >>> fede models on 180rotated original test set:
+# # >>> fede models on 180rotated original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set federica --test_set original-180
-# >>> fede models on original test set:
+# # >>> fede models on original test set:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set federica --test_set original --redirect_output
 
-# >>> occft_yolo on occluded test set EVAL:
+# # >>> occft_yolo on occluded test set EVAL:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --model_name occft_yolo --test_set occluded --redirect_output --only_evaluation
-# >>> occft_yolo on original test set EVAL:
+# # >>> occft_yolo on original test set EVAL:
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --model_name occft_yolo --test_set original --redirect_output --only_evaluation
 
-# >>> only agreement on all! occluded test set
+# # >>> only agreement on all! occluded test set
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded --redirect_output --only_agreement
-# >>> only agreement on all! original test set
+# # >>> only agreement on all! original test set
 # & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set original --redirect_output --only_agreement
 
-# >>> occft models on occluded matching test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded-matching --redirect_output --only_confusion
-# >>> occft models on occluded mismatching test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded-mismatching --redirect_output --only_confusion
-# >>> occft models on occlusion-positive-angry test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-angry --redirect_output --only_confusion
-# >>> occft models on occlusion-positive-disgust test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-disgust --redirect_output --only_confusion
-# >>> occft models on occlusion-positive-fear test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-fear --redirect_output --only_confusion
-# >>> occft models on occlusion-positive-happy test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-happy --redirect_output --only_confusion
-# >>> occft models on occlusion-positive-sad test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-sad --redirect_output --only_confusion
-# >>> occft models on occlusion-positive-surprise test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-surprise --redirect_output --only_confusion
-# >>> occft models on occlusion-negative-angry test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-angry --redirect_output --only_confusion
-# >>> occft models on occlusion-negative-disgust test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-disgust --redirect_output --only_confusion
-# >>> occft models on occlusion-negative-fear test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-fear --redirect_output --only_confusion
-# >>> occft models on occlusion-negative-happy test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-happy --redirect_output --only_confusion
-# >>> occft models on occlusion-negative-sad test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-sad --redirect_output --only_confusion
-# >>> occft models on occlusion-negative-surprise test set:
-# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-surprise --redirect_output --only_confusion
+# # >>> occft models on occluded matching test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded-matching --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occluded mismatching test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occluded-mismatching --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-positive-angry test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-angry --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-positive-disgust test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-disgust --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-positive-fear test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-fear --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-positive-happy test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-happy --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-positive-sad test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-sad --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-positive-surprise test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-positive-surprise --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-negative-angry test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-angry --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-negative-disgust test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-disgust --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-negative-fear test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-fear --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-negative-happy test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-happy --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-negative-sad test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-sad --redirect_output --only_confusion --model_name occft_yolo
+# # >>> occft models on occlusion-negative-surprise test set:
+# & C:/Users/Dragos/.conda/envs/fer-thesis/python.exe "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py" --models_set occft --test_set occlusion-negative-surprise --redirect_output --only_confusion --model_name occft_yolo
 
 if __name__ == "__main__":
     if len(MODEL_NAMES) == 1 and "yolo" in MODEL_NAMES[0].lower():

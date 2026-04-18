@@ -5,6 +5,9 @@
     "version": "0.2.0",
     "configurations": [      
 
+        
+
+
 
 
 
@@ -192,6 +195,21 @@
                     "--run_name", "20260224-202418_cmplt-run_occft-models_occluded-testset_do_explainability_extpert_keras",
                     "--redirect_output",
                 ]
+        },
+        {
+            "name": "do_evaluation_complete_keras (occft on occlusion-negative-angry)",
+            "type": "python",
+            "request": "launch",
+            "program": "c:/Users/Dragos/Roba/Lectures/YM2.2/Thesis/e Models/scripts/train_eval/do_evaluation_complete_keras.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--models_set", "occft",
+                "--test_set", "occlusion-negative-angry",
+                "--redirect_output",
+                "--only_confusion",
+                "--model_name", "occft_yolo"
+            ]
         },
     ]
 }

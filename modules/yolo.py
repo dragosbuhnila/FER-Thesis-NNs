@@ -207,6 +207,11 @@ def evaluate_yolo_model_folders_complete(model, test_folder_path):
         num_images = len([name for name in os.listdir(class_folder_path) if os.path.isfile(os.path.join(class_folder_path, name))])
         y_true.extend([class_index] * num_images)
 
+        image_files = [name for name in os.listdir(class_folder_path) if os.path.isfile(os.path.join(class_folder_path, name))]
+        if not image_files:
+            print(f"[WARNING] No images or videos found in {class_folder_path}. Skipping this class.")
+            continue
+
         results = model.predict(class_folder_path)
         probabilities.extend([result.probs.data.cpu().numpy() if isinstance(result.probs.data, torch.Tensor) else result.probs.data for result in results])
         predicted_images_paths.extend([result.path for result in results])
