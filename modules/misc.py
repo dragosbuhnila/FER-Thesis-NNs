@@ -2,6 +2,7 @@ import os
 import sys
 import zipfile
 from PIL import Image
+import platform
 import h5py
 import numpy as np
 import hashlib
@@ -155,8 +156,13 @@ def extract_image_index_original_or_180rotated(filename):
 def make_xai_result_image_name(path):
     # path looks like: b'.\\data\\datasets\\occluded_test_set\\bosphorus_test_HQ\\SURPRISE\\bosphorus_bs085_SURPRISE_472__masked-positive-ANGRY_mismatch.png'
     path = path.decode('utf-8') if isinstance(path, bytes) else path
-    filename = os.path.basename(path)
-    image_index = extract_image_index_original_or_180rotated(filename)
+    # Check if the system is Windows
+    if platform.system() == "Windows":
+        basename = os.path.basename(path)
+    else:
+        # Split manually for non-Windows systems
+        basename = path.split('\\')[-1]
+    image_index = extract_image_index_original_or_180rotated(basename)
     return f"image_{image_index}"
 
 # ====================================================================================================================================

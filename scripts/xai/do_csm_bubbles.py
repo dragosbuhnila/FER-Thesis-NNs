@@ -1,9 +1,9 @@
 # cdm stands for Canonical Saliency Map. 
 # Credits to Adele Roggia for basically the whole code. (Dragos Buhnila) I merely reorganized it a little and added argparsing.
 import os; import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from modules.misc import TEST_SET_PATHS, Tee, extract_image_index_original_or_180rotated, get_test_set_name_from_run_name, get_timestamp
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -88,7 +88,6 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
 
     dataset_images_path = unoccluded_back_images_path
 
-    print(f'[WARNING] hardcoded path for images to occluded test set. You should parametrize this. Path: {dataset_images_path}')
     canonical_faces_path = CANONICAL_FACES_CUT  # path delle facce canoniche
 
     al = 0.6
@@ -131,7 +130,11 @@ def compute_csm_bubbles(model_bubbles_path, limite, results_path, positivi, lim_
     emotions = EMOTIONS
 
     for emotion in emotions:
-        bubbles_images_for_current_gt_emotion = os.listdir(os.path.join(model_bubbles_path, emotion))
+        emotion_folder = os.path.join(model_bubbles_path, emotion)
+        if not os.path.exists(emotion_folder):
+            print(f"[WARNING] Emotion folder {emotion_folder} does not exist. Skipping emotion {emotion}.")
+            continue
+        bubbles_images_for_current_gt_emotion = os.listdir(emotion_folder)
         dataset_images = os.listdir(os.path.join(dataset_images_path, emotion))
         
         face = mp.Image.create_from_file(os.path.join(canonical_faces_path, f"{emotion}.png"))
@@ -392,6 +395,7 @@ def compute_csm_bubbles_wrapper(model_bubbles_path, bubbles_path, unoccluded_bac
 
 parser = argparse.ArgumentParser(description='Compute CSM bubbles for all models.')
 parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
+parser.add_argument('--run_subfolder',    type=str, default='',                      help="Subfolder within SAVED_IMAGES_PATH where the bubble images are stored. This allows you to organize runs in subfolders. If not specified, it will look directly in SAVED_IMAGES_PATH.")
 parser.add_argument('--run_name', type=str, required=True, help='Name of the run to process. It should match the folder name in SAVED_IMAGES_PATH where the bubble images are stored.')
 args = parser.parse_args()
 
@@ -426,8 +430,17 @@ print(f"\tMODELS_NAMES: {MODELS_NAMES}")
 print(f"\tRESULTS_NAME_SIGNATURE: {RESULTS_NAME_SIGNATURE}")
 print(f"========================================================")
 
+
+# >>> test_run with subfoler
+# $ python scripts/xai/do_csm_bubbles.py --run_subfolder "xai_subsets_bubbles" --run_name "20260415-153404_bubbles_cmplt-run_occft-models_occluded-matching-testset"
 if __name__ == "__main__":
-    bubbles_path = os.path.join(SAVED_IMAGES_PATH, args.run_name)
+    if args.run_subfolder:
+        bubbles_path = os.path.join(SAVED_IMAGES_PATH, args.run_subfolder, args.run_name)
+    else:
+        bubbles_path = os.path.join(SAVED_IMAGES_PATH, args.run_name)
+    print("[INFO] Now processing bubbles in path: ")
+    print(f"\t{bubbles_path}")
+
     folders = [f for f in os.listdir(bubbles_path) if os.path.isdir(os.path.join(bubbles_path, f))]
     folders = [folder for folder in folders if RESULTS_NAME_SIGNATURE not in folder]
     for folder in folders:

@@ -107,7 +107,11 @@ def generate_csm(input_saliencies_path, results_csv_path, test_set_images_path, 
 
     for emotion in emotions:
         # list of images for each emotion
-        images_filenames = os.listdir(os.path.join(images_path_norm, emotion))
+        emotion_folder = os.path.join(images_path_norm, emotion)
+        if not os.path.exists(emotion_folder):
+            print(f"[WARNING] Emotion folder {emotion_folder} does not exist. Skipping emotion {emotion}.")
+            continue
+        images_filenames = os.listdir(emotion_folder)
         print(emotion)
         
         face = mp.Image.create_from_file(os.path.join(canonical_faces_path, f"{emotion}.png"))
@@ -459,12 +463,16 @@ def process_model(model_name, input_saliencies_path, test_set_images_path, extra
 parser = argparse.ArgumentParser(description="Generate bubble-based explanations for model predictions on a test set.")
 parser.add_argument('--redirect_output',    action='store_true',                    help="Redirect console output to a log file.")
 parser.add_argument('--run_name',           type=str,  required=True,               help="Name for the run.")
-parser.add_argument('--input_base_folder',  type=str,  default=SAVED_IMAGES_PATH,   help="Base folder where saliency maps are stored.")
+parser.add_argument('--run_subfolder',    type=str, default='',                      help="Subfolder within SAVED_IMAGES_PATH where the bubble images are stored. This allows you to organize runs in subfolders. If not specified, it will look directly in SAVED_IMAGES_PATH.")
 parser.add_argument('--xai_method',         type=str,  required=True,   choices=["extpert", "gradcam"], help="XAI method to use for generating explanations: either extpert or gradcam.")
 args = parser.parse_args()
 
 # RUN
-SAL_MAPS_FOLDER = os.path.join(args.input_base_folder, args.run_name)
+if args.run_subfolder:
+    SAL_MAPS_FOLDER = os.path.join(SAVED_IMAGES_PATH, args.run_subfolder, args.run_name)
+else:
+    SAL_MAPS_FOLDER = os.path.join(SAVED_IMAGES_PATH, args.run_name)
+
 
 if 'ext' not in args.run_name and 'gradcam' not in args.run_name:
     raise ValueError("run_name must contain either 'ext' or 'gradcam' to specify the XAI method used.")
@@ -487,9 +495,8 @@ VISUALIZE = False
 
 print(f"========== SETTINGS ==========")
 print(f"ARGS:")
-print(f"\t--redirect_output: {args.redirect_output}")
-print(f"\t--input_base_folder: {args.input_base_folder}")   
-print(f"\t--run_name: {args.run_name}")
+for arg, value in vars(args).items():
+    print(f"\t{arg}: {value}")
 print(f"MACROS:")
 print(f"\tSAL_MAPS_FOLDER: {SAL_MAPS_FOLDER}")
 if args.redirect_output:

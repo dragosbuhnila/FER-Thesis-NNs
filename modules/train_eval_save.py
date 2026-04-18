@@ -34,9 +34,18 @@ def evaluate_yolo_model_folders(model, test_folder_path, debug=False):
     pred_labels = []
 
     for category in categories:
+        category_folder_path = os.path.join(test_folder_path, category)
+        # check if its empty or exists
+        if not os.path.exists(category_folder_path) or not os.path.isdir(category_folder_path):
+            print(f"Warning: Folder for category '{category}' not found at path: {category_folder_path}")
+            continue
+        images_in_category = [name for name in os.listdir(category_folder_path) if os.path.isfile(os.path.join(category_folder_path, name))]
+        if len(images_in_category) == 0:
+            print(f"Warning: No images found in folder for category '{category}' at path: {category_folder_path}")
+            continue
         # Eseguire la predizione per ogni cartella di immagini
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        results = model.predict(f'{os.path.join(test_folder_path, category)}', device=device)
+        results = model.predict(category_folder_path, device=device)
 
         # Estrarre le probabilità di classe per ogni risultato e aggiungerle alla lista
         pred_labels.extend([result.probs.top1 for result in results])

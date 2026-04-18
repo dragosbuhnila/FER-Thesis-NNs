@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=dbuh_zip_occluded_trainval_set_yolo_ver
+#SBATCH --job-name=dbuh_update_h5_paths_to_image_i_filenames
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ppp36213@gmail.com
 #SBATCH --partition=cpu_skylake
-#SBATCH --time=06:00:00
+#SBATCH --time=00:10:00
 #SBATCH --nodes=1
 #SBATCH --mem=100M
 #SBATCH --ntasks-per-node=1
@@ -36,9 +36,9 @@ echo "==========================================================================
 # =====================================================================================
 
 
-COMMAND_TO_RUN="zip -r data/models/occft_all_models.zip data/models/occft"
+COMMAND_TO_RUN="./scripts/datasets/update_h5_paths_to_image_i_filenames.py"
 echo "Now running $COMMAND_TO_RUN"
-$COMMAND_TO_RUN
+python $COMMAND_TO_RUN
 
 
 echo "==================================================================================="
