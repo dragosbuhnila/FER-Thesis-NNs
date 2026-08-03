@@ -4,5 +4,6 @@ Please read docs/guide_python11.md to install the dependencies correctly, as poe
 
 Buhnila Dragos 2025. Part of my PoliTO Master's Thesis Project  
 
+Go to the following Google Drive folder for downloading necessary files and some results or source data: https://drive.google.com/drive/u/1/folders/1CMD8sxee120G0NSFswjyCiQRzAPVd1yi
 
 
